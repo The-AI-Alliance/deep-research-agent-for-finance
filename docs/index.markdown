@@ -5,18 +5,18 @@ nav_order: 10
 has_children: false
 ---
 
-# MICROSITE_TITLE
+# Example App for AI in Finance
 
-| **Authors**     | [WORK_GROUP_NAME](WORK_GROUP_URL){:target="ai-alliance-wg"} (See the [Contributors]({{site.baseurl}}/contributing/#contributors)) |
-| **Last Update** | V0.1.0, YMD_TSTAMP |
+| **Authors**     | [Applications and Tools](https://thealliance.ai/focus-areas/applications-and-tools){:target="ai-alliance-wg"} (See the [Contributors]({{site.baseurl}}/contributing/#contributors)) |
+| **Last Update** | V0.1.0, 2025-07-09 |
 
 > **Tip:** Use the search box at the top of this page to find specific content.
 
-Welcome to the **The AI Alliance**: **MICROSITE_TITLE**. 
+Welcome to the **The AI Alliance**: **Example App for AI in Finance**. 
 
 Please join us! See our [contributing]({{site.baseurl}}/contributing) page for details.
 
-> **TODO:** This is a work-in-progress website for the MICROSITE_TITLE.
+> **TODO:** This is a work-in-progress website for the Example App for AI in Finance.
 
 > **NOTE:** The "boilerplate" text on this page mixes content you might want to use, as well as tips on writing Markdown. See also the comments in the source files.
 
@@ -37,7 +37,7 @@ Additional links: [^2]
 * [Contributing]({{site.baseurl}}/contributing): We welcome your contributions! Here's how you can contribute.
 * [About Us]({{site.baseurl}}/about): More about the AI Alliance and this project.
 * [The AI Alliance](https://thealliance.ai){:target="ai-alliance"}: The AI Alliance website.
-* [Project GitHub Repo](https://github.com/The-AI-Alliance/REPO_NAME){:target="repo"}
+* [Project GitHub Repo](https://github.com/The-AI-Alliance/ai-in-finance-sample-app){:target="repo"}
 
 Note our convention that external URLs include a target, specified with `{:target="some_name"}`. In fact, Jekyll is configured in `_config.yml` to use the `jekyll-target-blank` plugin, which automatically opens external links in a new tab, named `blank`. This is good enough, but it also means that every link you click will open in the same tab. So, explicitly specifying a `:target` provides a nicer experience. You will also notice that external links get a little box and arrow adornment. This is done automatically through a clever CSS hack in `docs/_includes/css/custom.scss.liquid`.
 
@@ -53,7 +53,7 @@ A table example using standard Markdown and showing how to set the desired align
 
 | Version  | Date       |
 | :------- | :--------- |
-| V0.1.0   | YMD_TSTAMP |
+| V0.1.0   | 2025-07-09 |
 
 [^1]: Use `[^N]` (for increasing `N` values) to mark "footnote #N" in text, as shown above. This is an example footnote with a link to it from above, and a link at the end of the footnote to go back to the point in the text (the "curled" arrow). **WARNING**, you must include the colon in the footnote definition as shown here, `[^1]:`.
 [^2]: A second example footnote. Note that you don't need to put a blank line between them; they work like lists.

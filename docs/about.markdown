@@ -5,9 +5,9 @@ nav_order: 100
 has_children: false
 ---
 
-# About MICROSITE_TITLE and The AI Alliance
+# About Example App for AI in Finance and The AI Alliance
 
-**MICROSITE_TITLE** is a project of the [WORK_GROUP_NAME](WORK_GROUP_URL){:target="wg"} work group in [The AI Alliance](https://thealliance.ai){:target="ai-alliance"}. 
+**Example App for AI in Finance** is a project of the [Applications and Tools](https://thealliance.ai/focus-areas/applications-and-tools){:target="wg"} work group in [The AI Alliance](https://thealliance.ai){:target="ai-alliance"}. 
 
 Please join us! See our [contributing]({{site.baseurl}}/contributing) page for details.
 

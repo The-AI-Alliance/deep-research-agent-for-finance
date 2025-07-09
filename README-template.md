@@ -129,7 +129,7 @@ However, if you don't want discussions, remove the URL on the `docs/contributing
 
 On the left-hand side of the _Settings_, click the link for _Pages_. Under _Branch_, select your publication branch, either `main`, `latest`, or a custom branch you specified above. Then select the `/docs` directory and finally, click _Save_.
 
-Your website should be published after a few minutes to https://the-ai-alliance.github.io/REPO_NAME/.
+Your website should be published after a few minutes to https://the-ai-alliance.github.io/ai-in-finance-sample-app/.
 
 > [!TIP]
 > At the top of the repo page, click _Actions_ to see the progress of building your website. This action will be executed every time you make a change to a file in your publication branch (i.e., `main` by default). If for some reason building the website fails, this page can provide useful debugging help.

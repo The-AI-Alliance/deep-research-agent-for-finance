@@ -1,10 +1,10 @@
-# README for MICROSITE_TITLE
+# README for Example App for AI in Finance
 
-[Published Documentation](https://the-ai-alliance.github.io/REPO_NAME/)
+[Published Documentation](https://the-ai-alliance.github.io/ai-in-finance-sample-app/)
 
-This repo contains the code and documentation for the AI Alliance: MICROSITE_TITLE.
+This repo contains the code and documentation for the AI Alliance: Example App for AI in Finance.
 
-See the [repo README](https://the-ai-alliance.github.io/REPO_NAME/) for additional details about this project.
+See the [repo README](https://the-ai-alliance.github.io/ai-in-finance-sample-app/) for additional details about this project.
 
 TODO - Describe this project
 

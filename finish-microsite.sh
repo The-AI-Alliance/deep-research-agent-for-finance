@@ -304,14 +304,14 @@ html_files=($(find docs/_layouts docs/_includes -name '*.html'))
 github_files=($(find .github \( -name '*.yaml' -o -name '*.md' \)))
 
 info "Replacing macros with correct values:"
-info "  REPO_NAME:       $repo_name"
-info "  MICROSITE_TITLE: $microsite_title"
-info "  WORK_GROUP_NAME: $work_group"
-info "  WORK_GROUP_URL:  $work_group_url"
-info "  DASHBOARD:       $dashboard"
-info "  ASSIGNEES:       $assignees"
-info "  YMD_TSTAMP:      $ymdtimestamp"
-info "  TIMESTAMP:       $timestamp"
+info "  ai-in-finance-sample-app:       $repo_name"
+info "  Example App for AI in Finance: $microsite_title"
+info "  Applications and Tools: $work_group"
+info "  https://thealliance.ai/focus-areas/applications-and-tools:  $work_group_url"
+info "  The-AI-Alliance/34:       $dashboard"
+info "  adampingel,rawkintrevo:       $assignees"
+info "  2025-07-09:      $ymdtimestamp"
+info "  2025-07-09 09:49 -0400:       $timestamp"
 info
 info "Processing Files:"
 
@@ -320,14 +320,14 @@ do
 	info "  $file"
 	if [[ -z $NOOP ]]
 	then
-		sed -e "s?REPO_NAME?$repo_name?g" \
-		    -e "s?MICROSITE_TITLE?$microsite_title?g" \
-		    -e "s?WORK_GROUP_NAME?$work_group?g" \
-		    -e "s?WORK_GROUP_URL?$work_group_url?g" \
-		    -e "s?DASHBOARD?$dashboard?g" \
-		    -e "s?ASSIGNEES?$assignees?g" \
-		    -e "s?YMD_TSTAMP?$ymdtimestamp?g" \
-		    -e "s?TIMESTAMP?$timestamp?g" \
+		sed -e "s?ai-in-finance-sample-app?$repo_name?g" \
+		    -e "s?Example App for AI in Finance?$microsite_title?g" \
+		    -e "s?Applications and Tools?$work_group?g" \
+		    -e "s?https://thealliance.ai/focus-areas/applications-and-tools?$work_group_url?g" \
+		    -e "s?The-AI-Alliance/34?$dashboard?g" \
+		    -e "s?adampingel,rawkintrevo?$assignees?g" \
+		    -e "s?2025-07-09?$ymdtimestamp?g" \
+		    -e "s?2025-07-09 09:49 -0400?$timestamp?g" \
 		    -i ".back" "$file"
 	else
 		$NOOP sed ... -i .back $file
