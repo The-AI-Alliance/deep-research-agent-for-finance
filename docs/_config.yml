@@ -13,10 +13,10 @@
 # you will see them accessed via {{ site.title }}, {{ site.github_repo }}, and so on.
 # You can create any custom variable you would like, and they will be accessible
 # in the templates via {{ site.myvariable }}.
-title: Example App for AI in Finance
+title: Example Application for AI in Finance
 email: contact@thealliance.ai
 description: >- # this means to ignore newlines until "baseurl:"
-  The website for the AI Alliance project, Example App for AI in Finance.
+  The website for the AI Alliance project, Example Application for AI in Finance.
 baseurl: "/ai-in-finance-sample-app" # the subpath of your site.
 url: "https://the-ai-alliance.github.io" # the base hostname & protocol for your site, e.g. http://example.com
 
@@ -70,7 +70,7 @@ aux_links:
     - "https://thealliance.ai"
 
 nav_external_links:
-  - title: The AI Alliance repo for Example App for AI in Finance"
+  - title: The AI Alliance repo for Example Application for AI in Finance"
     url: "https://github.com/The-AI-Alliance/ai-in-finance-sample-app"
     hide_icon: false
 
@@ -92,7 +92,7 @@ back_to_top_text: "Back to the top"
 last_edit_timestamp: true # show or hide edit time - page must have `last_modified_date` defined in the frontmatter
 last_edit_time_format: "%Y-%m-%d %H:%M %z" # uses ruby's time format: https://ruby-doc.org/stdlib-2.7.0/libdoc/time/rdoc/Time.html
 last_modified_timestamp: 2025-07-09 09:49 -0400
-last_version: 0.1.0
+last_version: 0.0.1
 
 # Custom: Add the range of years for the copyright here. This is done here,
 # rather than default.html, so that the latter file can remain completely 

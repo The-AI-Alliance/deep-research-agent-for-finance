@@ -5,9 +5,9 @@ nav_order: 100
 has_children: false
 ---
 
-# About Example App for AI in Finance and The AI Alliance
+# About Example Application for AI in Finance and The AI Alliance
 
-**Example App for AI in Finance** is a project of the [Applications and Tools](https://thealliance.ai/focus-areas/applications-and-tools){:target="wg"} work group in [The AI Alliance](https://thealliance.ai){:target="ai-alliance"}. 
+**Example Application for AI in Finance** is a project of the [Applications and Tools](https://thealliance.ai/focus-areas/applications-and-tools){:target="wg"} work group in [The AI Alliance](https://thealliance.ai){:target="ai-alliance"}. 
 
 Please join us! See our [contributing]({{site.baseurl}}/contributing) page for details.
 

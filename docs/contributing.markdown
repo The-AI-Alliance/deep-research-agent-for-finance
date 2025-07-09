@@ -8,7 +8,8 @@ nav_order: 90
 
 The following people have contributed to the creation and maintenance of this project:
 
-* TODO
+* [LastMile AI](https://lastmileai.dev/){:target="last-mile"}
+* [Dean Wampler, IBM](https://github.com/deanwampler){:target="dw"}
 
 # How to Contribute to this Project
 
