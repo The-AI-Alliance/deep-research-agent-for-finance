@@ -1,10 +1,10 @@
 # README for Example Application for AI in Finance
 
-[Published Documentation](https://the-ai-alliance.github.io/ai-in-finance-sample-app/)
+[Published Documentation](https://the-ai-alliance.github.io/ai-in-finance-example-app/)
 
 This repo contains the code and documentation for the AI Alliance: Example Application for AI in Finance.
 
-See the [project website](https://the-ai-alliance.github.io/ai-in-finance-sample-app/) for additional details about this project.
+See the [project website](https://the-ai-alliance.github.io/ai-in-finance-example-app/) for additional details about this project.
 
 > [!NOTE]
 > This is a new initiative. Do you have finance industry expertise? Do you have AI expertise? Do you want to grow your expertise in either area. Please join us! See our [contributing]({{site.baseurl}}/contributing) page for details.
