@@ -2,7 +2,7 @@
 
 ## July 14, 2025
 
-Attendees: Andrew, Phil, Dave, Adam
+Attendees: Andrew Hoh, Phil Chang, Dave Nielen, Adam Pingel, Dean Wampler
 
 ### Idea: Do a Deep Research Agent for finance
 
