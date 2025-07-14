@@ -2,7 +2,8 @@
 
 ## July 14, 2025
 
-Attendees: Andrew Hoh, Phil Chang, Dave Nielen, Adam Pingel, Dean Wampler
+* **Attendees:** Andrew Hoh, Phil Chang, Dave Nielen, Adam Pingel, Dean Wampler 
+* **Gemini Notes:** [link](https://docs.google.com/document/d/1gFvfIxcRBaPRMHC3y82JvaLO5glihtpGDhLmFwTHoQM/edit?usp=sharing)
 
 ### Idea: Do a Deep Research Agent for finance
 
