@@ -1,50 +1,67 @@
-# README for Example Application for AI in Finance
+# AI in Finance Example App
 
-[Published Documentation](https://the-ai-alliance.github.io/ai-in-finance-example-app/)
+A finance deep research agent designed to collect comprehensive information about publicly traded companies and generate detailed investment research reports.
 
-This repo contains the code and documentation for the AI Alliance: Example Application for AI in Finance.
+## About
 
-See the [project website](https://the-ai-alliance.github.io/ai-in-finance-example-app/) for additional details about this project.
+This application leverages AI to perform automated financial research and analysis. It gathers data from multiple reliable financial sources to create structured investment reports with:
 
-> [!NOTE]
-> This is a new initiative. Do you have finance industry expertise? Do you have AI expertise? Do you want to grow your expertise in either area. Please join us! See our [contributing]({{site.baseurl}}/contributing) page for details.
+- Basic stock information and metrics
+- Business overviews and revenue analysis
+- Recent news and market events
+- Financial performance summaries
+- Risk and opportunity assessments
+- Investor sentiment analysis
 
-Why create another example application? This example application probes the most important functional and non-functional requirements of a representative finance application that leverages AI. We intend to go _deep_, rather than provide a superficial example, to explore where realistic concerns have to be properly addressed for successful and reliable production deployments. 
+The application is built using [mcp-agent](https://github.com/lastmile-ai/mcp-agent), a framework for creating AI agents with Model Context Protocol (MCP) integration.
 
-This project leverages the AI Alliance expertise in agent-based development, use of MCP, and use of AI testing and benchmarking technologies for effective testing of AI applications.
+## Setup
 
-The rest of this README provides information for contributors, developers, and users of this project repo.
+### Prerequisites
 
-## Getting Involved
+- Python 3.10 or higher
+- [uv](https://docs.astral.sh/uv/) package manager
 
-We hold a weekly status meeting on Monday's, 11AM Eastern time. Reach out [Dean Wampler](mailto:dwampler@thealliance.ai) for information. See our [meeting notes](meeting-notes.md).
+### Installation
 
-We welcome contributions as PRs. Please see our [Alliance community repo](https://github.com/The-AI-Alliance/community/) for general information about contributing to any of our projects. This section provides some specific details you need to know.
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd ai-in-finance-example-app
+```
 
-In particular, see the AI Alliance [CONTRIBUTING](https://github.com/The-AI-Alliance/community/blob/main/CONTRIBUTING.md) instructions. You will need to agree with the AI Alliance [Code of Conduct](https://github.com/The-AI-Alliance/community/blob/main/CODE_OF_CONDUCT.md).
+2. Install dependencies:
+```bash
+uv add mcp-agent
+```
 
-All _code_ contributions are licensed under the [Apache 2.0 LICENSE](https://github.com/The-AI-Alliance/community/blob/main/LICENSE.Apache-2.0) (which is also in this repo, [LICENSE.Apache-2.0](LICENSE.Apache-2.0)).
+## Usage
 
-All _documentation_ contributions are licensed under the [Creative Commons Attribution 4.0 International](https://github.com/The-AI-Alliance/community/blob/main/LICENSE.CC-BY-4.0) (which is also in this repo, [LICENSE.CC-BY-4.0](LICENSE.CC-BY-4.0)).
+Run the finance research agent:
 
-All _data_ contributions are licensed under the [Community Data License Agreement - Permissive - Version 2.0](https://github.com/The-AI-Alliance/community/blob/main/LICENSE.CDLA-2.0) (which is also in this repo, [LICENSE.CDLA-2.0](LICENSE.CDLA-2.0)).
+```bash
+uv run main.py
+```
 
-### Quick Tip - View the Website Locally
+The application will:
+1. Connect to the configured MCP servers
+2. Execute the research agent with predefined instructions
+3. Generate a comprehensive stock report
 
-See [GITHUB_PAGES.md](GITHUB_PAGES.md) for information on viewing the site locally with `jekyll`.
+### Configuration
 
-### We use the "Developer Certificate of Origin" (DCO).
+The application uses configuration files:
+- `mcp_agent.config.yaml` - Main configuration settings
+- `mcp_agent.secrets.yaml` - API keys and secrets (not tracked in git)
 
-> [!WARNING]
-> Before you make any git commits with changes, understand what's required for DCO.
+## Contributing
 
-See the Alliance contributing guide [section on DCO](https://github.com/The-AI-Alliance/community/blob/main/CONTRIBUTING.md#developer-certificate-of-origin) for details. In practical terms, supporting this requirement means you must use the `-s` flag with your `git commit` commands.
+This project is part of the AI Alliance initiative. We welcome contributions from developers with finance industry expertise, AI expertise, or those looking to grow their skills in either area.
 
-## About the GitHub Pages Website Published from this Repo
+For contribution guidelines, see the [AI Alliance community repo](https://github.com/The-AI-Alliance/community/).
 
-The website is published using [GitHub Pages](https://pages.github.com/), where the pages are written in Markdown and served using [Jekyll](https://github.com/jekyll/jekyll). We use the [Just the Docs](https://just-the-docs.github.io/just-the-docs/) Jekyll theme.
+## License
 
-See [GITHUB_PAGES.md](GITHUB_PAGES.md) for more information.
-
-> [!NOTE]
-> As described above, all documentation is licensed under Creative Commons Attribution 4.0 International. See [LICENSE.CDLA-2.0](LICENSE.CDLA-2.0)).
+- Code: [Apache 2.0](LICENSE.Apache-2.0)
+- Documentation: [Creative Commons Attribution 4.0 International](LICENSE.CC-BY-4.0)
+- Data: [Community Data License Agreement - Permissive - Version 2.0](LICENSE.CDLA-2.0)
