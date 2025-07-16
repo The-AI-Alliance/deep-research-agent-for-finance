@@ -1,0 +1,11 @@
+[project]
+name = "ai-in-finance-example-app"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "anthropic>=0.57.1",
+    "mcp-agent>=0.1.7",
+    "openai>=1.96.0",
+]
