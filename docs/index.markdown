@@ -11,7 +11,7 @@ has_children: false
 
 Welcome to the **The AI Alliance**: **Example Application for AI in Finance**. 
 
-> **NOTE:** This is a new initiative. Do you have finance industry expertise? Do you have AI expertise? Do you want to grow your expertise in either area. Please join us! See our [contributing]({{site.baseurl}}/contributing) page for details.
+> **Note:** This is a new initiative. Do you have finance industry expertise? Do you have AI expertise? Do you want to grow your expertise in either area. Please join us! See our [contributing]({{site.baseurl}}/contributing) page for details.
 
 ## What Is It?
 

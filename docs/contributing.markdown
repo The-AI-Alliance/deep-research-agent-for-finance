@@ -21,6 +21,6 @@ Contributing changes as [pull requests](https://github.com/The-AI-Alliance/ai-in
 
 We also welcome feedback through [email](mailto:contact@thealliance.ai). Be sure to mention this project.
 
-# Joining the Work Group
+# Joining the Project
 
 If you want to participate more actively in this project, send us [email](mailto:contact@thealliance.ai) or complete the form on the Alliance's [Become a Collaborator](https://thealliance.ai/become-a-collaborator){:target="aia-website"} page. Check the boxes that look most appropriate and describe your interest in this project in the _Message_ box.
