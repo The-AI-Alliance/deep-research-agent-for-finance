@@ -15,7 +15,7 @@ This application leverages AI to perform automated financial research and analys
 
 The application is built using [mcp-agent](https://github.com/lastmile-ai/mcp-agent), a framework for creating AI agents with Model Context Protocol (MCP) integration.
 
-See also our [website](https://the-ai-alliance.github.io/ai-application-testing/).
+See also our [website](https://the-ai-alliance.github.io/ai-in-finance-example-app/).
 
 ## Setup
 
