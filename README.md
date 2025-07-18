@@ -1,6 +1,6 @@
 # AI in Finance Example App
 
-A finance deep research agent designed to collect comprehensive information about publicly traded companies and generate detailed investment research reports.
+A finance deep research agent designed to collect comprehensive information about publicly-traded companies and generate detailed investment research reports.
 
 ## About
 
@@ -56,12 +56,16 @@ The application uses configuration files:
 
 ## Contributing
 
-This project is part of the AI Alliance initiative. We welcome contributions from developers with finance industry expertise, AI expertise, or those looking to grow their skills in either area.
+This project is part of the AI Alliance. We welcome contributions from developers with finance industry expertise, AI expertise, or those looking to grow their skills in either area.
 
-For contribution guidelines, see the [AI Alliance community repo](https://github.com/The-AI-Alliance/community/).
+For contribution guidelines, see the AI Alliance [CONTRIBUTING](https://github.com/The-AI-Alliance/community/blob/main/CONTRIBUTING.md) instructions. Note that we use the "Developer Certificate of Origin" (DCO). In short, all this really requires is that you add the `-s` flag to your `git commit` commands. See [this section](https://github.com/The-AI-Alliance/community/blob/main/CONTRIBUTING.md#developer-certificate-of-origin) for details.
 
-## License
+### Licenses
 
 - Code: [Apache 2.0](LICENSE.Apache-2.0)
 - Documentation: [Creative Commons Attribution 4.0 International](LICENSE.CC-BY-4.0)
 - Data: [Community Data License Agreement - Permissive - Version 2.0](LICENSE.CDLA-2.0)
+
+## About the GitHub Pages Website Published from this Repo
+
+The website is published using [GitHub Pages](https://pages.github.com/), where the pages are written in Markdown and served using [Jekyll](https://github.com/jekyll/jekyll). See [GITHUB_PAGES.md](GITHUB_PAGES.md) for more information.
