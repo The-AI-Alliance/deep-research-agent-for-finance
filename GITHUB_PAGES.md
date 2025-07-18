@@ -57,13 +57,6 @@ What gets displayed by GitHub Pages is the customized Markdown files in the `doc
 
 Here are some things you should know.
 
-### Using the Correct Branch
-
-Issue PRs for the `main` branch. Note that many of our microsite repos are configured to publish the website from another branch, usually `latest`, not `main`. For those repos, it will be necessary to merge from `main` to `latest` after merging the PR.
-
-> [!NOTE]
-> If you are curious, the details of how the publication process is configured are discussed [below](#configuring-github-pages-in-the-repo-settings).
-
 ### Updating the Website Version
 
 By default, the template file for `docs/index.markdown` has the latest _version_ in a table near the top of the page and a table with the history of the versions near the bottom. Some websites have deleted this content or moved it elsewhere. We don't require you to include this information nor do we require that you update it according to any specific requirements, if you keep it. However, if you keep this information, you'll want to edit the current version in the following places:
@@ -258,9 +251,3 @@ gem uninstall jekyll
 gem install jekyll
 gem list | grep jekyll
 ```
-
-### Configuring GitHub Pages in the Repo Settings
-
-This section documents the one-time settings necessary to [configure publication of a repo's GitHub Pages](https://docs.github.com/en/enterprise-server@3.1/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site). 
-
-In the repo's [_Settings > Pages_ section](https://github.com/The-AI-Alliance/ai-in-finance-example-app/settings/pages), use the menu to select the branch from which you want to publish the website. By default, we assume `main` is the desired branch, so pick that. However, if you want to use a different branch, i.e., `latest` or another one you specified when running `finish-microsite.sh`, then select it. Finally, select the `docs` folder in the dropdown menu to the right, which is the root folder for the pages.

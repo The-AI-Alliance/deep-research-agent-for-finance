@@ -7,18 +7,39 @@ has_children: false
 
 # Example Application for AI in Finance
 
-| **Authors**     | [Applications and Tools](https://thealliance.ai/focus-areas/applications-and-tools){:target="ai-alliance-wg"} (See the [Contributors]({{site.baseurl}}/contributing/#contributors)) |
-| **Last Update** | V0.0.1, 2025-07-09 |
-
 > **Tip:** Use the search box at the top of this page to find specific content.
 
 Welcome to the **The AI Alliance**: **Example Application for AI in Finance**. 
 
 > **NOTE:** This is a new initiative. Do you have finance industry expertise? Do you have AI expertise? Do you want to grow your expertise in either area. Please join us! See our [contributing]({{site.baseurl}}/contributing) page for details.
 
-Why create another example application? This example application probes the most important functional and non-functional requirements of a representative finance application that leverages AI. We intend to go _deep_, rather than provide a superficial example, to explore where realistic concerns have to be properly addressed for successful reliable production deployments. 
+## What Is It?
 
-This project leverages the AI Alliance expertise in agent-based development, use of MCP, and use of AI testing and benchmarking technologies for effective testing of AI applications.
+This app is a finance deep research agent designed to collect comprehensive information about publicly-traded companies and generate detailed investment research reports.
+
+## About
+
+This application leverages AI to perform automated financial research and analysis. It gathers data from multiple reliable financial sources to create structured investment reports with:
+
+- Basic stock information and metrics
+- Business overviews and revenue analysis
+- Recent news and market events
+- Financial performance summaries
+- Risk and opportunity assessments
+- Investor sentiment analysis
+
+The application is built using [mcp-agent](https://github.com/lastmile-ai/mcp-agent), a framework for creating AI agents with Model Context Protocol (MCP) integration.
+
+We also want to demonstrate techniques for testing AI-enabled applications, where model outputs are not _deterministic_, i.e., 100% predictable for a given set of inputs. Developers are accustomed to testing deterministic components and applications, but AI experts have the techniques developers can use to be _confident_ their AI-enabled application works as designed. See [Achieving Confidence in Enterprise AI Applications](https://the-ai-alliance.github.io/ai-application-testing/){:target="_blank"} for more on this topic.
+
+## Try It!
+
+The project [README](https://github.com/The-AI-Alliance/ai-in-finance-example-app){:target="repo"} describes how to install and run this application.
+
+
+| **Authors**     | [Applications and Tools](https://thealliance.ai/focus-areas/applications-and-tools){:target="ai-alliance-wg"} work group. (See the [Contributors]({{site.baseurl}}/contributing/#contributors)) |
+| **Last Update** | V0.0.2, 2025-07-18 |
+
 
 <details open markdown="block">
   <summary>
