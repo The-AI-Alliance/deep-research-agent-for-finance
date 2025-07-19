@@ -40,12 +40,3 @@ The project [README](https://github.com/The-AI-Alliance/ai-in-finance-example-ap
 | **Authors**     | [Applications and Tools](https://thealliance.ai/focus-areas/applications-and-tools){:target="ai-alliance-wg"} work group. (See the [Contributors]({{site.baseurl}}/contributing/#contributors)) |
 | **Last Update** | V0.0.2, 2025-07-18 |
 
-
-<details open markdown="block">
-  <summary>
-    Table of contents
-  </summary>
-  {: .text-delta }
-1. TOC
-{:toc}
-</details>
