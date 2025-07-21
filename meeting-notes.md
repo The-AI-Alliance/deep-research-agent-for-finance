@@ -62,5 +62,5 @@ We should also acquire some representative sample data, especially for the "down
 * Have something solid in a month.
   
 ### Action Items
-- [ ] Create [issues](https://github.com/The-AI-Alliance/ai-in-finance-example-app/issues) for ideas of things to do, flesh-out ideas. ([Project Dashboard](https://github.com/orgs/The-AI-Alliance/projects/42)). [Discussions](https://github.com/The-AI-Alliance/ai-in-finance-example-app/discussions) can be used, too.
-- [ ] Reach out to other Alliance members in Finance to get them involved. (Dean)
+- [x] Create [issues](https://github.com/The-AI-Alliance/ai-in-finance-example-app/issues) for ideas of things to do, flesh-out ideas. ([Project Dashboard](https://github.com/orgs/The-AI-Alliance/projects/42)). [Discussions](https://github.com/The-AI-Alliance/ai-in-finance-example-app/discussions) can be used, too.
+- [x] Reach out to other Alliance members in Finance to get them involved. (Dean)
