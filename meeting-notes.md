@@ -1,8 +1,33 @@
 # Meeting Notes
 
+
+## July 21, 2025
+
+* **Attendees:** Andrew Hoh, Dave Nielsen, Adam Pingel, Dean Wampler 
+* **Gemini Notes:** [link](https://docs.google.com/document/d/1Y9BWRFbMmXiTZteBw6FWb1F_4GOpI__agse-2cGwkfc/edit?usp=sharing)
+
+### What Features/Tasks Should We Do Next?
+
+* Blog post - when the project is "meaty enough" to talk about.
+* What best techniques can be discussed in meetups, conferences, etc.
+* Move to a deep research architecture <-- What LastMile wants to showcase the most
+  * Phil used to be an investment banker; knows the space, so he's a good source of requirements, use cases...
+  * Aggregating into Excel key data from third-party data sources used in market research is a big time saver.
+* We need to find and aggregate more data sources, accessed using MCP
+* Next few weeks?
+  * Find a good Excel MCP server
+    * V1 use case: user enters a symbol, app returns data into a table.
+      * Graphs not required
+      * Validation of returned results not required; difficult, a possible "V2" feature.
+  * Find some useful data sources
+  * Break out the current app into more components towards the desired architecture, e.g., separate smaller services and an "aggregator".
+
+### Action Items
+- [ ] Dean: Create issues for the next few week's tasks.
+
 ## July 14, 2025
 
-* **Attendees:** Andrew Hoh, Phil Chang, Dave Nielen, Adam Pingel, Dean Wampler 
+* **Attendees:** Andrew Hoh, Phil Chang, Dave Nielsen, Adam Pingel, Dean Wampler 
 * **Gemini Notes:** [link](https://docs.google.com/document/d/1gFvfIxcRBaPRMHC3y82JvaLO5glihtpGDhLmFwTHoQM/edit?usp=sharing)
 
 ### Idea: Do a Deep Research Agent for finance
