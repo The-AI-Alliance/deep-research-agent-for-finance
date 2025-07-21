@@ -3,7 +3,7 @@
 
 ## July 21, 2025
 
-* **Attendees:** Andrew Hoh, Dave Nielsen, Adam Pingel, Dean Wampler 
+* **Attendees:** Andrew Hoh, Sarmad Qadri, Dave Nielsen, Adam Pingel, Dean Wampler 
 * **Gemini Notes:** [link](https://docs.google.com/document/d/1Y9BWRFbMmXiTZteBw6FWb1F_4GOpI__agse-2cGwkfc/edit?usp=sharing)
 
 ### What Features/Tasks Should We Do Next?
