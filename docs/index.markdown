@@ -5,17 +5,17 @@ nav_order: 10
 has_children: false
 ---
 
-# Example Application for AI in Finance
+# Deep Research Agent for Finance
 
 > **Tip:** Use the search box at the top of this page to find specific content.
 
-Welcome to the **The AI Alliance**: **Example Application for AI in Finance**. 
+Welcome to the **The AI Alliance**: **Deep Research Agent for Finance**. 
 
 > **Note:** This is a new initiative. Do you have finance industry expertise? Do you have AI expertise? Do you want to grow your expertise in either area. Please join us! See our [contributing]({{site.baseurl}}/contributing) page for details.
 
 ## What Is It?
 
-This app is a finance deep research agent designed to collect comprehensive information about publicly-traded companies and generate detailed investment research reports.
+This app is an example application of a deep research agent designed to collect comprehensive information about publicly-traded companies and generate detailed investment research reports. The target user would be a financial analyst.
 
 ## About
 

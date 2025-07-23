@@ -7,7 +7,7 @@ has_children: false
 
 # About This Example Application and The AI Alliance
 
-The **Example Application for AI in Finance** is a project of the [Applications and Tools](https://thealliance.ai/focus-areas/applications-and-tools){:target="wg"} work group in [The AI Alliance](https://thealliance.ai){:target="ai-alliance"}. 
+The **Deep Research Agent for Finance** is a project of the [Applications and Tools](https://thealliance.ai/focus-areas/applications-and-tools){:target="wg"} work group in [The AI Alliance](https://thealliance.ai){:target="ai-alliance"}. 
 
 The [home page]({{site.baseurl}}/) describes the project.
 
