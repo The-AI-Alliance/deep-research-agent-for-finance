@@ -1,3 +1,5 @@
+# Validation of the Excel MCP Server.
+
 [Jul 28, 2025] Basic validation tests on the [excel-mcp-server](https://github.com/haris-musa/excel-mcp-server) to cover the 21 tool calls:
 
 ## Unit Test Summary
