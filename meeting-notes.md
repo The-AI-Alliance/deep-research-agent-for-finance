@@ -3,7 +3,7 @@
 ## July 28, 2025
 
 * **Attendees:** Andrew Hoh, Phil Chang, Dean Wampler, Elad Levi (PlurAI), Dave Nielsen 
-* **Gemini Notes:** [link](todo)
+* **Gemini Notes:** [link](https://docs.google.com/document/d/1xA722_Sv-K5NKvUWFNGqESbrLUOM21bm40Rh4LQNASk/edit?usp=sharing)
 
 ### From Last Week
 * Find a good Excel server.
