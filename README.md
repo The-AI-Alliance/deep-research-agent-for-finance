@@ -39,6 +39,8 @@ uv add mcp-agent
 
 ## Usage
 
+Currently, the app requires an OpenAI or Anthropic account. Edit `mcp_agent.secrets.yaml` to add the API key for one of those services.
+
 Run the finance research agent:
 
 ```bash
@@ -49,6 +51,16 @@ The application will:
 1. Connect to the configured MCP servers
 2. Execute the research agent with predefined instructions
 3. Generate a comprehensive stock report
+
+You can also run `make`, which builds the default `all` target, which builds the `run-app` target to run the app. In other words, the following are equivalent:
+
+```bash
+make
+make all
+make run-app
+```
+
+Try `make help` for additional details.
 
 ### Configuration
 
@@ -70,4 +82,9 @@ For contribution guidelines, see the AI Alliance [CONTRIBUTING](https://github.c
 
 ## About the GitHub Pages Website Published from this Repo
 
-The website is published using [GitHub Pages](https://pages.github.com/), where the pages are written in Markdown and served using [Jekyll](https://github.com/jekyll/jekyll). See [GITHUB_PAGES.md](GITHUB_PAGES.md) for more information.
+The website is published using [GitHub Pages](https://pages.github.com/), where the pages are written in Markdown and served using [Jekyll](https://github.com/jekyll/jekyll). 
+
+There are `Makefile` targets running the website locally. Try `make help` for details.
+
+
+See [GITHUB_PAGES.md](GITHUB_PAGES.md) for more information.
