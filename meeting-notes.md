@@ -7,7 +7,7 @@
 
 ### From Last Week
 * Find a good Excel server.
-  * Most popular one?? https://github.com/negokaz/excel-mcp-server.
+  * Most popular one?? https://github.com/haris-musa/excel-mcp-server.
     * Needs to be validated. (A good thing to document? How to do this for any server??)
     * Hopefully MS will release one of their own.
 * Find useful data sources.

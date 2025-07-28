@@ -15,5 +15,9 @@ mcp:
     fetch:
       command: "uvx"
       args: ["mcp-server-fetch"]
+    excel:
+      command: "uvx"
+      args: ["excel-mcp-server", "stdio"]
+      
 openai:
   default_model: "gpt-4o-mini"
