@@ -12,8 +12,10 @@
     * Hopefully MS will release one of their own.
 * Find useful data sources.
   * Andrew looked at some. Good ones tend to charge for use. Less popular ones will need a lot more testing.
-  * E.g., 10Ks, financial reports (official ones better), latest relevant news, aggregators
-  * What about financial benchmark sources?
+  * E.g., 10Ks, financial reports (official ones better), latest relevant news, aggregators.
+  * See the [SEC EDGAR search](https://www.sec.gov/edgar/search/).
+    * From it you can extract very interesting finance information on all US public companies.
+    * [FinanceBench](https://arxiv.org/abs/2311.11944) was built with this data.
   * A synthetic dataset for a fictitious company, etc.
     * But people will care about accuracy, so how would this work?
 * Evolve towards the desired architecture...
