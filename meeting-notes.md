@@ -1,5 +1,35 @@
 # Meeting Notes
 
+## July 28, 2025
+
+* **Attendees:** Andrew Hoh, Phil Chang, Dean Wampler, Elad Levi (PlurAI), Dave Nielsen 
+* **Gemini Notes:** [link](todo)
+
+### From Last Week
+* Find a good Excel server.
+  * Most popular one?? https://github.com/negokaz/excel-mcp-server.
+    * Needs to be validated. (A good thing to document? How to do this for any server??)
+    * Hopefully MS will release one of their own.
+* Find useful data sources.
+  * Andrew looked at some. Good ones tend to charge for use. Less popular ones will need a lot more testing.
+  * E.g., 10Ks, financial reports (official ones better), latest relevant news, aggregators
+  * What about financial benchmark sources?
+  * A synthetic dataset for a fictitious company, etc.
+    * But people will care about accuracy, so how would this work?
+* Evolve towards the desired architecture...
+  * Dean started a PR to move the current `main.py` file to `src/finance-deep-search` (name TBD...) and create a corresponding test directory.
+  * See: https://github.com/lastmile-ai/mcp-agent/tree/feature/adaptive_workflow/src/mcp_agent/workflows/adaptive
+    * Branch will be merged soon.
+    * Similar to the model described by Anthropic's [blog post](https://www.anthropic.com/engineering/built-multi-agent-research-system) on deep research.
+    * What "evangelism" should we do right now? (See also the [blog post ticket](https://github.com/The-AI-Alliance/ai-in-finance-example-app/issues/6).)
+
+### Action Items
+- [ ] Dave: Reach out to community people for help validating 3rd-party servers.
+- [ ] Keep looking for data sources, e.g., from other AIA members? (Dean and Dave: look at the membership...)
+- [ ] Dean: Update issues with relevant notes here.
+- [ ] Dave: Follow up on "evangelism" opportunities.
+- [ ] Dean: Next steps for PR process improvements.
+
 
 ## July 21, 2025
 
@@ -23,7 +53,7 @@
   * Break out the current app into more components towards the desired architecture, e.g., separate smaller services and an "aggregator".
 
 ### Action Items
-- [ ] Dean: Create issues for the next few week's tasks.
+- [x] Dean: Create issues for the next few week's tasks.
 
 ## July 14, 2025
 
