@@ -1,3 +1,4 @@
+# Makefile with targets to build the website and run the app.
 
 pages_url    := https://the-ai-alliance.github.io/ai-in-finance-example-app/
 docs_dir     := docs
@@ -20,11 +21,13 @@ NOW                 ?= $(shell date +"%Y%m%d-%H%M%S")
 define help_message
 Quick help for this make process.
 
-make all                # Clean and locally view the document.
-make clean              # Remove built artifacts, etc.
+make all                # Make run-app
+make run-app            # Run the app. "uv" is required. See the README for details.
+
 make view-pages         # View the published GitHub pages in a browser.
-make view-local         # View the pages locally (requires Jekyll).
+make view-local         # Clean and locally view the pages (requires Jekyll).
                         # Tip: "JEKYLL_PORT=8000 make view-local" uses port 8000 instead of 4000!
+make pages-clean        # Remove built artifacts, etc.
 
 Miscellaneous tasks for help, debugging, setup, etc.
 
@@ -88,10 +91,10 @@ Ruby's 'gem' is required. See ruby-lang.org for installation instructions.
 endef
 
 
-.PHONY: all view-pages view-local clean help 
-.PHONY: setup-jekyll run-jekyll
+.PHONY: all run-app 
+.PHONY: setup-jekyll run-jekyll view-pages view-local pages-clean help 
 
-all:: clean view-local
+all:: run-app
 
 help::
 	$(info ${help_message})
@@ -112,15 +115,18 @@ print-info:
 	@echo "GIT_HASH:            ${GIT_HASH}"
 	@echo "NOW:                 ${NOW}"
 
-clean::
-	rm -rf ${clean_dirs} 
+run-app:: uv-shell-command-check
+	cd src/finance_deep_search && uv run main.py
 
 view-pages::
 	@python -m webbrowser "${pages_url}" || \
 		(echo "ERROR: I could not open the GitHub Pages URL. Try ⌘-click or ^-click on this URL instead:" && \
 		 echo "ERROR:   ${pages_url}" && exit 1 )
 
-view-local:: setup-jekyll run-jekyll
+view-local:: setup-jekyll pages-clean run-jekyll
+
+pages-clean::
+	rm -rf ${clean_dirs} 
 
 # Passing --baseurl '' allows us to use `localhost:4000` rather than require
 # `localhost:4000/The-AI-Alliance/ai-in-finance-example-app` when running locally.

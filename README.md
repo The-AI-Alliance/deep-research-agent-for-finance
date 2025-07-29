@@ -13,9 +13,9 @@ This application leverages AI to perform automated financial research and analys
 - Risk and opportunity assessments
 - Investor sentiment analysis
 
-The application is built using [mcp-agent](https://github.com/lastmile-ai/mcp-agent), a framework for creating AI agents with Model Context Protocol (MCP) integration.
+The application is built using [`mcp-agent`](https://github.com/lastmile-ai/mcp-agent), a framework for creating AI agents with Model Context Protocol (MCP) integration.
 
-See also our [website](https://the-ai-alliance.github.io/ai-in-finance-example-app/).
+See also the project [website](https://the-ai-alliance.github.io/ai-in-finance-example-app/).
 
 ## Setup
 
@@ -39,9 +39,12 @@ uv add mcp-agent
 
 ## Usage
 
+Currently, the app requires an OpenAI or Anthropic account. Edit `mcp_agent.secrets.yaml` to add the API key for one of those services.
+
 Run the finance research agent:
 
 ```bash
+cd src/finance_deep_search
 uv run main.py
 ```
 
@@ -50,9 +53,19 @@ The application will:
 2. Execute the research agent with predefined instructions
 3. Generate a comprehensive stock report
 
+You can also use `make` to run the app. The following commands are equivalent, because `all` is the first target and its sole dependency is `run-app`:
+
+```bash
+make
+make all
+make run-app
+```
+
+Try `make help` for additional details. (It also has targets that are used to develop the project website.)
+
 ### Configuration
 
-The application uses configuration files:
+The application uses the following configuration files:
 - `mcp_agent.config.yaml` - Main configuration settings
 - `mcp_agent.secrets.yaml` - API keys and secrets (not tracked in git)
 
@@ -70,4 +83,13 @@ For contribution guidelines, see the AI Alliance [CONTRIBUTING](https://github.c
 
 ## About the GitHub Pages Website Published from this Repo
 
-The website is published using [GitHub Pages](https://pages.github.com/), where the pages are written in Markdown and served using [Jekyll](https://github.com/jekyll/jekyll). See [GITHUB_PAGES.md](GITHUB_PAGES.md) for more information.
+The project's [companion website](https://the-ai-alliance.github.io/ai-in-finance-example-app/) is published using [GitHub Pages](https://pages.github.com/), where the pages are written in Markdown and served using [Jekyll](https://github.com/jekyll/jekyll).
+
+The [`docs`](tree/main/docs) folder contains the website sources. There are `Makefile` targets running the website locally. Try `make help` for details.
+
+The repo root directory has several files and subdirectories that are part of the website implementation, include the following:
+
+* [`docs`](tree/main/docs): The sources (Markdown, JavScript, CSS, etc.) for the web site.
+* [`GITHUB_PAGES.md`](tree/main/GITHUB_PAGES.md): Details about the website, how to edit it, and how to run it locally for previewing.
+* [`check-external-links.sh`](tree/main/check-external-links.sh): Our convention is that links to external URLs should have a `target` defined (e.g., `target="_blank"`) to open a new browser tab or window. This script checks for missing targets.
+* [`Gemfile`](tree/main/Gemfile): Ruby library dependencies for the Jekyll website.
