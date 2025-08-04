@@ -11,12 +11,18 @@
 ### Topics
 
 * Next steps for the excel server?
-    * Close _Find a good OSS Excel MCP integration_ [#3](https://github.com/The-AI-Alliance/ai-in-finance-example-app/issues/3)?
-    * E.g., _User queries for data about an organization from Excel and the results are returned into the spreadsheet_ [#5](https://github.com/The-AI-Alliance/ai-in-finance-example-app/issues/5)?
+    * Closed _Find a good OSS Excel MCP integration_ [#3](https://github.com/The-AI-Alliance/ai-in-finance-example-app/issues/3).
+    * Next step? _User queries for data about an organization from Excel and the results are returned into the spreadsheet_ [#5](https://github.com/The-AI-Alliance/ai-in-finance-example-app/issues/5)?
 * Progress on datasets? [#4](https://github.com/The-AI-Alliance/ai-in-finance-example-app/issues/4).
+    * Andrew looked at FinanceBench, which is a little stale.
+    * SEC EDGAR more interesting.
 * Status of `mcp-agent` [PR #346](https://github.com/lastmile-ai/mcp-agent/pull/346):  _Implement AdaptiveWorkflow, a dynamic orchestrator agent_.
     * Blocker for _Begin refactoring towards the desired app architecture_ [#7](https://github.com/The-AI-Alliance/ai-in-finance-example-app/issues/7)?
+    * Andrew has a diagram he's working on for the deep research architecture.
+* Mihai (IBM) from https://ibm.github.io/mcp-context-forge/ is interested in getting involved.
 * Testing?
+* Community evangelism.
+    * New architecture; around end of August.
 
 ### Action Items
 - [ ] ?
