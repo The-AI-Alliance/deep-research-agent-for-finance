@@ -1,5 +1,8 @@
 # Meeting Notes
 
+* [Issues](https://github.com/The-AI-Alliance/ai-in-finance-example-app/issues)
+* [Project Dashboard](https://github.com/orgs/The-AI-Alliance/projects/42)
+
 ## August 4, 2025
 
 * **Attendees:** Andrew Hoh, Phil Chang, Dean Wampler, Elad Levi (PlurAI), Dave Nielsen 
@@ -8,9 +11,12 @@
 ### Topics
 
 * Next steps for the excel server?
-* Progress on datasets?
-* Status of `mcp-agent` [PR #346](https://github.com/lastmile-ai/mcp-agent/pull/346):  _Implement AdaptiveWorkflow, a dynamic orchestrator agent_
-* Testing
+    * Close _Find a good OSS Excel MCP integration_ [#3](https://github.com/The-AI-Alliance/ai-in-finance-example-app/issues/3)?
+    * E.g., _User queries for data about an organization from Excel and the results are returned into the spreadsheet_ [#5](https://github.com/The-AI-Alliance/ai-in-finance-example-app/issues/5)?
+* Progress on datasets? [#4](https://github.com/The-AI-Alliance/ai-in-finance-example-app/issues/4).
+* Status of `mcp-agent` [PR #346](https://github.com/lastmile-ai/mcp-agent/pull/346):  _Implement AdaptiveWorkflow, a dynamic orchestrator agent_.
+    * Blocker for _Begin refactoring towards the desired app architecture_ [#7](https://github.com/The-AI-Alliance/ai-in-finance-example-app/issues/7)?
+* Testing?
 
 ### Action Items
 - [ ] ?
