@@ -1,5 +1,20 @@
 # Meeting Notes
 
+## August 4, 2025
+
+* **Attendees:** Andrew Hoh, Phil Chang, Dean Wampler, Elad Levi (PlurAI), Dave Nielsen 
+* **Gemini Notes:** [link](https://docs.google.com/document/d/1xA722_Sv-K5NKvUWFNGqESbrLUOM21bm40Rh4LQNASk/edit?usp=sharing)
+
+### Topics
+
+* Next steps for the excel server?
+* Progress on datasets?
+* Status of `mcp-agent` [PR #346](https://github.com/lastmile-ai/mcp-agent/pull/346):  _Implement AdaptiveWorkflow, a dynamic orchestrator agent_
+* Testing
+
+### Action Items
+- [ ] ?
+
 ## July 28, 2025
 
 * **Attendees:** Andrew Hoh, Phil Chang, Dean Wampler, Elad Levi (PlurAI), Dave Nielsen 
@@ -28,9 +43,9 @@
 ### Action Items
 - [ ] Dave: Reach out to community people for help validating 3rd-party servers.
 - [ ] Keep looking for data sources, e.g., from other AIA members? (Dean and Dave: look at the membership...)
-- [ ] Dean: Update issues with relevant notes here.
+- [x] Dean: Update issues with relevant notes here.
 - [ ] Dave: Follow up on "evangelism" opportunities.
-- [ ] Dean: Next steps for PR process improvements.
+- [x] Dean: Next steps for PR process improvements.
 
 
 ## July 21, 2025
