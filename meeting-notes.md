@@ -27,7 +27,7 @@
 ### Action Items
 - [ ] Andrew finishing architecture update based on the `mcp-agent` [PR #346](https://github.com/lastmile-ai/mcp-agent/pull/346).
 - [ ] Dean working with Elad on testing.
-- [ ] Dave will invite a NY-based student to the project.
+- [x] Dave will invite a NY-based student to the project.
 
 ## July 28, 2025
 
