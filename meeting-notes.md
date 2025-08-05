@@ -28,9 +28,9 @@
 ### Action Items
 - [ ] Dave: Reach out to community people for help validating 3rd-party servers.
 - [ ] Keep looking for data sources, e.g., from other AIA members? (Dean and Dave: look at the membership...)
-- [ ] Dean: Update issues with relevant notes here.
+- [x] Dean: Update issues with relevant notes here.
 - [ ] Dave: Follow up on "evangelism" opportunities.
-- [ ] Dean: Next steps for PR process improvements.
+- [x] Dean: Next steps for PR process improvements.
 
 
 ## July 21, 2025
