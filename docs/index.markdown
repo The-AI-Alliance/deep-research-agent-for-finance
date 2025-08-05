@@ -11,11 +11,11 @@ has_children: false
 
 Welcome to the **The AI Alliance**: **Deep Research Agent for Finance**. 
 
-> **Note:** This is a new initiative. Do you have finance industry expertise? Do you have AI expertise? Do you want to grow your expertise in either area. Please join us! See our [contributing]({{site.baseurl}}/contributing) page for details.
+> **Note:** Do you have finance industry expertise? Do you have AI expertise? Do you want to grow your expertise in either area. Please join us! See our [contributing]({{site.baseurl}}/contributing) page for details.
 
 ## What Is It?
 
-This app is an example application of a deep research agent designed to collect comprehensive information about publicly-traded companies and generate detailed investment research reports. The target user would be a financial analyst.
+This app is an example application of a **deep research agent** designed to collect comprehensive information about publicly-traded companies and generate detailed investment research reports. The target user would be a financial analyst or investor.
 
 ## About
 
