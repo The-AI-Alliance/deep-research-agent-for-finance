@@ -7,10 +7,12 @@ has_children: false
 
 # Deep Research Agent for Finance
 
+{: .tip}
 > **Tip:** Use the search box at the top of this page to find specific content.
 
 Welcome to the **The AI Alliance**: **Deep Research Agent for Finance**. 
 
+{: .note}
 > **Note:** Do you have finance industry expertise? Do you have AI expertise? Do you want to grow your expertise in either area. Please join us! See our [contributing]({{site.baseurl}}/contributing) page for details.
 
 ## What Is It?
