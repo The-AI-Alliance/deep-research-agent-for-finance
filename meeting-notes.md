@@ -22,21 +22,29 @@
 
 ## August 4, 2025
 
-* **Attendees:** Andrew Hoh, Phil Chang, Dean Wampler, Elad Levi (PlurAI), Dave Nielsen 
-* **Gemini Notes:** [link](https://docs.google.com/document/d/1xA722_Sv-K5NKvUWFNGqESbrLUOM21bm40Rh4LQNASk/edit?usp=sharing)
+* **Attendees:** Andrew Hoh, Phil Chang, Dean Wampler, Dave Nielsen 
+* **Gemini Notes:** [link](https://docs.google.com/document/d/1_nschqtnb_alBn-cUImGVnDRpz-_kH1KgvxHlYS9jRw/edit?usp=sharing)
 
 ### Topics
 
 * Next steps for the excel server?
-    * Close _Find a good OSS Excel MCP integration_ [#3](https://github.com/The-AI-Alliance/ai-in-finance-example-app/issues/3)?
-    * E.g., _User queries for data about an organization from Excel and the results are returned into the spreadsheet_ [#5](https://github.com/The-AI-Alliance/ai-in-finance-example-app/issues/5)?
+    * Closed _Find a good OSS Excel MCP integration_ [#3](https://github.com/The-AI-Alliance/ai-in-finance-example-app/issues/3).
+    * Next step? _User queries for data about an organization from Excel and the results are returned into the spreadsheet_ [#5](https://github.com/The-AI-Alliance/ai-in-finance-example-app/issues/5)?
 * Progress on datasets? [#4](https://github.com/The-AI-Alliance/ai-in-finance-example-app/issues/4).
+    * Andrew looked at FinanceBench, which is a little stale.
+    * SEC EDGAR looks more interesting.
 * Status of `mcp-agent` [PR #346](https://github.com/lastmile-ai/mcp-agent/pull/346):  _Implement AdaptiveWorkflow, a dynamic orchestrator agent_.
     * Blocker for _Begin refactoring towards the desired app architecture_ [#7](https://github.com/The-AI-Alliance/ai-in-finance-example-app/issues/7)?
-* Testing?
+    * Andrew has a diagram he's working on for the deep research architecture.
+* Mihai (IBM) from https://ibm.github.io/mcp-context-forge/ is interested in getting involved.
+* Testing? Dean will work on Elad Levi on a start for testing.
+* Community evangelism.
+    * New architecture; around end of August.
 
 ### Action Items
-- [ ] ?
+- [ ] Andrew finishing architecture update based on the `mcp-agent` [PR #346](https://github.com/lastmile-ai/mcp-agent/pull/346).
+- [ ] Dean working with Elad on testing.
+- [x] Dave will invite a NY-based student to the project.
 
 ## July 28, 2025
 
