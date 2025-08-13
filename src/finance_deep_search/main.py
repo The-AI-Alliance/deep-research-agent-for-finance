@@ -17,11 +17,6 @@ import sys
 import time
 from datetime import datetime
 
-# Add the local mcp-agent source to Python path
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
-mcp_agent_src = os.path.join(project_root, "mcp-agent", "src")
-sys.path.insert(0, mcp_agent_src)
-
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
@@ -452,21 +447,178 @@ async def main():
         layout = create_display_layout()
 
         # Define the financial research task
-        task = """
-        Conduct comprehensive financial research on Meta Platforms (META) and create detailed reports.
-        
-        Your research should include:
-        1. Current stock price, market cap, and key financial metrics (P/E, PEG, Beta)
-        2. Latest quarterly earnings (EPS, Revenue) with actual vs estimate comparisons
-        3. Analysis of last 2 earnings reports with YoY growth trends
-        4. Recent financial news and analyst consensus (Buy/Hold/Sell)
-        5. Key financial ratios and performance indicators
-        6. Revenue breakdown and business segment analysis
-        7. Competitor comparison and market position
-        
-        Use reliable sources like Yahoo Finance, CNBC, MarketWatch, and SEC filings.
-        Ensure all data is current, accurate, and properly cited.
-        """
+        task = r'''
+        # Deep Research Agent — Tech Financials (General)
+
+        Role: You are a meticulous financial analyst. Collect, verify, and structure all information needed to build a tech-style financial profile for Meta platforms (stock ticker: META). Prefer primary sources and publicly accessible secondary/consensus sources. Do not guess; return `null` + an explanation when a number cannot be substantiated.
+
+        ## Inputs
+        - company_name: Meta Platforms, Inc.
+        - ticker: META
+        - hq_country: US
+        - reporting_currency: USD
+        - units: $ millions
+
+        ## Objectives
+        1. Gather historical financials (last 3 fiscal years) and the most recent TTM where available.
+        2. Capture company guidance (revenue, opex/capex ranges, margin commentary).
+        3. Add Street/consensus and at least two bank projections for next FY (and next+1 if easily available) using public excerpts.
+        4. Extract or compute line items aligned to a tech P&L:
+        - Revenue by stream (e.g., Ads / Subscriptions / Hardware / Payments & Other)
+        - Cost of Revenue detail (infrastructure, depreciation & amortization, partner/content costs, payment processing & other)
+        - Opex: R&D, Sales & Marketing, G&A
+        - Non-operating: interest income/expense, other income/expense
+        - Tax expense and effective tax rate
+        - Derived: Gross Profit, Operating Income, Net Income, margins
+        5. (Optional) Cash flow & capex: Operating Cash Flow, Capex, FCF, FCF margin.
+        6. Collect segments/KPIs if disclosed (e.g., DAU/MAU, ARPU by region, paid subs, ad impressions, price per ad, headcount, SBC).
+
+        ## Source Priority (in order)
+        1. Regulatory filings (10-K/10-Q/8-K; or local equivalents)
+        2. Company Investor Relations (press releases, presentations, guidance tables)
+        3. Earnings call transcripts (public pages)
+        4. High-quality financial media (Reuters/FT/WSJ articles with public excerpts)
+        5. Consensus snapshots (public pages)
+        6. Bank research (public quotes/excerpts only; no proprietary PDFs)
+
+        For every number: record source_url, publisher, title, date, and pinpoint (page/slide/line). Keep any direct quotes ≤ 30 words.
+
+        ## Starter Links (public, non-paywalled when possible)
+        Regulators (pick based on hq_country)
+        - US (SEC EDGAR company search): https://www.sec.gov/edgar/searchedgar/companysearch
+
+        Transcripts (public pages)
+        - Motley Fool earnings call transcripts: https://www.fool.com/earnings/call-transcripts/
+        - Seeking Alpha (some pages public): https://seekingalpha.com/symbol/{TICKER}/earnings
+        - Company-hosted webcast pages (events/IR)
+
+        Consensus & Estimates (public snapshots)
+        - Yahoo Finance “Analysis”: https://finance.yahoo.com/quote/{TICKER}/analysis
+        - Nasdaq earnings & estimates: https://www.nasdaq.com/market-activity/stocks/{TICKER}/earnings
+
+        ## Query Patterns (use multiple)
+        - "site:sec.gov 10-K {company_name}", "site:sec.gov 10-Q {company_name} revenue", "site:{company-domain} investor guidance"
+        - "site:reuters.com {company_name} guidance revenue", "site:nasdaq.com {ticker} earnings estimates"
+        - "site:seekingalpha.com {ticker} prepared remarks", "site:fool.com {company_name} call transcript"
+        - For segments/KPIs: "{company_name} ARPU", "{company_name} DAU MAU", "{company_name} capex guidance"
+
+        ## Computation Rules
+        - Gross Profit = Revenue - Cost of Revenue
+        - Operating Income = Gross Profit - (R&D + S&M + G&A)
+        - Pre-Tax = Operating Income + (Interest Income - Interest Expense) + Other Inc/(Exp)
+        - Net Income = Pre-Tax - Income Tax Expense
+        - Margins = Metric ÷ Total Revenue
+        - FCF = Operating Cash Flow - Capex; FCF Margin = FCF ÷ Revenue
+        - If a sub-line isn't disclosed, leave `null` and state the imputation you considered (but did not use).
+
+        ## Forecasting & Models
+        1. Company guidance first (quarterly or annual). If quarterly: annualize transparently (document method and date).
+        2. Consensus second (public snapshots). Capture revenue and EPS; operating income if available.
+        3. Banks: gather ≥2 public excerpts (JPM, GS, MS, Citi, BofA, Barclays, etc.). Record value, date, and verbatim short quote.
+        4. Return range + median for each forecasted metric (e.g., FY+1 revenue, capex, EPS).
+
+        ## Validation (must include in output)
+        - Sums: components → totals; segments → consolidated; opex lines → total opex.
+        - Rates: effective tax = tax_expense ÷ pre_tax (report).
+        - Margins recompute correctly from reported figures.
+        - Period alignment: fiscal year definitions; currency/units consistent.
+        - YoY deltas: flag > ±20% with a one-line explanation (pricing, mix, FX, one-offs).
+        - Freshness: include the latest filing + latest guidance dates.
+
+        ## Output (Machine-Readable JSON)
+        Return a single JSON object with these top-level keys. Use `null` where unknown, and always include `sources` arrays with `id` references.
+
+        {
+        "company": "",
+        "ticker": "",
+        "currency": "USD",
+        "units": "millions",
+        "periods": ["FY2022","FY2023","FY2024","TTM","FY2025E","FY2026E"],
+        "financials": {
+            "revenue": {
+            "streams": {
+                "ads": {"FY2022": null, "FY2023": null, "FY2024": null, "FY2025E": null, "sources": ["s_ir_pr","s_10k"]},
+                "subscriptions": {"FY2022": null, "FY2023": null, "FY2024": null, "FY2025E": null, "sources": []},
+                "hardware": {"FY2022": null, "FY2023": null, "FY2024": null, "FY2025E": null, "sources": []},
+                "payments_other": {"FY2022": null, "FY2023": null, "FY2024": null, "FY2025E": null, "sources": []}
+            },
+            "total": {"FY2022": null, "FY2023": null, "FY2024": null, "TTM": null, "FY2025E": null, "sources": ["s_10k","s_consensus"]}
+            },
+            "cost_of_revenue": {
+            "infrastructure_da": {"FY2022": null, "FY2023": null, "FY2024": null, "FY2025E": null, "sources": ["s_10k"]},
+            "content_partner_costs": {"FY2022": null, "FY2023": null, "FY2024": null, "FY2025E": null, "sources": []},
+            "payments_processing_other": {"FY2022": null, "FY2023": null, "FY2024": null, "FY2025E": null, "sources": []},
+            "total": {"FY2022": null, "FY2023": null, "FY2024": null, "FY2025E": null}
+            },
+            "opex": {
+            "r_and_d": {"FY2022": null, "FY2023": null, "FY2024": null, "FY2025E": null, "sources": ["s_10k"]},
+            "sales_marketing": {"FY2022": null, "FY2023": null, "FY2024": null, "FY2025E": null, "sources": []},
+            "g_and_a": {"FY2022": null, "FY2023": null, "FY2024": null, "FY2025E": null, "sources": []},
+            "total": {"FY2022": null, "FY2023": null, "FY2024": null, "FY2025E": null}
+            },
+            "non_operating": {
+            "interest_income": {"FY2022": null, "FY2023": null, "FY2024": null, "sources": ["s_10k"]},
+            "interest_expense": {"FY2022": null, "FY2023": null, "FY2024": null, "sources": []},
+            "other_income_expense": {"FY2022": null, "FY2023": null, "FY2024": null, "sources": []}
+            },
+            "tax": {
+            "income_tax_expense": {"FY2022": null, "FY2023": null, "FY2024": null, "sources": ["s_10k"]},
+            "effective_tax_rate_percent": {"FY2022": null, "FY2023": null, "FY2024": null}
+            },
+            "derived": {
+            "gross_profit": {"FY2022": null, "FY2023": null, "FY2024": null, "FY2025E": null},
+            "operating_income": {"FY2022": null, "FY2023": null, "FY2024": null, "FY2025E": null},
+            "net_income": {"FY2022": null, "FY2023": null, "FY2024": null, "FY2025E": null},
+            "margins_percent": {
+                "gross": {"FY2022": null, "FY2023": null, "FY2024": null, "FY2025E": null},
+                "operating": {"FY2022": null, "FY2023": null, "FY2024": null, "FY2025E": null},
+                "net": {"FY2022": null, "FY2023": null, "FY2024": null, "FY2025E": null}
+            }
+            },
+            "cashflow": {
+            "ocf": {"FY2022": null, "FY2023": null, "FY2024": null, "sources": ["s_10k_cf"]},
+            "capex": {"FY2022": null, "FY2023": null, "FY2024": null, "FY2025E": null, "sources": ["s_ir_guidance"]},
+            "fcf": {"FY2022": null, "FY2023": null, "FY2024": null}
+            },
+            "segments_kpis": {
+            "segments": [],
+            "kpis": []
+            }
+        },
+        "street_and_banks": {
+            "consensus": {
+            "revenue_FY+1": {"value": null, "sources": ["s_consensus"]},
+            "eps_FY+1": {"value": null, "sources": ["s_consensus"]}
+            },
+            "banks": [
+            {"bank":"", "metric":"revenue_FY+1", "value": null, "date": "", "quote": "", "source":"s_bank1"},
+            {"bank":"", "metric":"revenue_FY+1", "value": null, "date": "", "quote": "", "source":"s_bank2"}
+            ],
+            "ranges": {
+            "revenue_FY+1_min": null,
+            "revenue_FY+1_max": null,
+            "revenue_FY+1_median": null
+            }
+        },
+        "sources": {
+            "s_10k": {"title":"Annual report","publisher":"Regulator/SEC","url":"","date":"","pinpoint":"","confidence":"high"},
+            "s_10k_cf": {"title":"Cash flow statement","publisher":"Regulator/SEC","url":"","date":"","pinpoint":"","confidence":"high"},
+            "s_ir_pr": {"title":"Earnings press release","publisher":"Company IR","url":"","date":"","pinpoint":"","confidence":"high"},
+            "s_ir_guidance": {"title":"Guidance/Capex commentary","publisher":"Company IR","url":"","date":"","pinpoint":"","confidence":"medium"},
+            "s_consensus": {"title":"Consensus snapshot","publisher":"(Yahoo/Nasdaq/Reuters)","url":"","date":"","confidence":"medium"},
+            "s_bank1": {"title":"Public bank note excerpt","publisher":"","url":"","date":"","confidence":"medium"},
+            "s_bank2": {"title":"Public bank note excerpt","publisher":"","url":"","date":"","confidence":"medium"}
+        },
+        "validation": {
+            "sum_checks": [],
+            "rate_checks": [],
+            "margin_checks": [],
+            "period_alignment": "",
+            "yoy_flags": []
+        },
+        "notes": []
+        }
+        '''
 
         # Store plan reference for display
         orchestrator.current_plan = None
@@ -516,29 +668,29 @@ async def main():
                         - Populate the sheet using the financial context provided (yields, quarterly earnings, revenue breakdowns, key ratios, etc.).  
                         - Lay out the data in a tabular format matching this style:  
 
-                            | **Account**                         | **FY 2022** | **FY 2023** | **FY 2024** | **FY 2025E** |
-                            |-------------------------------------|-----------:|-----------:|-----------:|------------:|
-                            | **Revenue**                         |            |            |            |             |
-                            | • Net Sales                         |    100,000 |    120,000 |    140,000 |     160,000 |
-                            | • Other Revenue                     |      5,000 |      6,000 |      7,000 |       8,000 |
-                            | **Cost of Goods Sold**              |            |            |            |             |
-                            | • Materials & Production Costs      |   (60,000) |   (72,000) |   (84,000) |    (96,000) |
-                            | • Freight & Handling                |    (2,000) |    (2,400) |    (2,800) |     (3,200) |
-                            | **Gross Profit**                    |    43,000  |    51,600  |    60,200  |     68,800  |
-                            | **Gross Margin**                    |     38.6%  |     38.9%  |     39.0%  |      39.4%  |
-                            | **Operating Expenses**              |            |            |            |             |
-                            | • R&D                               |   (10,000) |   (11,000) |   (12,000) |    (13,000) |
-                            | • SG&A                              |   (15,000) |   (16,500) |   (18,000) |    (19,500) |
-                            | **Operating Income**                |    18,000  |    24,100  |    30,200  |     36,300  |
-                            | **Operating Margin**                |     17.1%  |     18.3%  |     18.6%  |      19.3%  |
-                            | **Non-Operating**                   |            |            |            |             |
-                            | • Interest Expense                  |    (1,000) |    (1,100) |    (1,200) |     (1,300) |
-                            | • Other Income (Expense)            |       500  |       600  |       700  |       800   |
-                            | **Pre-Tax Income**                  |    17,500  |    23,600  |    29,700  |     35,800  |
-                            | • Income Tax Expense (25%)          |    (4,375) |    (5,900) |    (7,425) |     (8,950) |
-                            | **Net Income**                      |    13,125  |    17,700  |    22,275  |     26,850  |
-                            | **Net Margin**                      |     12.0%  |     12.8%  |     13.2%  |      13.4%  |
-
+                        | **Account**                              | **FY 2022** | **FY 2023** | **FY 2024** | **FY 2025E (Our Model)** | **FY 2025E (Guidance / Consensus)** |
+                        |------------------------------------------|------------:|------------:|------------:|--------------------------:|-------------------------------------:|
+                        | **Revenue**                              |             |             |             |                           |                                      |
+                        | • Advertising                            |    112,000  |    129,000  |    146,000  |        162,000           |                                     |
+                        | • Reality Labs                           |      2,000  |      3,000  |      4,000  |          5,000           |                                     |
+                        | • Payments & Other                       |      4,000  |      3,000  |      3,000  |          3,000           |                                     |
+                        | **Total Revenue**                         |    118,000  |    135,000  |    153,000  |        170,000           | Company: Q3 guidance ~\$49B/Q → implies FY ~\$204B annualized*; Analyst Q2 est: ~\$44.8B → implies FY ~\$179B** |
+                        | **Cost of Revenue**                       |             |             |             |                           |                                      |
+                        | • Infrastructure & Depreciation           |   (22,000)  |   (26,000)  |   (29,000)  |       (31,000)           |                                     |
+                        | • Content/Partner Payments                |    (4,000)  |    (5,000)  |    (5,500)  |        (6,000)           |                                     |
+                        | • Payments Processing & Other             |    (2,000)  |    (2,000)  |    (2,500)  |        (3,000)           |                                     |
+                        | **Gross Profit**                          |     90,000  |    102,000  |    116,000  |        130,000           |                                     |
+                        | **Gross Margin**                          |      76.3%  |      75.6%  |      75.8%  |       76.5%              |                                     |
+                        | **Operating Expenses**                    |             |             |             |                           |                                      |
+                        | • R&D                                    |   (30,000)  |   (32,000)  |   (34,000)  |        (36,000)          |                                     |
+                        | • Sales & Marketing                       |   (17,000)  |   (19,000)  |   (21,000)  |        (23,000)          |                                     |
+                        | • General & Admin.                       |   (11,000)  |   (12,000)  |   (12,500)  |        (13,000)          |                                    |
+                        | **Operating Income**                      |     32,000  |     39,000  |     48,500  |         58,000           |                                     |
+                        | **Operating Margin**                      |      27.1%  |      28.9%  |      31.7%  |       34.1%              |                                     |
+                        | **Pre-Tax Income**                        |     32,600  |     40,100  |     49,700  |         59,300           |                                    |
+                        | **Net Income**                            |     27,058  |     33,283  |     41,251  |         49,219           |                                     |
+                        | **Net Margin**                            |      22.9%  |      24.7%  |      27.0%  |       29.0%              |                                     |
+                        
                         3. **Formatting requirements**  
                         - Apply appropriate number formats for currency, percentages, and negatives (e.g. parentheses).  
                         - Bold main headers and indent bullet items.  
