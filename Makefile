@@ -1,4 +1,3 @@
-# Makefile with targets to build the website and run the app.
 
 pages_url    := https://the-ai-alliance.github.io/ai-in-finance-example-app/
 docs_dir     := docs
@@ -21,13 +20,11 @@ NOW                 ?= $(shell date +"%Y%m%d-%H%M%S")
 define help_message
 Quick help for this make process.
 
-make all                # Make run-app
-make run-app            # Run the app. "uv" is required. See the README for details.
-
+make all                # Clean and locally view the document.
+make clean              # Remove built artifacts, etc.
 make view-pages         # View the published GitHub pages in a browser.
-make view-local         # Clean and locally view the pages (requires Jekyll).
+make view-local         # View the pages locally (requires Jekyll).
                         # Tip: "JEKYLL_PORT=8000 make view-local" uses port 8000 instead of 4000!
-make pages-clean        # Remove built artifacts, etc.
 
 Miscellaneous tasks for help, debugging, setup, etc.
 
@@ -78,23 +75,17 @@ ERROR: Answer "y" (yes) to the prompts and ignore any warnings that you can't un
 
 endef
 
-define missing_ruby_gem_or_command_error_message
-is needed by ${PWD}/Makefile. Try "gem install ..."
+define ruby_installation_message
+See ruby-lang.org for installation instructions.
 endef
 
-define ruby_and_gem_required_message
-'ruby' and 'gem' are required. See ruby-lang.org for installation instructions.
-endef
+.PHONY: all view-pages view-local clean help 
+.PHONY: setup-jekyll run-jekyll
 
-define gem_required_message
-Ruby's 'gem' is required. See ruby-lang.org for installation instructions.
-endef
+foobar::
+	foo=hello $(info ${foo_message})
 
-
-.PHONY: all run-app 
-.PHONY: setup-jekyll run-jekyll view-pages view-local pages-clean help 
-
-all:: run-app
+all:: view-local
 
 help::
 	$(info ${help_message})
@@ -115,48 +106,59 @@ print-info:
 	@echo "GIT_HASH:            ${GIT_HASH}"
 	@echo "NOW:                 ${NOW}"
 
-run-app:: uv-shell-command-check
-	cd src/finance_deep_search && uv run main.py
+clean::
+	rm -rf ${clean_dirs} 
 
 view-pages::
 	@python -m webbrowser "${pages_url}" || \
-		(echo "ERROR: I could not open the GitHub Pages URL. Try ⌘-click or ^-click on this URL instead:" && \
-		 echo "ERROR:   ${pages_url}" && exit 1 )
+		$(error "ERROR: I could not open the GitHub Pages URL. Try ⌘-click or ^-click on this URL instead: ${pages_url}")
 
-view-local:: setup-jekyll pages-clean run-jekyll
-
-pages-clean::
-	rm -rf ${clean_dirs} 
+view-local:: setup-jekyll run-jekyll
 
 # Passing --baseurl '' allows us to use `localhost:4000` rather than require
-# `localhost:4000/The-AI-Alliance/ai-in-finance-example-app` when running locally.
-run-jekyll: clean 
+# `localhost:4000/The-AI-Alliance/REPO_NAME` when running locally.
+run-jekyll: clean
 	@echo
 	@echo "Once you see the http://127.0.0.1:${JEKYLL_PORT}/ URL printed, open it with command+click..."
 	@echo
-	cd ${docs_dir} && bundle exec jekyll serve --port ${JEKYLL_PORT} --baseurl '' --incremental || ( echo "ERROR: Failed to run Jekyll. Try running 'make setup-jekyll'." && exit 1 )
+	cd ${docs_dir} && \
+		bundle exec jekyll serve --port ${JEKYLL_PORT} --baseurl '' --incremental || \
+		${MAKE} jekyll-error
 
-setup-jekyll:: ruby-installed-check bundle-ruby-command-check
+setup-jekyll:: ruby-installed-check ruby-gem-installation bundle-command-check bundle-installation
+
+.PHONY: ruby-installed-check ruby-gem-installation bundle-command-check bundle-installation
+.PHONY: jekyll-error ruby-missing-error gem-missing-error gem-error bundle-error bundle-missing-error
+
+ruby-gem-installation::
 	@echo "Updating Ruby gems required for local viewing of the docs, including jekyll."
 	gem install jekyll bundler jemoji || ${MAKE} gem-error
+
+bundle-installation::
 	bundle install || ${MAKE} bundle-error
 	bundle update html-pipeline || ${MAKE} bundle-error
 
 ruby-installed-check:
-	@command -v ruby > /dev/null || \
-		( echo "ERROR: ${ruby_and_gem_required_message}" && exit 1 )
-	@command -v gem  > /dev/null || \
-		( echo "ERROR: ${gem_required_message}" && exit 1 )
+	@command -v ruby > /dev/null || ${MAKE} ruby-missing-error
+	@command -v gem  > /dev/null || ${MAKE} gem-missing-error
 
-%-error:
-	$(error ${${@}-message})
+bundle-command-check:
+	@command -v bundle > /dev/null || \
+		${MAKE} bundle-missing-error 
 
-%-ruby-command-check:
-	@command -v ${@:%-ruby-command-check=%} > /dev/null || \
-		( echo "ERROR: Ruby command/gem ${@:%-ruby-command-check=%} ${missing_ruby_gem_or_command_error_message}" && \
-			exit 1 )
-
-%-shell-command-check:
-	@command -v ${@:%-shell-command-check=%} > /dev/null || \
-		( echo "ERROR: shell command ${@:%-shell-command-check=%} ${missing_shell_command_error_message}" && \
-			exit 1 )
+# NOTE: We call make to run these %-error targets, because if you try
+# some_command || $(error "didn't work"), the $(error ...) function is always
+# invoked, independent of the shell script logic. Hence, the only way to make
+# this invocation conditional is to use a make target invocation, as shown above.
+jekyll-error:
+	$(error "ERROR: Failed to run Jekyll. Try running 'make setup-jekyll'.")
+ruby-missing-error:
+	$(error "ERROR: 'ruby' is required. ${ruby_installation_message}")
+gem-missing-error:
+	$(error "ERROR: Ruby's 'gem' is required. ${ruby_installation_message}")
+gem-error:
+	$(error ${gem-error-message})
+bundle-error:
+	$(error ${bundle-error-message})
+bundle-missing-error:
+	$(error "ERROR: Ruby gem command 'bundle' is required. I tried 'gem install bundle', but it apparently didn't work!")

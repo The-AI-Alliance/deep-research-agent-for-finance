@@ -1,3 +1,23 @@
+/*
+$nav-width: 16rem;
+$nav-width-md: 15rem;
+$nav-width: 250px !default;
+$nav-width-md: 248px !default;
+*/
+
+/*
+$content-width: 50rem !default;
+$header-height: 3.75rem !default;
+$content-width: 800px !default;
+$header-height: 60px !default;
+*/
+
+@media screen { 
+  .side-bar {
+    width: 15.5rem;
+  }
+}
+
 table {
   background-color: rgba(222, 196, 172, 0.11);
   border: solid 1px rgba(222, 196, 172, 0.25); //$blue-100; //#52b1ae;
@@ -41,6 +61,27 @@ blockquote {
   border: solid 1px rgba(222, 196, 172, 0.25); 
   padding: 10px;
   margin:  0px;
+}
+
+.highlight {
+  background-color: lighten($yellow-000, 20%);
+  border: solid 1px $yellow-100;
+}
+.important {
+  background-color: lighten($blue-000, 30%);
+  border: solid 1px $blue-100;
+}
+.tip {
+  background-color: lighten($green-000, 30%);
+  border: solid 1px $green-100;
+}
+.note {
+  background-color: lighten($purple-000, 30%);
+  border: solid 1px $purple-100;
+}
+.warning {
+  background-color: lighten($red-000, 10%);
+  border: solid 1px $red-100;
 }
 
 .description {
