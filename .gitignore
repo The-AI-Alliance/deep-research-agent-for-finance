@@ -285,4 +285,4 @@ pac.entitlement
 
 # MCP Agent logs and secrets
 logs/
-mcp_agent.secrets.yaml
+*.secrets.yaml

@@ -2,11 +2,11 @@ $schema: ../../../schema/mcp-agent.config.schema.json
 
 execution_engine: asyncio
 logger:
-  transports: [console, file]
+  transports: [file]
   level: debug
   progress_display: true
   path_settings:
-    path_pattern: "logs/mcp-agent-{unique_id}.jsonl"
+    path_pattern: "../../logs/mcp-agent-{unique_id}.jsonl"
     unique_id: "timestamp" # Options: "timestamp" or "session_id"
     timestamp_format: "%Y%m%d_%H%M%S"
 
@@ -15,6 +15,9 @@ mcp:
     fetch:
       command: "uvx"
       args: ["mcp-server-fetch"]
+    filesystem:
+      command: "npx"
+      args: ["-y", "@modelcontextprotocol/server-filesystem", "."]
     excel:
       command: "uvx"
       args: ["excel-mcp-server", "stdio"]

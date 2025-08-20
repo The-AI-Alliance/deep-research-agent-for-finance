@@ -3,6 +3,44 @@
 * [Issues](https://github.com/The-AI-Alliance/ai-in-finance-example-app/issues)
 * [Project Dashboard](https://github.com/orgs/The-AI-Alliance/projects/42)
 
+## August 18, 2025
+
+* **Attendees:** Andrew Hoh, Phil Chang, Dave Nielsen, Andrea Greco, Dean Wampler
+* **Gemini Notes:** [link](https://docs.google.com/document/d/1qB3NsjgkI2BUwry6_LFLy8aOzNzCFLVtWuFGrSARrT4/edit?usp=sharing)
+
+### Topics
+
+* Blog post draft.
+* Discussed finance company potential members joining the Alliance who would be interested.
+* Deep research agent is a universal pattern with wide applicability.
+* Discussed Adam's work on knowledge data and potential connections.
+* What other low hanging fruit should we think about?
+  * Medical research space (and others too) could be fruitful applications.
+  * Legal, finding related cases for precedent.
+* Models they've used: GPT OSS, GPT 5, Claude, Gemini (esp. when longer contexts need).
+  * Good planning capabilities important and they have been improving in these flagship models.
+  * Good cost tradeoffs.
+  * User experience is very important to users, too.
+* Updates:
+  * Andrew: working on PR for Excel server. Has some quirks, like absolute paths for files. Put prompts in separate prompt file/directory. More robust testing on the Excel server, and check on status of datasets research.
+
+## August 11, 2025
+
+* **Attendees:** Andrew Hoh, Phil Chang, Adam Pingel, Dave Nielsen 
+
+### Topics
+
+* Demo of the Finance Deep Research Agent
+
+* Next steps for the Finance Deep Research Agent?
+    * [Deep Orchestrator](https://github.com/lastmile-ai/mcp-agent/tree/main/src/mcp_agent/workflows/deep_orchestrator) will be launched in MCP-Agent main with a new Pypi release
+    * Check-in the latest Finance Deep Research Agent
+    * Need to add citations support in MCP-Agent Deep Orchestrator
+
+* Progress on datasets? [#4](https://github.com/The-AI-Alliance/ai-in-finance-example-app/issues/4).
+    * Find MCP servers with good financial data sources to augment the finance agent's final report
+
+
 ## August 4, 2025
 
 * **Attendees:** Andrew Hoh, Phil Chang, Dean Wampler, Dave Nielsen 
