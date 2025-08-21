@@ -7,7 +7,8 @@
 // cause them to be opened in separate windows; for that
 // the anchor tag has to contain a target="foo".
 div.main-content a[href^="http"]::after,
-div.main-content a[href^="https://"]::after
+div.main-content a[href^="https://"]::after,
+div.main-content a[href^="mailto:"]::after
 {
   content: "";
   width: 11px;
