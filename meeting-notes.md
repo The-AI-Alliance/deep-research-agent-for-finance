@@ -3,6 +3,27 @@
 * [Issues](https://github.com/The-AI-Alliance/ai-in-finance-example-app/issues)
 * [Project Dashboard](https://github.com/orgs/The-AI-Alliance/projects/42)
 
+## August 18, 2025
+
+* **Attendees:** Andrew Hoh, Phil Chang, Dave Nielsen, Andrea Greco, Dean Wampler
+* **Gemini Notes:** [link](https://docs.google.com/document/d/1qB3NsjgkI2BUwry6_LFLy8aOzNzCFLVtWuFGrSARrT4/edit?usp=sharing)
+
+### Topics
+
+* Blog post draft.
+* Discussed finance company potential members joining the Alliance who would be interested.
+* Deep research agent is a universal pattern with wide applicability.
+* Discussed Adam's work on knowledge data and potential connections.
+* What other low hanging fruit should we think about?
+  * Medical research space (and others too) could be fruitful applications.
+  * Legal, finding related cases for precedent.
+* Models they've used: GPT OSS, GPT 5, Claude, Gemini (esp. when longer contexts need).
+  * Good planning capabilities important and they have been improving in these flagship models.
+  * Good cost tradeoffs.
+  * User experience is very important to users, too.
+* Updates:
+  * Andrew: working on PR for Excel server. Has some quirks, like absolute paths for files. Put prompts in separate prompt file/directory. More robust testing on the Excel server, and check on status of datasets research.
+
 ## August 11, 2025
 
 * **Attendees:** Andrew Hoh, Phil Chang, Adam Pingel, Dave Nielsen 
