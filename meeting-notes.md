@@ -6,7 +6,7 @@
 ## August 25, 2025
 
 * **Attendees:** Andrew Hoh, Phil Chang, Dave Nielsen, Andrea Greco, Dean Wampler, Adam Pingel
-* **Gemini Notes:** [link](https://docs.google.com/document/d/1qB3NsjgkI2BUwry6_LFLy8aOzNzCFLVtWuFGrSARrT4/edit?usp=sharing)
+* **Gemini Notes:** [link](https://docs.google.com/document/d/10_sodmEEEh4p5NolXndu3FGC-l2dSEbpoC2fnTjsr7s/edit?usp=sharing)
 
 ### Topics
 
