@@ -3,6 +3,20 @@
 * [Issues](https://github.com/The-AI-Alliance/ai-in-finance-example-app/issues)
 * [Project Dashboard](https://github.com/orgs/The-AI-Alliance/projects/42)
 
+## August 25, 2025
+
+* **Attendees:** Andrew Hoh, Phil Chang, Dave Nielsen, Andrea Greco, Dean Wampler, Adam Pingel
+* **Gemini Notes:** [link](https://docs.google.com/document/d/10_sodmEEEh4p5NolXndu3FGC-l2dSEbpoC2fnTjsr7s/edit?usp=sharing)
+
+### Topics
+
+* Blog post draft status. Nearly done.
+* Andrew working on finishing a PR.
+* Raw unstructured data sources?
+* Dean: I'm seeing an exception thrown at the very end of a run.
+  * Appears to be improper termination of the Excel MCP server.
+* One of their guys might be able to be in the booth at AI Conf. for a few hours to demo this app and discuss other things they are doing. Dave will follow up.
+
 ## August 18, 2025
 
 * **Attendees:** Andrew Hoh, Phil Chang, Dave Nielsen, Andrea Greco, Dean Wampler
