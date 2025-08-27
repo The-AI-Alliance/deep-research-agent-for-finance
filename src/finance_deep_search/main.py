@@ -11,11 +11,14 @@ This example demonstrates the Deep Orchestrator (AdaptiveOrchestrator) for finan
 - Full state visibility throughout execution
 """
 
+import argparse
 import asyncio
 import os
+import re
 import sys
 import time
 from datetime import datetime
+from pathlib import Path
 
 from rich.console import Console
 from rich.table import Table
@@ -43,6 +46,35 @@ from mcp_agent.workflows.llm.augmented_llm import RequestParams
 app = MCPApp(name="finance_deep_research")
 
 console = Console(highlight=False, soft_wrap=False, emoji=False)
+
+
+def load_prompt_markdown(prompt_file: str) -> str:
+    """Load a markdown prompt file and return the content after frontmatter."""
+    script_dir = Path(__file__).parent
+    prompt_path = script_dir / "prompts" / prompt_file
+    
+    if not prompt_path.exists():
+        raise FileNotFoundError(f"Prompt file not found: {prompt_path}")
+    
+    with open(prompt_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+    
+    # Split frontmatter and content
+    if content.startswith('---'):
+        parts = content.split('---', 2)
+        if len(parts) >= 3:
+            return parts[2].strip()  # Return content after frontmatter
+    
+    return content.strip()
+
+
+def format_prompt(prompt_content: str, **variables) -> str:
+    """Format a prompt template with the given variables."""
+    # Replace template variables
+    for key, value in variables.items():
+        prompt_content = prompt_content.replace(f"{{{{{key}}}}}", str(value))
+    
+    return prompt_content
 
 
 class DeepOrchestratorMonitor:
@@ -403,7 +435,7 @@ def update_display(layout: Layout, monitor: DeepOrchestratorMonitor):
     layout["right"].update(right_content)
 
 
-async def main():
+async def main(output_path: str = None, ticker: str = None, company_name: str = None):
 
     # Initialize MCP App
     app = MCPApp(name="finance_deep_research")
@@ -446,179 +478,16 @@ async def main():
         # Create display layout
         layout = create_display_layout()
 
-        # Define the financial research task
-        task = r'''
-        # Deep Research Agent — Tech Financials (General)
-
-        Role: You are a meticulous financial analyst. Collect, verify, and structure all information needed to build a tech-style financial profile for Meta platforms (stock ticker: META). Prefer primary sources and publicly accessible secondary/consensus sources. Do not guess; return `null` + an explanation when a number cannot be substantiated.
-
-        ## Inputs
-        - company_name: Meta Platforms, Inc.
-        - ticker: META
-        - hq_country: US
-        - reporting_currency: USD
-        - units: $ millions
-
-        ## Objectives
-        1. Gather historical financials (last 3 fiscal years) and the most recent TTM where available.
-        2. Capture company guidance (revenue, opex/capex ranges, margin commentary).
-        3. Add Street/consensus and at least two bank projections for next FY (and next+1 if easily available) using public excerpts.
-        4. Extract or compute line items aligned to a tech P&L:
-        - Revenue by stream (e.g., Ads / Subscriptions / Hardware / Payments & Other)
-        - Cost of Revenue detail (infrastructure, depreciation & amortization, partner/content costs, payment processing & other)
-        - Opex: R&D, Sales & Marketing, G&A
-        - Non-operating: interest income/expense, other income/expense
-        - Tax expense and effective tax rate
-        - Derived: Gross Profit, Operating Income, Net Income, margins
-        5. (Optional) Cash flow & capex: Operating Cash Flow, Capex, FCF, FCF margin.
-        6. Collect segments/KPIs if disclosed (e.g., DAU/MAU, ARPU by region, paid subs, ad impressions, price per ad, headcount, SBC).
-
-        ## Source Priority (in order)
-        1. Regulatory filings (10-K/10-Q/8-K; or local equivalents)
-        2. Company Investor Relations (press releases, presentations, guidance tables)
-        3. Earnings call transcripts (public pages)
-        4. High-quality financial media (Reuters/FT/WSJ articles with public excerpts)
-        5. Consensus snapshots (public pages)
-        6. Bank research (public quotes/excerpts only; no proprietary PDFs)
-
-        For every number: record source_url, publisher, title, date, and pinpoint (page/slide/line). Keep any direct quotes ≤ 30 words.
-
-        ## Starter Links (public, non-paywalled when possible)
-        Regulators (pick based on hq_country)
-        - US (SEC EDGAR company search): https://www.sec.gov/edgar/searchedgar/companysearch
-
-        Transcripts (public pages)
-        - Motley Fool earnings call transcripts: https://www.fool.com/earnings/call-transcripts/
-        - Seeking Alpha (some pages public): https://seekingalpha.com/symbol/{TICKER}/earnings
-        - Company-hosted webcast pages (events/IR)
-
-        Consensus & Estimates (public snapshots)
-        - Yahoo Finance “Analysis”: https://finance.yahoo.com/quote/{TICKER}/analysis
-        - Nasdaq earnings & estimates: https://www.nasdaq.com/market-activity/stocks/{TICKER}/earnings
-
-        ## Query Patterns (use multiple)
-        - "site:sec.gov 10-K {company_name}", "site:sec.gov 10-Q {company_name} revenue", "site:{company-domain} investor guidance"
-        - "site:reuters.com {company_name} guidance revenue", "site:nasdaq.com {ticker} earnings estimates"
-        - "site:seekingalpha.com {ticker} prepared remarks", "site:fool.com {company_name} call transcript"
-        - For segments/KPIs: "{company_name} ARPU", "{company_name} DAU MAU", "{company_name} capex guidance"
-
-        ## Computation Rules
-        - Gross Profit = Revenue - Cost of Revenue
-        - Operating Income = Gross Profit - (R&D + S&M + G&A)
-        - Pre-Tax = Operating Income + (Interest Income - Interest Expense) + Other Inc/(Exp)
-        - Net Income = Pre-Tax - Income Tax Expense
-        - Margins = Metric ÷ Total Revenue
-        - FCF = Operating Cash Flow - Capex; FCF Margin = FCF ÷ Revenue
-        - If a sub-line isn't disclosed, leave `null` and state the imputation you considered (but did not use).
-
-        ## Forecasting & Models
-        1. Company guidance first (quarterly or annual). If quarterly: annualize transparently (document method and date).
-        2. Consensus second (public snapshots). Capture revenue and EPS; operating income if available.
-        3. Banks: gather ≥2 public excerpts (JPM, GS, MS, Citi, BofA, Barclays, etc.). Record value, date, and verbatim short quote.
-        4. Return range + median for each forecasted metric (e.g., FY+1 revenue, capex, EPS).
-
-        ## Validation (must include in output)
-        - Sums: components → totals; segments → consolidated; opex lines → total opex.
-        - Rates: effective tax = tax_expense ÷ pre_tax (report).
-        - Margins recompute correctly from reported figures.
-        - Period alignment: fiscal year definitions; currency/units consistent.
-        - YoY deltas: flag > ±20% with a one-line explanation (pricing, mix, FX, one-offs).
-        - Freshness: include the latest filing + latest guidance dates.
-
-        ## Output (Machine-Readable JSON)
-        Return a single JSON object with these top-level keys. Use `null` where unknown, and always include `sources` arrays with `id` references.
-
-        {
-        "company": "",
-        "ticker": "",
-        "currency": "USD",
-        "units": "millions",
-        "periods": ["FY2022","FY2023","FY2024","TTM","FY2025E","FY2026E"],
-        "financials": {
-            "revenue": {
-            "streams": {
-                "ads": {"FY2022": null, "FY2023": null, "FY2024": null, "FY2025E": null, "sources": ["s_ir_pr","s_10k"]},
-                "subscriptions": {"FY2022": null, "FY2023": null, "FY2024": null, "FY2025E": null, "sources": []},
-                "hardware": {"FY2022": null, "FY2023": null, "FY2024": null, "FY2025E": null, "sources": []},
-                "payments_other": {"FY2022": null, "FY2023": null, "FY2024": null, "FY2025E": null, "sources": []}
-            },
-            "total": {"FY2022": null, "FY2023": null, "FY2024": null, "TTM": null, "FY2025E": null, "sources": ["s_10k","s_consensus"]}
-            },
-            "cost_of_revenue": {
-            "infrastructure_da": {"FY2022": null, "FY2023": null, "FY2024": null, "FY2025E": null, "sources": ["s_10k"]},
-            "content_partner_costs": {"FY2022": null, "FY2023": null, "FY2024": null, "FY2025E": null, "sources": []},
-            "payments_processing_other": {"FY2022": null, "FY2023": null, "FY2024": null, "FY2025E": null, "sources": []},
-            "total": {"FY2022": null, "FY2023": null, "FY2024": null, "FY2025E": null}
-            },
-            "opex": {
-            "r_and_d": {"FY2022": null, "FY2023": null, "FY2024": null, "FY2025E": null, "sources": ["s_10k"]},
-            "sales_marketing": {"FY2022": null, "FY2023": null, "FY2024": null, "FY2025E": null, "sources": []},
-            "g_and_a": {"FY2022": null, "FY2023": null, "FY2024": null, "FY2025E": null, "sources": []},
-            "total": {"FY2022": null, "FY2023": null, "FY2024": null, "FY2025E": null}
-            },
-            "non_operating": {
-            "interest_income": {"FY2022": null, "FY2023": null, "FY2024": null, "sources": ["s_10k"]},
-            "interest_expense": {"FY2022": null, "FY2023": null, "FY2024": null, "sources": []},
-            "other_income_expense": {"FY2022": null, "FY2023": null, "FY2024": null, "sources": []}
-            },
-            "tax": {
-            "income_tax_expense": {"FY2022": null, "FY2023": null, "FY2024": null, "sources": ["s_10k"]},
-            "effective_tax_rate_percent": {"FY2022": null, "FY2023": null, "FY2024": null}
-            },
-            "derived": {
-            "gross_profit": {"FY2022": null, "FY2023": null, "FY2024": null, "FY2025E": null},
-            "operating_income": {"FY2022": null, "FY2023": null, "FY2024": null, "FY2025E": null},
-            "net_income": {"FY2022": null, "FY2023": null, "FY2024": null, "FY2025E": null},
-            "margins_percent": {
-                "gross": {"FY2022": null, "FY2023": null, "FY2024": null, "FY2025E": null},
-                "operating": {"FY2022": null, "FY2023": null, "FY2024": null, "FY2025E": null},
-                "net": {"FY2022": null, "FY2023": null, "FY2024": null, "FY2025E": null}
-            }
-            },
-            "cashflow": {
-            "ocf": {"FY2022": null, "FY2023": null, "FY2024": null, "sources": ["s_10k_cf"]},
-            "capex": {"FY2022": null, "FY2023": null, "FY2024": null, "FY2025E": null, "sources": ["s_ir_guidance"]},
-            "fcf": {"FY2022": null, "FY2023": null, "FY2024": null}
-            },
-            "segments_kpis": {
-            "segments": [],
-            "kpis": []
-            }
-        },
-        "street_and_banks": {
-            "consensus": {
-            "revenue_FY+1": {"value": null, "sources": ["s_consensus"]},
-            "eps_FY+1": {"value": null, "sources": ["s_consensus"]}
-            },
-            "banks": [
-            {"bank":"", "metric":"revenue_FY+1", "value": null, "date": "", "quote": "", "source":"s_bank1"},
-            {"bank":"", "metric":"revenue_FY+1", "value": null, "date": "", "quote": "", "source":"s_bank2"}
-            ],
-            "ranges": {
-            "revenue_FY+1_min": null,
-            "revenue_FY+1_max": null,
-            "revenue_FY+1_median": null
-            }
-        },
-        "sources": {
-            "s_10k": {"title":"Annual report","publisher":"Regulator/SEC","url":"","date":"","pinpoint":"","confidence":"high"},
-            "s_10k_cf": {"title":"Cash flow statement","publisher":"Regulator/SEC","url":"","date":"","pinpoint":"","confidence":"high"},
-            "s_ir_pr": {"title":"Earnings press release","publisher":"Company IR","url":"","date":"","pinpoint":"","confidence":"high"},
-            "s_ir_guidance": {"title":"Guidance/Capex commentary","publisher":"Company IR","url":"","date":"","pinpoint":"","confidence":"medium"},
-            "s_consensus": {"title":"Consensus snapshot","publisher":"(Yahoo/Nasdaq/Reuters)","url":"","date":"","confidence":"medium"},
-            "s_bank1": {"title":"Public bank note excerpt","publisher":"","url":"","date":"","confidence":"medium"},
-            "s_bank2": {"title":"Public bank note excerpt","publisher":"","url":"","date":"","confidence":"medium"}
-        },
-        "validation": {
-            "sum_checks": [],
-            "rate_checks": [],
-            "margin_checks": [],
-            "period_alignment": "",
-            "yoy_flags": []
-        },
-        "notes": []
-        }
-        '''
+        # Load and format the financial research task prompt
+        financial_prompt = load_prompt_markdown("financial_research_agent.md")
+        task = format_prompt(
+            financial_prompt,
+            company_name=company_name or "Meta Platforms, Inc.",
+            ticker=ticker or "META", 
+            hq_country="US",
+            reporting_currency="USD",
+            units="$ millions"
+        )
 
         # Store plan reference for display
         orchestrator.current_plan = None
@@ -644,7 +513,7 @@ async def main():
                 result = await orchestrator.generate_str(
                     message=task,
                     request_params=RequestParams(
-                        model="gpt-4o-mini", temperature=0.7, max_iterations=10
+                        model="gpt-4o", temperature=0.7, max_iterations=10
                     ),
                 )
 
@@ -652,60 +521,18 @@ async def main():
                     result[:2000] + "..." if len(result) > 2000 else result
                 )
 
+                # Load and format the Excel agent prompt
+                excel_prompt = load_prompt_markdown("excel_writer_agent.md")
+                excel_instruction = format_prompt(
+                    excel_prompt,
+                    stock_ticker=ticker or "META",
+                    output_path=output_path or "./output",
+                    financial_data=result
+                )
+                
                 excel_agent = Agent(
                     name="ExcelWriter",
-                    instruction="""**SYSTEM:**  
-                        You are a top-tier financial research analyst and spreadsheet automation expert.  
-
-                        **USER:**  
-                        Your task is to generate an Excel workbook containing key financial data for the publicly traded company identified by `{stock_ticker}`. Follow these requirements:
-
-                        1. **Workbook creation**  
-                        - Create a new Excel file at `./financials_{stock_ticker}.xlsx`.  
-                        - Use a worksheet named **Financials**.  
-
-                        2. **Data population**  
-                        - Populate the sheet using the financial context provided (yields, quarterly earnings, revenue breakdowns, key ratios, etc.).  
-                        - Lay out the data in a tabular format matching this style:  
-
-                        | **Account**                              | **FY 2022** | **FY 2023** | **FY 2024** | **FY 2025E (Our Model)** | **FY 2025E (Guidance / Consensus)** |
-                        |------------------------------------------|------------:|------------:|------------:|--------------------------:|-------------------------------------:|
-                        | **Revenue**                              |             |             |             |                           |                                      |
-                        | • Advertising                            |    112,000  |    129,000  |    146,000  |        162,000           |                                     |
-                        | • Reality Labs                           |      2,000  |      3,000  |      4,000  |          5,000           |                                     |
-                        | • Payments & Other                       |      4,000  |      3,000  |      3,000  |          3,000           |                                     |
-                        | **Total Revenue**                         |    118,000  |    135,000  |    153,000  |        170,000           | Company: Q3 guidance ~\$49B/Q → implies FY ~\$204B annualized*; Analyst Q2 est: ~\$44.8B → implies FY ~\$179B** |
-                        | **Cost of Revenue**                       |             |             |             |                           |                                      |
-                        | • Infrastructure & Depreciation           |   (22,000)  |   (26,000)  |   (29,000)  |       (31,000)           |                                     |
-                        | • Content/Partner Payments                |    (4,000)  |    (5,000)  |    (5,500)  |        (6,000)           |                                     |
-                        | • Payments Processing & Other             |    (2,000)  |    (2,000)  |    (2,500)  |        (3,000)           |                                     |
-                        | **Gross Profit**                          |     90,000  |    102,000  |    116,000  |        130,000           |                                     |
-                        | **Gross Margin**                          |      76.3%  |      75.6%  |      75.8%  |       76.5%              |                                     |
-                        | **Operating Expenses**                    |             |             |             |                           |                                      |
-                        | • R&D                                    |   (30,000)  |   (32,000)  |   (34,000)  |        (36,000)          |                                     |
-                        | • Sales & Marketing                       |   (17,000)  |   (19,000)  |   (21,000)  |        (23,000)          |                                     |
-                        | • General & Admin.                       |   (11,000)  |   (12,000)  |   (12,500)  |        (13,000)          |                                    |
-                        | **Operating Income**                      |     32,000  |     39,000  |     48,500  |         58,000           |                                     |
-                        | **Operating Margin**                      |      27.1%  |      28.9%  |      31.7%  |       34.1%              |                                     |
-                        | **Pre-Tax Income**                        |     32,600  |     40,100  |     49,700  |         59,300           |                                    |
-                        | **Net Income**                            |     27,058  |     33,283  |     41,251  |         49,219           |                                     |
-                        | **Net Margin**                            |      22.9%  |      24.7%  |      27.0%  |       29.0%              |                                     |
-                        
-                        3. **Formatting requirements**  
-                        - Apply appropriate number formats for currency, percentages, and negatives (e.g. parentheses).  
-                        - Bold main headers and indent bullet items.  
-                        - Auto-adjust column widths.  
-                        - Style the header row with a background color and bold text, and apply banded row shading.
-
-                        4. **Implementation**  
-                        - Write executable Python code using **openpyxl** or **pandas → ExcelWriter**.  
-                        - Use context managers, handle missing sheets gracefully, and include brief comments.  
-
-                        5. **Output**  
-                        - Save the workbook and print a confirmation:  
-                            ```
-                            Created /Users/andrew_lastmile_ai/Documents/GitHub/ai-in-finance-example-app/output/financials_{stock_ticker}.xlsx with updated Financials sheet.
-                            ```""",
+                    instruction=excel_instruction,
                     context=context,
                     server_names=["excel"]
                 )
@@ -716,9 +543,9 @@ async def main():
                     )
 
                     excel_result = await excel_llm.generate_str(
-                        message=result,
+                        message="Generate the Excel file with the provided financial data.",
                         request_params=RequestParams(
-                            model="gpt-4o-mini", temperature=0.7, max_iterations=10
+                            model="o4-mini", temperature=0.7, max_iterations=10
                         ),
                     )
 
@@ -826,8 +653,32 @@ async def main():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Deep Finance Research using orchestrated AI agents"
+    )
+    parser.add_argument(
+        "--ticker",
+        required=True,
+        help="Stock ticker symbol (e.g., META, AAPL, GOOGL)"
+    )
+    parser.add_argument(
+        "--output-path",
+        required=True,
+        help="Path where Excel output files will be saved"
+    )
+    parser.add_argument(
+        "--company-name",
+        help="Full company name (optional, will be inferred from ticker if not provided)"
+    )
+    
+    args = parser.parse_args()
+    
+    # Ensure output directory exists
+    output_dir = Path(args.output_path)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    
     # Change to example directory
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
     # Run the example
-    asyncio.run(main())
+    asyncio.run(main(args.output_path, args.ticker, args.company_name))
