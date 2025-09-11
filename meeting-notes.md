@@ -1,6 +1,6 @@
 # Meeting Notes
 
-* [Issues](https://github.com/The-AI-Alliance/ai-in-finance-example-app/issues)
+* [Issues](https://github.com/The-AI-Alliance/deep-research-agent-in-finance/issues)
 * [Project Dashboard](https://github.com/orgs/The-AI-Alliance/projects/42)
 
 ## August 25, 2025
@@ -51,7 +51,7 @@
     * Check-in the latest Finance Deep Research Agent
     * Need to add citations support in MCP-Agent Deep Orchestrator
 
-* Progress on datasets? [#4](https://github.com/The-AI-Alliance/ai-in-finance-example-app/issues/4).
+* Progress on datasets? [#4](https://github.com/The-AI-Alliance/deep-research-agent-in-finance/issues/4).
     * Find MCP servers with good financial data sources to augment the finance agent's final report
 
 
@@ -63,13 +63,13 @@
 ### Topics
 
 * Next steps for the excel server?
-    * Closed _Find a good OSS Excel MCP integration_ [#3](https://github.com/The-AI-Alliance/ai-in-finance-example-app/issues/3).
-    * Next step? _User queries for data about an organization from Excel and the results are returned into the spreadsheet_ [#5](https://github.com/The-AI-Alliance/ai-in-finance-example-app/issues/5)?
-* Progress on datasets? [#4](https://github.com/The-AI-Alliance/ai-in-finance-example-app/issues/4).
+    * Closed _Find a good OSS Excel MCP integration_ [#3](https://github.com/The-AI-Alliance/deep-research-agent-in-finance/issues/3).
+    * Next step? _User queries for data about an organization from Excel and the results are returned into the spreadsheet_ [#5](https://github.com/The-AI-Alliance/deep-research-agent-in-finance/issues/5)?
+* Progress on datasets? [#4](https://github.com/The-AI-Alliance/deep-research-agent-in-finance/issues/4).
     * Andrew looked at FinanceBench, which is a little stale.
     * SEC EDGAR looks more interesting.
 * Status of `mcp-agent` [PR #346](https://github.com/lastmile-ai/mcp-agent/pull/346):  _Implement AdaptiveWorkflow, a dynamic orchestrator agent_.
-    * Blocker for _Begin refactoring towards the desired app architecture_ [#7](https://github.com/The-AI-Alliance/ai-in-finance-example-app/issues/7)?
+    * Blocker for _Begin refactoring towards the desired app architecture_ [#7](https://github.com/The-AI-Alliance/deep-research-agent-in-finance/issues/7)?
     * Andrew has a diagram he's working on for the deep research architecture.
 * Mihai (IBM) from https://ibm.github.io/mcp-context-forge/ is interested in getting involved.
 * Testing? Dean will work on Elad Levi on a start for testing.
@@ -104,7 +104,7 @@
   * See: https://github.com/lastmile-ai/mcp-agent/tree/feature/adaptive_workflow/src/mcp_agent/workflows/adaptive
     * Branch will be merged soon.
     * Similar to the model described by Anthropic's [blog post](https://www.anthropic.com/engineering/built-multi-agent-research-system) on deep research.
-    * What "evangelism" should we do right now? (See also the [blog post ticket](https://github.com/The-AI-Alliance/ai-in-finance-example-app/issues/6).)
+    * What "evangelism" should we do right now? (See also the [blog post ticket](https://github.com/The-AI-Alliance/deep-research-agent-in-finance/issues/6).)
 
 ### Action Items
 - [ ] Dave: Reach out to community people for help validating 3rd-party servers.
@@ -175,5 +175,5 @@ We should also acquire some representative sample data, especially for the "down
 * Have something solid in a month.
   
 ### Action Items
-- [x] Create [issues](https://github.com/The-AI-Alliance/ai-in-finance-example-app/issues) for ideas of things to do, flesh-out ideas. ([Project Dashboard](https://github.com/orgs/The-AI-Alliance/projects/42)). [Discussions](https://github.com/The-AI-Alliance/ai-in-finance-example-app/discussions) can be used, too.
+- [x] Create [issues](https://github.com/The-AI-Alliance/deep-research-agent-in-finance/issues) for ideas of things to do, flesh-out ideas. ([Project Dashboard](https://github.com/orgs/The-AI-Alliance/projects/42)). [Discussions](https://github.com/The-AI-Alliance/deep-research-agent-in-finance/discussions) can be used, too.
 - [x] Reach out to other Alliance members in Finance to get them involved. (Dean)

@@ -15,7 +15,7 @@ This application leverages AI to perform automated financial research and analys
 
 The application is built using [`mcp-agent`](https://github.com/lastmile-ai/mcp-agent), a framework for creating AI agents with Model Context Protocol (MCP) integration.
 
-See also the project [website](https://the-ai-alliance.github.io/ai-in-finance-example-app/).
+See also the project [website](https://the-ai-alliance.github.io/deep-research-agent-in-finance/).
 
 ## Setup
 
@@ -29,7 +29,7 @@ See also the project [website](https://the-ai-alliance.github.io/ai-in-finance-e
 1. Clone the repository:
 ```bash
 git clone <repository-url>
-cd ai-in-finance-example-app
+cd deep-research-agent-in-finance
 ```
 
 2. Install dependencies:
@@ -83,7 +83,7 @@ For contribution guidelines, see the AI Alliance [CONTRIBUTING](https://github.c
 
 ## About the GitHub Pages Website Published from this Repo
 
-The project's [companion website](https://the-ai-alliance.github.io/ai-in-finance-example-app/) is published using [GitHub Pages](https://pages.github.com/), where the pages are written in Markdown and served using [Jekyll](https://github.com/jekyll/jekyll).
+The project's [companion website](https://the-ai-alliance.github.io/deep-research-agent-in-finance/) is published using [GitHub Pages](https://pages.github.com/), where the pages are written in Markdown and served using [Jekyll](https://github.com/jekyll/jekyll).
 
 The [`docs`](tree/main/docs) folder contains the website sources. There are `Makefile` targets running the website locally. Try `make help` for details.
 
