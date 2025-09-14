@@ -1,5 +1,5 @@
 
-pages_url    := https://the-ai-alliance.github.io/ai-in-finance-example-app/
+pages_url    := https://the-ai-alliance.github.io/deep-research-agent-for-finance/
 docs_dir     := docs
 site_dir     := ${docs_dir}/_site
 clean_dirs   := ${site_dir} ${docs_dir}/.sass-cache
