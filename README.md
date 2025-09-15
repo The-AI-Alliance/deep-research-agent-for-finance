@@ -2,6 +2,14 @@
 
 A finance deep research agent designed to collect comprehensive information about publicly-traded companies and generate detailed investment research reports.
 
+<p align="center">
+<a href="https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/LICENSE.Apache-2.0"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg"/></a>
+<a href="https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/LICENSE.CC-BY-4.00"><img src="https://img.shields.io/badge/License-CC_BY_4.0-lightgrey.svg"/></a>
+</p>
+
+https://github.com/user-attachments/assets/60675db5-6e0a-4a8d-9463-6a0f9d0a46d7
+
+
 ## About
 
 This application leverages AI to perform automated financial research and analysis. It gathers data from multiple reliable financial sources to create structured investment reports with:
@@ -13,7 +21,7 @@ This application leverages AI to perform automated financial research and analys
 - Risk and opportunity assessments
 - Investor sentiment analysis
 
-The application is built using [`mcp-agent`](https://github.com/lastmile-ai/mcp-agent), a framework for creating AI agents with Model Context Protocol (MCP) integration.
+The application is built using [`mcp-agent`](https://github.com/lastmile-ai/mcp-agent), a framework for creating AI agents with Model Context Protocol (MCP) integration. The application utilizes the [deep research architecture](https://thealliance.ai/blog/building-a-deep-research-agent-using-mcp-agent) to allow for the LLM to thoroughly research and revise it's findings until a comprehensive research report is complete.
 
 See also the project [website](https://the-ai-alliance.github.io/deep-research-agent-for-finance/).
 
@@ -39,7 +47,11 @@ uv add mcp-agent
 
 ## Usage
 
-Currently, the app requires an OpenAI or Anthropic account. Edit `mcp_agent.secrets.yaml` to add the API key for one of those services.
+In the example, the app uses `gpt4o` from OpenAI. If you'd like to use a model from another provider, you can edit the `mcp_agent.secrets.yaml` to add the API key for one of those services, add the model you'd like to use in `mcp_agent.config.yaml`, and add the provider wrapper i.e. `AnthropicAugmentedLLM`.
+
+Examples for specifying other providers:
+- [Ollama](https://github.com/lastmile-ai/mcp-agent/tree/main/examples/model_providers/mcp_basic_ollama_agent)
+- [Gemini](https://github.com/lastmile-ai/mcp-agent/tree/main/examples/model_providers/mcp_basic_google_agent)
 
 Run the finance research agent:
 
@@ -68,6 +80,27 @@ Try `make help` for additional details. (It also has targets that are used to de
 The application uses the following configuration files:
 - `mcp_agent.config.yaml` - Main configuration settings
 - `mcp_agent.secrets.yaml` - API keys and secrets (not tracked in git)
+
+### Architecture
+
+<img src="https://images.prismic.io/ai-alliance/aMCNHWGNHVfTO240_Frame162610%5B18%5D.jpg?auto=format%2Ccompress&fit=max&w=1920" alt="Deep Research Agent Architecture" width="400"/>
+
+Source Code for the [Deep Orchestrator](https://github.com/lastmile-ai/mcp-agent/tree/main/src/mcp_agent/workflows/deep_orchestrator)
+
+High level flow:
+1. **Input Processing** - Input user objective
+2. **Plan Development** - Develop a full plan, with steps and subtasks
+3. **Execution Phase** - Run through all steps
+4. **New Verification Step** - Add an objective verification.
+5. *If objective verification is not satisfied, replan and repeat*
+
+Key components:
+- **TODO Queue** - a queue of multiple steps and full plan for execution
+- **Memory and Knowledge** - persisting memory and knowledge across steps. Determining when context should be fed in
+- **Non-LLM functions** - Dependendency validation, MCP server validation, Agent verification
+- **Replanning** - logic for triggering a new replan
+- **Emergency stop** - stopping execution due to repeated failures
+- **Force completion** - respecting the budget and forcing completion due to budget overrun
 
 ## Contributing
 
