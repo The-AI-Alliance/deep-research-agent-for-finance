@@ -20,28 +20,28 @@ Generate an Excel workbook containing key financial data for **{{stock_ticker}}*
 ### 2. Data Layout
 Populate the sheet using the provided financial context in this tabular format:
 
-| **Account** | **FY 2022** | **FY 2023** | **FY 2024** | **FY 2025E (Our Model)** | **FY 2025E (Guidance/Consensus)** |
-|-------------|------------:|------------:|------------:|--------------------------:|----------------------------------:|
-| **Revenue** |             |             |             |                           |                                   |
-| • Advertising | 112,000 | 129,000 | 146,000 | 162,000 |                          |
-| • Reality Labs | 2,000 | 3,000 | 4,000 | 5,000 |                         |
-| • Payments & Other | 4,000 | 3,000 | 3,000 | 3,000 |                    |
-| **Total Revenue** | 118,000 | 135,000 | 153,000 | 170,000 | Company guidance + Analyst estimates |
-| **Cost of Revenue** |         |         |         |           |                      |
-| • Infrastructure & Depreciation | (22,000) | (26,000) | (29,000) | (31,000) |     |
-| • Content/Partner Payments | (4,000) | (5,000) | (5,500) | (6,000) |          |
-| • Payments Processing & Other | (2,000) | (2,000) | (2,500) | (3,000) |        |
-| **Gross Profit** | 90,000 | 102,000 | 116,000 | 130,000 |                   |
-| **Gross Margin** | 76.3% | 75.6% | 75.8% | 76.5% |                         |
-| **Operating Expenses** |       |       |       |         |                     |
-| • R&D | (30,000) | (32,000) | (34,000) | (36,000) |                          |
-| • Sales & Marketing | (17,000) | (19,000) | (21,000) | (23,000) |             |
-| • General & Admin | (11,000) | (12,000) | (12,500) | (13,000) |             |
-| **Operating Income** | 32,000 | 39,000 | 48,500 | 58,000 |                  |
-| **Operating Margin** | 27.1% | 28.9% | 31.7% | 34.1% |                      |
-| **Pre-Tax Income** | 32,600 | 40,100 | 49,700 | 59,300 |                    |
-| **Net Income** | 27,058 | 33,283 | 41,251 | 49,219 |                        |
-| **Net Margin** | 22.9% | 24.7% | 27.0% | 29.0% |                          |
+| **Account** | **FY N-3** | **FY N-2** | **FY N-1** | **FY N (Our Model)** | **FY N (Guidance/Consensus)** |
+|-------------|-----------:|-----------:|-----------:|----------------------:|------------------------------:|
+| **Revenue** |            |            |            |                       |                               |
+| • Segment A (e.g., Advertising) | [Fill in] | [Fill in] | [Fill in] | [Fill in] | [Fill in] |
+| • Segment B (e.g., Reality Labs) | [Fill in] | [Fill in] | [Fill in] | [Fill in] | [Fill in] |
+| • Segment C (e.g., Payments & Other) | [Fill in] | [Fill in] | [Fill in] | [Fill in] | [Fill in] |
+| **Total Revenue** | [Fill in] | [Fill in] | [Fill in] | [Fill in] | [Fill in] |
+| **Cost of Revenue** |            |            |            |                       |                               |
+| • Infrastructure & Depreciation | [Fill in] | [Fill in] | [Fill in] | [Fill in] | [Fill in] |
+| • Content/Partner Payments | [Fill in] | [Fill in] | [Fill in] | [Fill in] | [Fill in] |
+| • Payments Processing & Other | [Fill in] | [Fill in] | [Fill in] | [Fill in] | [Fill in] |
+| **Gross Profit** | [Fill in] | [Fill in] | [Fill in] | [Fill in] | [Fill in] |
+| **Gross Margin** | [Fill in] | [Fill in] | [Fill in] | [Fill in] | [Fill in] |
+| **Operating Expenses** |            |            |            |                       |                               |
+| • R&D | [Fill in] | [Fill in] | [Fill in] | [Fill in] | [Fill in] |
+| • Sales & Marketing | [Fill in] | [Fill in] | [Fill in] | [Fill in] | [Fill in] |
+| • General & Admin | [Fill in] | [Fill in] | [Fill in] | [Fill in] | [Fill in] |
+| **Operating Income** | [Fill in] | [Fill in] | [Fill in] | [Fill in] | [Fill in] |
+| **Operating Margin** | [Fill in] | [Fill in] | [Fill in] | [Fill in] | [Fill in] |
+| **Pre-Tax Income** | [Fill in] | [Fill in] | [Fill in] | [Fill in] | [Fill in] |
+| **Net Income** | [Fill in] | [Fill in] | [Fill in] | [Fill in] | [Fill in] |
+| **Net Margin** | [Fill in] | [Fill in] | [Fill in] | [Fill in] | [Fill in] |
 
 ### 3. Formatting Requirements
 
