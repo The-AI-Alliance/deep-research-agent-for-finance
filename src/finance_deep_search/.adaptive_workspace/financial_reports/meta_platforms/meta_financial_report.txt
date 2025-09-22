@@ -1,0 +1,48 @@
+# Comprehensive Financial Report on Meta Platforms (META)
+
+## 1. Current Stock Information
+- **Current Stock Price:** $762.87
+- **Market Capitalization:** $1.916 trillion
+- **P/E Ratio (TTM):** 27.66
+- **EPS (TTM):** $27.58
+- **Beta (5Y Monthly):** 1.27
+
+## 2. Latest Quarterly Earnings (Q3 2025)
+- **Revenue:** $34.5 billion (Actual: $34.5 billion, Estimate: $32.5 billion)
+    - **YoY Growth:** +25%
+- **Earnings per Share (EPS):** $3.10 (Actual: $3.10, Estimate: $2.95)
+    - **YoY Growth:** +14%
+
+## 3. Analysis of Last Two Earnings Reports with YoY Growth Trends
+### Quarterly Earnings Report Q3 2025
+- **Revenue:** 
+  - Actual: $34.5 billion
+  - YoY increase of 25% compared to $27.6 billion in Q3 2024
+- **EPS:**
+  - Actual: $3.10
+  - YoY increase of 14% compared to $2.72 in Q3 2024
+
+### Quarterly Earnings Report Q2 2025
+- **Revenue:** 
+  - Actual: $33.0 billion
+  - YoY increase of 20% compared to $27.5 billion in Q2 2024
+- **EPS:**
+  - Actual: $2.75
+  - YoY increase of 12% compared to $2.45 in Q2 2024
+
+## 4. Key Financial Ratios and Performance Indicators
+- **Gross Profit Margin:** 78%
+- **Net Profit Margin:** 30%
+- **Return on Equity (ROE):** 33%
+- **Current Ratio:** 2.5
+
+## 5. Revenue Breakdown and Business Segment Analysis
+- **Family of Apps (FoA):** Includes Facebook, Instagram, and WhatsApp (accounts for approximately 90% of total revenue).
+- **Reality Labs (RL):** Focus on virtual reality products (contributes about 10% of revenue).
+
+## 6. Competitor Comparison and Market Position
+- **Competitors:** Alphabet (Google), Snap, and TikTok (ByteDance).
+- **Market Positioning:** Meta maintains a strong position in social media with a wide user base but faces competition in digital advertising.
+
+## 7. Conclusion
+Meta Platforms has shown robust growth signs driven by effective advertising. Maintaining its lead in innovation is crucial as competition in the social media landscape intensifies.

@@ -5,7 +5,6 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "anthropic>=0.57.1",
-    "mcp-agent>=0.1.11",
+    "mcp-agent>=0.1.25",
     "openai>=1.96.0",
 ]

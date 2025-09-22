@@ -15,9 +15,22 @@ mcp:
     fetch:
       command: "uvx"
       args: ["mcp-server-fetch"]
+    exa:
+      command: "npx"
+      args: [
+        "-y",
+        "mcp-remote",
+        "https://mcp.exa.ai/mcp?exaApiKey=87a80776-053c-4559-b3cd-51b6ac61471a"
+      ]
     filesystem:
       command: "npx"
       args: ["-y", "@modelcontextprotocol/server-filesystem", "."]
+    yfmcp:
+      command: "uvx"
+      args: ["yfmcp@latest"]
+    financial-datasets:
+      command: "npx"
+      args: ["-y", "mcp-remote", "https://mcp.financialdatasets.ai/mcp"]
     excel:
       command: "uvx"
       args: ["excel-mcp-server", "stdio"]
