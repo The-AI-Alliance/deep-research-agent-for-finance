@@ -15,13 +15,6 @@ mcp:
     fetch:
       command: "uvx"
       args: ["mcp-server-fetch"]
-    exa:
-      command: "npx"
-      args: [
-        "-y",
-        "mcp-remote",
-        "https://mcp.exa.ai/mcp?exaApiKey=87a80776-053c-4559-b3cd-51b6ac61471a"
-      ]
     filesystem:
       command: "npx"
       args: ["-y", "@modelcontextprotocol/server-filesystem", "."]
