@@ -21,7 +21,7 @@ This application leverages AI to perform automated financial research and analys
 - Risk and opportunity assessments
 - Investor sentiment analysis
 
-The application is built using [`mcp-agent`](https://github.com/lastmile-ai/mcp-agent), a framework for creating AI agents with Model Context Protocol (MCP) integration. The application utilizes the [deep research architecture](https://thealliance.ai/blog/building-a-deep-research-agent-using-mcp-agent) to allow for the LLM to thoroughly research and revise it's findings until a comprehensive research report is complete.
+The application is built using [`mcp-agent`](https://github.com/lastmile-ai/mcp-agent), a framework for creating AI agents with Model Context Protocol (MCP) integration. The application utilizes the _deep research architecture_, described in this [AI Alliance blog post](https://thealliance.ai/blog/building-a-deep-research-agent-using-mcp-agent), which allows for the LLM to thoroughly research and revise it's findings until a comprehensive research report is complete.
 
 See also the project [website](https://the-ai-alliance.github.io/deep-research-agent-for-finance/).
 
@@ -37,7 +37,6 @@ See also the project [website](https://the-ai-alliance.github.io/deep-research-a
 1. Clone the repository:
 ```bash
 git clone <repository-url>
-cd deep-research-agent-for-finance
 ```
 
 2. Install dependencies:
@@ -53,11 +52,10 @@ Examples for specifying other providers:
 - [Ollama](https://github.com/lastmile-ai/mcp-agent/tree/main/examples/model_providers/mcp_basic_ollama_agent)
 - [Gemini](https://github.com/lastmile-ai/mcp-agent/tree/main/examples/model_providers/mcp_basic_google_agent)
 
-Run the finance research agent:
+Run the finance research agent (and research Meta, the default):
 
 ```bash
-cd src/finance_deep_search
-uv run main.py
+uv run src/finance_deep_search/main.py --output-path meta-report
 ```
 
 The application will:
@@ -65,21 +63,23 @@ The application will:
 2. Execute the research agent with predefined instructions
 3. Generate a comprehensive stock report
 
-You can also use `make` to run the app. The following commands are equivalent, because `all` is the first target and its sole dependency is `run-app`:
+You can also use `make` to run the app. The following commands are equivalent, because `all` is the first target and its sole dependency is `app-run`:
 
 ```bash
 make
 make all
-make run-app
+make app-run
 ```
 
-Try `make help` for additional details. (It also has targets that are used to develop the project website.)
+Try `make help` or `make app-help` for additional details. (The `Makefile` also has targets that are used to develop and locally run the project website.)
 
 ### Configuration
 
 The application uses the following configuration files:
 - `mcp_agent.config.yaml` - Main configuration settings
-- `mcp_agent.secrets.yaml` - API keys and secrets (not tracked in git)
+- `mcp_agent.secrets.yaml` - API keys and secrets (_**not**_ tracked in git!).
+
+The `mcp_agent.secrets.yaml` file is optional, as the keys and secrets will be read from your environment, e.g., `OPENAI_API_KEY`, if defined. If you want to use this file for these definitions, copy `.venv/lib/python3.12/site-packages/mcp_agent/data/examples/basic/mcp_basic_agent/mcp_agent.secrets.yaml.example` to `mcp_agent.secrets.yaml`. (`.gitignore` already ignores `*.secrets.yaml` files.)
 
 ### Architecture
 
