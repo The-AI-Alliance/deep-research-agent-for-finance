@@ -450,7 +450,7 @@ async def main(output_path: str = None, ticker: str = None, company_name: str = 
         # Create configuration for the Deep Orchestrator
         config = DeepOrchestratorConfig(
             name="DeepFinancialResearcher",
-            available_servers=["fetch", "filesystem"],
+            available_servers=["fetch", "filesystem", "yfmcp", "financial-datasets"],
             execution=ExecutionConfig(
                 max_iterations=25,
                 max_replans=2,
@@ -484,8 +484,6 @@ async def main(output_path: str = None, ticker: str = None, company_name: str = 
             financial_prompt,
             company_name=company_name or "Meta Platforms, Inc.",
             ticker=ticker or "META", 
-            hq_country="US",
-            reporting_currency="USD",
             units="$ millions"
         )
 
@@ -640,10 +638,12 @@ async def main(output_path: str = None, ticker: str = None, company_name: str = 
         # Display token usage if available
         if context.token_counter:
             summary = context.token_counter.get_summary()
-            console.print(
-                f"\n[bold]Total Tokens:[/bold] {summary.usage.total_tokens:,}"
-            )
-            console.print(f"[bold]Total Cost:[/bold] ${summary.cost:.4f}")
+            if summary and hasattr(summary, "usage"):
+                console.print(
+                    f"\n[bold]Total Tokens:[/bold] {summary.usage.total_tokens:,}"
+                )
+                if hasattr(summary, "cost"):
+                    console.print(f"[bold]Total Cost:[/bold] ${summary.cost:.4f}")
 
         # Show workspace artifacts if any were created
         if orchestrator.memory.artifacts:
@@ -658,8 +658,8 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--ticker",
-        required=True,
-        help="Stock ticker symbol (e.g., META, AAPL, GOOGL)"
+        default="META",
+        help="Stock ticker symbol (default: META, e.g., META, AAPL, GOOGL)"
     )
     parser.add_argument(
         "--output-path",

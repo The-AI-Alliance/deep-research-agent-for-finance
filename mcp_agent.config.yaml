@@ -18,6 +18,12 @@ mcp:
     filesystem:
       command: "npx"
       args: ["-y", "@modelcontextprotocol/server-filesystem", "."]
+    yfmcp:
+      command: "uvx"
+      args: ["yfmcp@latest"]
+    financial-datasets:
+      command: "npx"
+      args: ["-y", "mcp-remote", "https://mcp.financialdatasets.ai/mcp"]
     excel:
       command: "uvx"
       args: ["excel-mcp-server", "stdio"]
