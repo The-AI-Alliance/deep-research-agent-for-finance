@@ -63,13 +63,9 @@ blockquote {
   margin:  0px;
 }
 
-.highlight {
+.attention {
   background-color: lighten($yellow-000, 20%);
   border: solid 1px $yellow-100;
-}
-.important {
-  background-color: lighten($blue-000, 30%);
-  border: solid 1px $blue-100;
 }
 .tip {
   background-color: lighten($green-000, 30%);
