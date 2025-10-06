@@ -3,12 +3,16 @@ pages_url    := https://the-ai-alliance.github.io/deep-research-agent-for-financ
 docs_dir     := docs
 site_dir     := ${docs_dir}/_site
 clean_dirs   := ${site_dir} ${docs_dir}/.sass-cache
+app_dir      := src/finance_deep_search
 
 # Environment variables
-MAKEFLAGS            = -w  # --warn-undefined-variables
+MAKEFLAGS           ?= # -w --warn-undefined-variables
 MAKEFLAGS_RECURSIVE ?= # --print-directory (only useful for recursive makes...)
 UNAME               ?= $(shell uname)
 ARCHITECTURE        ?= $(shell uname -m)
+
+# App defaults
+APP_OUTPUT          ?= meta-report
 
 # Override when running `make view-local` using e.g., `JEKYLL_PORT=8000 make view-local`
 JEKYLL_PORT         ?= 4000
@@ -20,7 +24,11 @@ NOW                 ?= $(shell date +"%Y%m%d-%H%M%S")
 define help_message
 Quick help for this make process.
 
-make all                # Clean and locally view the document.
+make all                # Run the application by building "app-run".
+make app-run            # Run the application with default arguments
+make app-help           # Run the application with --help to see the available arguments.
+make app-setup          # One-time setup of the application dependences.
+
 make clean              # Remove built artifacts, etc.
 make view-pages         # View the published GitHub pages in a browser.
 make view-local         # View the pages locally (requires Jekyll).
@@ -36,8 +44,12 @@ make run-jekyll         # Used by "view-local"; assumes everything is already bu
                         # Tip: "JEKYLL_PORT=8000 make run-jekyll" uses port 8000 instead of 4000!
 endef
 
-define missing_shell_command_error_message
-is needed by ${PWD}/Makefile. Try 'make help' and look at the README.
+define missing_uv_message
+ERROR: The Python dependency manager \'uv\' is used. Please visit https://docs.astral.sh/uv/ to install it.
+endef
+
+define missing_mcp_agent_message
+ERROR: The Python dependency \'mcp-agent\' is not installed. Either run \'uv add mcp-agent\' or \'make app-setup\'.
 endef
 
 ifndef docs_dir
@@ -81,19 +93,43 @@ endef
 
 .PHONY: all view-pages view-local clean help 
 .PHONY: setup-jekyll run-jekyll
+.PHONY: app-run app-setup app-check uv-check mcp-agent-check app-help
 
-foobar::
-	foo=hello $(info ${foo_message})
+all:: app-run
 
-all:: view-local
+app-run:: app-check
+	uv run ${app_dir}/main.py --output-path ${APP_OUTPUT} ${APP_ARGS}
+
+app-check:: uv-check mcp-agent-check
+uv-check::
+	@command -v uv > /dev/null || ( echo ${missing_uv_message} && exit 1 )
+mcp-agent-check::
+	@uv pip freeze | grep mcp-agent > /dev/null || ( echo ${missing_mcp_agent_message} && exit 1 )
+
+app-setup:: uv-check
+	uv add mcp-agent
+
+app-help:: 
+	@echo "Help on ${app_dir}/main.py:"
+	uv run ${app_dir}/main.py --help  
+	@echo
+	@echo "The default arguments passed by 'make app-run' are '--output-path ${APP_OUTPUT}'."
+	@echo "To override the argument to --output-path, use 'make APP_OUTPUT=... app-run'."
+	@echo "To add other arguments, use 'make APP_ARGS=\"...\" app-run'."
+	@echo "(Note the quotes!)"
+		
 
 help::
 	$(info ${help_message})
 	@echo
+	@echo "Run make app-help for more help on running the app."
+	@echo
 
 print-info:
+	@echo "Some of this information pertains to the website:"
 	@echo "GitHub Pages URL:    ${pages_url}"
 	@echo "current dir:         ${PWD}"
+	@echo "app dir:             ${app_dir}"
 	@echo "docs dir:            ${docs_dir}"
 	@echo "site dir:            ${site_dir}"
 	@echo "clean dirs:          ${clean_dirs} (deleted by 'make clean')"

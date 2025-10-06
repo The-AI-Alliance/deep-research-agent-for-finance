@@ -21,11 +21,13 @@ This application leverages AI to perform automated financial research and analys
 - Risk and opportunity assessments
 - Investor sentiment analysis
 
-The application is built using [`mcp-agent`](https://github.com/lastmile-ai/mcp-agent), a framework for creating AI agents with Model Context Protocol (MCP) integration. The application utilizes the [deep research architecture](https://thealliance.ai/blog/building-a-deep-research-agent-using-mcp-agent) to allow for the LLM to thoroughly research and revise it's findings until a comprehensive research report is complete.
+The application is built using [`mcp-agent`](https://github.com/lastmile-ai/mcp-agent), a framework for creating AI agents with Model Context Protocol (MCP) integration. The application utilizes the _deep research architecture_, described in this [AI Alliance blog post](https://thealliance.ai/blog/building-a-deep-research-agent-using-mcp-agent), which allows for the LLM to thoroughly research and revise it's findings until a comprehensive research report is complete.
 
 See also the project [website](https://the-ai-alliance.github.io/deep-research-agent-for-finance/).
 
 ## Setup
+
+An inference service provider or local option like Ollama is required. See **Usage** below for details.
 
 ### Prerequisites
 
@@ -37,7 +39,6 @@ See also the project [website](https://the-ai-alliance.github.io/deep-research-a
 1. Clone the repository:
 ```bash
 git clone <repository-url>
-cd deep-research-agent-for-finance
 ```
 
 2. Install dependencies:
@@ -47,45 +48,54 @@ uv add mcp-agent
 
 ## Usage
 
-In the example, the app uses `gpt4o` from OpenAI. If you'd like to use a model from another provider, you can edit the `mcp_agent.secrets.yaml` to add the API key for one of those services, add the model you'd like to use in `mcp_agent.config.yaml`, and add the provider wrapper i.e. `AnthropicAugmentedLLM`.
+In the example, the app uses `gpt4o` from OpenAI by default. If you'd like to use a model from another provider, you can edit the `mcp_agent.secrets.yaml` (see **Configuration** below) to add the API key for one of those services, then add the model you'd like to use in `mcp_agent.config.yaml`, and use the corresponding provider wrapper, i.e., `AnthropicAugmentedLLM`, in `src/finance-deep-research/main.py`, replacing the use of `OpenAIAugmentedLLM`, if you aren't using OpenAI.
 
 Examples for specifying other providers:
 - [Ollama](https://github.com/lastmile-ai/mcp-agent/tree/main/examples/model_providers/mcp_basic_ollama_agent)
 - [Gemini](https://github.com/lastmile-ai/mcp-agent/tree/main/examples/model_providers/mcp_basic_google_agent)
+- [All supported providers](https://github.com/lastmile-ai/mcp-agent/tree/main/examples/model_providers/)
 
-Run the finance research agent:
+Run the finance research agent as follows. It researches Meta, by default:
 
 ```bash
-cd src/finance_deep_search
-uv run main.py
+uv run src/finance_deep_search/main.py --output-path meta-report
 ```
+
+> [!TIP]
+> Run `uv run src/finance_deep_search/main.py --help` or `make app-help`
+> to see the available command-line options.
 
 The application will:
 1. Connect to the configured MCP servers
 2. Execute the research agent with predefined instructions
 3. Generate a comprehensive stock report
 
-You can also use `make` to run the app. The following commands are equivalent, because `all` is the first target and its sole dependency is `run-app`:
+> [!NOTE]
+> While running the app, you may see a browser window pop up asking for permission to authenticate to a financial dataset MCP server. There is no cost to do this. You can authenticate using a `gmail` email address, for example. If you decline, the app will still run, but it may run for a longer time while the deep research agent tries to gather the information it needs without this source.
+
+You can also use `make` to run the app. The following commands are equivalent, because `all` is the first target and its sole dependency is `app-run`:
 
 ```bash
 make
 make all
-make run-app
+make app-run
 ```
 
-Try `make help` for additional details. (It also has targets that are used to develop the project website.)
+Try `make help` or `make app-help` for additional details. (The `Makefile` also has targets that are used to develop and locally run the project website.)
 
 ### Configuration
 
 The application uses the following configuration files:
 - `mcp_agent.config.yaml` - Main configuration settings
-- `mcp_agent.secrets.yaml` - API keys and secrets (not tracked in git)
+- `mcp_agent.secrets.yaml` - API keys and secrets (_**not**_ tracked in git!).
+
+The `mcp_agent.secrets.yaml` file is optional, as some of the keys and secrets will be read from your environment, e.g., `OPENAI_API_KEY`, if defined. See the discussion above  If you want to use this file for these definitions, copy `.venv/lib/python3.12/site-packages/mcp_agent/data/examples/basic/mcp_basic_agent/mcp_agent.secrets.yaml.example` to `mcp_agent.secrets.yaml`. (`.gitignore` already ignores `*.secrets.yaml` files.)
 
 ### Architecture
 
 <img src="https://images.prismic.io/ai-alliance/aMCNHWGNHVfTO240_Frame162610%5B18%5D.jpg?auto=format%2Ccompress&fit=max&w=1920" alt="Deep Research Agent Architecture" width="400"/>
 
-Source Code for the [Deep Orchestrator](https://github.com/lastmile-ai/mcp-agent/tree/main/src/mcp_agent/workflows/deep_orchestrator)
+The source code for the [Deep Orchestrator](https://github.com/lastmile-ai/mcp-agent/tree/main/src/mcp_agent/workflows/deep_orchestrator). A detailed [AI Alliance blog post](https://thealliance.ai/blog/building-a-deep-research-agent-using-mcp-agent) on the lessons learned creating Deep Orchestrator.
 
 High level flow:
 1. **Input Processing** - Input user objective
