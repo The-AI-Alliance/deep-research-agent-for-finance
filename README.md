@@ -58,8 +58,10 @@ Examples for specifying other providers:
 Run the finance research agent as follows. It researches Meta, by default:
 
 ```bash
-uv run src/finance_deep_search/main.py --output-path meta-report
+uv run src/finance_deep_search/main.py
 ```
+
+An Excel spreadsheet will be written to the `output` directory.
 
 > [!TIP]
 > Run `uv run src/finance_deep_search/main.py --help` or `make app-help`

@@ -12,7 +12,7 @@ UNAME               ?= $(shell uname)
 ARCHITECTURE        ?= $(shell uname -m)
 
 # App defaults
-APP_OUTPUT          ?= meta-report
+APP_OUTPUT          ?= output
 
 # Override when running `make view-local` using e.g., `JEKYLL_PORT=8000 make view-local`
 JEKYLL_PORT         ?= 4000
