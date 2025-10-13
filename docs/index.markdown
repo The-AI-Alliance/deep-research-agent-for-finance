@@ -32,7 +32,7 @@ This application leverages AI to perform automated financial research and analys
 
 The application is built using [mcp-agent](https://github.com/lastmile-ai/mcp-agent){:target="mcp-agent"}, a framework for creating AI agents with Model Context Protocol (MCP) integration.
 
-We also want to demonstrate techniques for testing AI-enabled applications, where model outputs are not _deterministic_, i.e., 100% predictable for a given set of inputs. Developers are accustomed to testing deterministic components and applications, but AI experts have the techniques developers can use to be _confident_ their AI-enabled application works as designed. See [Achieving Confidence in Enterprise AI Applications](https://the-ai-alliance.github.io/ai-application-testing/){:target="_blank"} for more on this topic.
+We also want to demonstrate techniques for testing AI-enabled applications, where model outputs are not _deterministic_, i.e., 100% predictable for a given set of inputs. Developers are accustomed to testing deterministic components and applications, but AI experts have the techniques developers can use to be _confident_ their AI-enabled application works as designed. See [Testing Generative AI Applications](https://the-ai-alliance.github.io/ai-application-testing/){:target="_blank"} for more on this topic.
 
 ## Try It!
 
