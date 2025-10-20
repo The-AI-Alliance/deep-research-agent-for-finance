@@ -114,6 +114,54 @@ Key components:
 - **Emergency stop** - stopping execution due to repeated failures
 - **Force completion** - respecting the budget and forcing completion due to budget overrun
 
+## Customizing Data Sources for Deep Research
+
+The Deep Research agent for Finance integrates into data sources using MCP, which means you can customize which data sources the agent has access to. In order to add/remove certain data sources to the agent, there are two steps:
+
+1. In `mcp_agent.config.yaml`, add the details for the MCP server you'd like to use.
+
+Example:
+```yaml
+mcp:
+  servers:
+    yfmcp:
+      command: "uvx"
+      args: ["yfmcp@latest"]
+    example-mcp-server:
+      command: "npx"
+      args: [
+        "mcp-remote",
+        "url-to-your-mcp-server",
+        "--header",
+        "Authorization: Bearer ${BEARER_TOKEN}"
+      ]
+```
+
+2. In `src/finance_deep_search/main.py`, go to the config of the Deep Orchestrator and add your server as a new available server:
+
+```python
+config = DeepOrchestratorConfig(
+    name="DeepFinancialResearcher",
+
+    #add your server to the available_servers
+    available_servers=["fetch", "filesystem", "yfmcp", "financial-datasets", "your-server-here"],
+    execution=ExecutionConfig(
+        max_iterations=25,
+        max_replans=2,
+        max_task_retries=5,
+        enable_parallel=True,
+        enable_filesystem=True,
+    ),
+    budget=BudgetConfig(
+        max_tokens=100000,
+        max_cost=1.00,
+        max_time_minutes=10,
+    ),
+)
+```
+
+*[Optional] If you'd like to optimize the performance, add specific instructions to the prompt on how the model can better use your MCP data source. You will find the main prompt at `src/finance_deep_search/prompts/financial_research_agent.md`.*
+
 ## Contributing
 
 This project is part of the AI Alliance. We welcome contributions from developers with finance industry expertise, AI expertise, or those looking to grow their skills in either area.
