@@ -19,7 +19,7 @@ The project [README](https://github.com/The-AI-Alliance/deep-research-agent-for-
 
 Contributing changes as [pull requests](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/pulls){:target="prs"} is the best way to contribute. Alternatively, consider [posting issues](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/issues){:target="issues"}. 
 
-We also welcome feedback through [email](mailto:contact@thealliance.ai?subject=Feedback&#32;on&#32;the&#32;Deep&#32;Research&#32;Agent&#32;for&#32;Finance&#32;project). Be sure to mention this project.
+We also welcome feedback through [email](mailto:contact@thealliance.ai?subject=Feedback for the Deep Research Agent for Finance project). Be sure to mention this project.
 
 # Joining the Project
 
