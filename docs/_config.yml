@@ -97,7 +97,7 @@ last_version: V0.2.0
 # Custom: Add the range of years for the copyright here. This is done here,
 # rather than default.html, so that the latter file can remain completely 
 # generic across repos, but the range of years can be configurable per repo.
-copyright_years: 2025
+copyright_years: 2025-2026
 
 # "Edit this page on GitHub" link text
 gh_edit_link: true # show or hide edit this page link
