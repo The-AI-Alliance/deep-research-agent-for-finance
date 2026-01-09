@@ -29,6 +29,8 @@ make app-run            # Run the application with default arguments
 make app-help           # Run the application with --help to see the available arguments.
 make app-setup          # One-time setup of the application dependences.
 
+make test               # Run the automated tests. ("make tests" is a synonym...)
+
 make clean              # Remove built artifacts, etc.
 make view-pages         # View the published GitHub pages in a browser.
 make view-local         # View the pages locally (requires Jekyll).
@@ -93,7 +95,7 @@ endef
 
 .PHONY: all view-pages view-local clean help 
 .PHONY: setup-jekyll run-jekyll
-.PHONY: app-run app-setup app-check uv-check mcp-agent-check app-help
+.PHONY: app-run app-setup app-check uv-check mcp-agent-check app-help test tests
 
 all:: app-run
 
@@ -141,6 +143,9 @@ print-info:
 	@echo "ARCHITECTURE:        ${ARCHITECTURE}"
 	@echo "GIT_HASH:            ${GIT_HASH}"
 	@echo "NOW:                 ${NOW}"
+
+test tests:: uv-check
+	cd src && uv run python -m unittest discover -s tests
 
 clean::
 	rm -rf ${clean_dirs} 

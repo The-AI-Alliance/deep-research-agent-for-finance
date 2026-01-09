@@ -43,39 +43,11 @@ from mcp_agent.workflows.deep_orchestrator.config import (
 from mcp_agent.workflows.llm.augmented_llm_openai import OpenAIAugmentedLLM
 from mcp_agent.workflows.llm.augmented_llm import RequestParams
 
+from utils import load_prompt_markdown, format_prompt
+
 app = MCPApp(name="finance_deep_research")
 
 console = Console(highlight=False, soft_wrap=False, emoji=False)
-
-
-def load_prompt_markdown(prompt_file: str) -> str:
-    """Load a markdown prompt file and return the content after frontmatter."""
-    script_dir = Path(__file__).parent
-    prompt_path = script_dir / "prompts" / prompt_file
-    
-    if not prompt_path.exists():
-        raise FileNotFoundError(f"Prompt file not found: {prompt_path}")
-    
-    with open(prompt_path, 'r', encoding='utf-8') as f:
-        content = f.read()
-    
-    # Split frontmatter and content
-    if content.startswith('---'):
-        parts = content.split('---', 2)
-        if len(parts) >= 3:
-            return parts[2].strip()  # Return content after frontmatter
-    
-    return content.strip()
-
-
-def format_prompt(prompt_content: str, **variables) -> str:
-    """Format a prompt template with the given variables."""
-    # Replace template variables
-    for key, value in variables.items():
-        prompt_content = prompt_content.replace(f"{{{{{key}}}}}", str(value))
-    
-    return prompt_content
-
 
 class DeepOrchestratorMonitor:
     """Monitor to expose all internal state of the Deep Orchestrator"""
@@ -478,8 +450,13 @@ async def main(output_path: str = None, ticker: str = None, company_name: str = 
         # Create display layout
         layout = create_display_layout()
 
+
+        # Define the location of the prompts
+        script_dir = Path(__file__).parent
+        prompt_dir = script_dir / "prompts"
+
         # Load and format the financial research task prompt
-        financial_prompt = load_prompt_markdown("financial_research_agent.md")
+        financial_prompt = load_prompt_markdown(prompt_dir / "financial_research_agent.md")
         task = format_prompt(
             financial_prompt,
             company_name=company_name or "Meta Platforms, Inc.",
@@ -520,7 +497,7 @@ async def main(output_path: str = None, ticker: str = None, company_name: str = 
                 )
 
                 # Load and format the Excel agent prompt
-                excel_prompt = load_prompt_markdown("excel_writer_agent.md")
+                excel_prompt = load_prompt_markdown(prompt_dir / "excel_writer_agent.md")
                 excel_instruction = format_prompt(
                     excel_prompt,
                     stock_ticker=ticker or "META",
