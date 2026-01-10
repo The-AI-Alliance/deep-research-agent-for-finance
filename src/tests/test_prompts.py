@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 import os, re, sys
 
-from utils import (
+from finance_deep_search.prompts import (
     split_frontmatter_and_content,
     load_prompt_markdown, format_prompt
 )
@@ -109,6 +109,28 @@ class TestPromptUtils(unittest.TestCase):
         at = actual_text.strip()
         self.assertEqual(et, at,
             f'<{et}> != <{at}> (kvs: {kvs}, text = {text})')
+
+    @given(st.text(), st.text())
+    def test_load_prompt_markdown_returns_the_content_only(self,
+        frontmatter: str, content: str):
+        """The frontmatter is removed from the returned content."""
+        with open("temp_prompt.md", 'w', encoding='utf-8') as prompt_file:
+            prompt_file.write('---\n')
+            prompt_file.write(frontmatter)
+            prompt_file.write('\n')
+            prompt_file.write('---\n')
+            prompt_file.write(content)
+        prompt_test_file = Path("temp_prompt.md")
+        actual_content = load_prompt_markdown(prompt_test_file)
+        prompt_test_file.unlink()
+        self.assertEqual(content, actual_content)
+
+    def test_load_prompt_markdown_returns_the_content_only(self):
+        """FileNotFoundError is raised if the file doesn't exist."""
+        prompt_test_file = Path("does_not_exist.md")
+        with self.assertRaises(FileNotFoundError):
+            actual_content = load_prompt_markdown(prompt_test_file)
+
 
 if __name__ == "__main__":
     unittest.main()

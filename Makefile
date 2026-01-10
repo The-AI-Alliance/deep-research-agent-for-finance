@@ -3,7 +3,8 @@ pages_url    := https://the-ai-alliance.github.io/deep-research-agent-for-financ
 docs_dir     := docs
 site_dir     := ${docs_dir}/_site
 clean_dirs   := ${site_dir} ${docs_dir}/.sass-cache
-app_dir      := src/finance_deep_search
+src_dir      := src
+app_dir      := finance_deep_search
 
 # Environment variables
 MAKEFLAGS           ?= # -w --warn-undefined-variables
@@ -12,6 +13,8 @@ UNAME               ?= $(shell uname)
 ARCHITECTURE        ?= $(shell uname -m)
 
 # App defaults
+# Hack: on the command line, use `make APP_ARGS='--foo bar' target` to pass command-line
+# arguments '--foo bar' to commands executed when building "target".
 APP_OUTPUT          ?= output
 
 # Override when running `make view-local` using e.g., `JEKYLL_PORT=8000 make view-local`
@@ -20,6 +23,11 @@ JEKYLL_PORT         ?= 4000
 # Used for version tagging release artifacts.
 GIT_HASH            ?= $(shell git show --pretty="%H" --abbrev-commit |head -1)
 NOW                 ?= $(shell date +"%Y%m%d-%H%M%S")
+
+foo:
+	echo ${@}
+	echo ${MAKEFLAGS}
+	echo ${MAKECMDGOALS}
 
 define help_message
 Quick help for this make process.
@@ -100,7 +108,10 @@ endef
 all:: app-run
 
 app-run:: app-check
-	uv run ${app_dir}/main.py --output-path ${APP_OUTPUT} ${APP_ARGS}
+	cd ${src_dir} && uv run ${app_dir}/main.py --output-path ${APP_OUTPUT} ${APP_ARGS}
+
+test tests:: uv-check
+	cd src && uv run python -m unittest discover -s tests
 
 app-check:: uv-check mcp-agent-check
 uv-check::
@@ -112,8 +123,8 @@ app-setup:: uv-check
 	uv add mcp-agent
 
 app-help:: 
-	@echo "Help on ${app_dir}/main.py:"
-	uv run ${app_dir}/main.py --help  
+	@echo "Help on ${src_dir}/${app_dir}/main.py:"
+	cd ${src_dir} && uv run ${app_dir}/main.py --help  
 	@echo
 	@echo "The default arguments passed by 'make app-run' are '--output-path ${APP_OUTPUT}'."
 	@echo "To override the argument to --output-path, use 'make APP_OUTPUT=... app-run'."
@@ -131,10 +142,13 @@ print-info:
 	@echo "Some of this information pertains to the website:"
 	@echo "GitHub Pages URL:    ${pages_url}"
 	@echo "current dir:         ${PWD}"
-	@echo "app dir:             ${app_dir}"
+	@echo "src dir:             ${src_dir}"
+	@echo "app dir:             ${app_dir} (under ${src_dir})"
 	@echo "docs dir:            ${docs_dir}"
 	@echo "site dir:            ${site_dir}"
 	@echo "clean dirs:          ${clean_dirs} (deleted by 'make clean')"
+	@echo "APP_ARGS:            ${APP_ARGS}"
+	@echo "APP_OUTPUT:          ${APP_OUTPUT}"
 	@echo
 	@echo "MAKEFLAGS:           ${MAKEFLAGS}"
 	@echo "MAKEFLAGS_RECURSIVE: ${MAKEFLAGS_RECURSIVE}"
@@ -143,9 +157,6 @@ print-info:
 	@echo "ARCHITECTURE:        ${ARCHITECTURE}"
 	@echo "GIT_HASH:            ${GIT_HASH}"
 	@echo "NOW:                 ${NOW}"
-
-test tests:: uv-check
-	cd src && uv run python -m unittest discover -s tests
 
 clean::
 	rm -rf ${clean_dirs} 

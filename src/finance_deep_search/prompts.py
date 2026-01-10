@@ -38,8 +38,8 @@ def load_prompt_markdown(prompt_path: Path) -> str:
     
     with open(prompt_path, 'r', encoding='utf-8') as f:
         content = f.read()
-        frontmatter_and_content = split_frontmatter_and_content(content)
-        return frontmatter_and_content[0]
+        frontmatter, content = split_frontmatter_and_content(content)
+        return content
 
 def format_prompt(prompt_content: str, **variables) -> str:
     """

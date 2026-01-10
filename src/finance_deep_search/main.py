@@ -43,16 +43,17 @@ from mcp_agent.workflows.deep_orchestrator.config import (
 from mcp_agent.workflows.llm.augmented_llm_openai import OpenAIAugmentedLLM
 from mcp_agent.workflows.llm.augmented_llm import RequestParams
 
-from utils import load_prompt_markdown, format_prompt
+from prompts import load_prompt_markdown, format_prompt
 
-app = MCPApp(name="finance_deep_research")
+def_app_name = "finance_deep_research"
 
 console = Console(highlight=False, soft_wrap=False, emoji=False)
 
 class DeepOrchestratorMonitor:
     """Monitor to expose all internal state of the Deep Orchestrator"""
 
-    def __init__(self, orchestrator: DeepOrchestrator):
+    def __init__(self, app_name: str, orchestrator: DeepOrchestrator):
+        self.app_name = str
         self.orchestrator = orchestrator
         self.start_time = time.time()
 
@@ -410,7 +411,7 @@ def update_display(layout: Layout, monitor: DeepOrchestratorMonitor):
 async def main(output_path: str = None, ticker: str = None, company_name: str = None):
 
     # Initialize MCP App
-    app = MCPApp(name="finance_deep_research")
+    app = MCPApp(name=def_app_name)
 
     async with app.run() as mcp_app:
         context = mcp_app.context
@@ -634,18 +635,18 @@ if __name__ == "__main__":
         description="Deep Finance Research using orchestrated AI agents"
     )
     parser.add_argument(
-        "--ticker",
+        "-t", "--ticker",
         default="META",
         help="Stock ticker symbol (default: META, e.g., META, AAPL, GOOGL)"
     )
     parser.add_argument(
-        "--output-path",
-        required=True,
-        help="Path where Excel output files will be saved"
+        "-c", "--company-name",
+        help="Full company name (optional, will be inferred from ticker if not provided)"
     )
     parser.add_argument(
-        "--company-name",
-        help="Full company name (optional, will be inferred from ticker if not provided)"
+        "-o", "--output-path",
+        required=True,
+        help="Path where Excel output files will be saved"
     )
     
     args = parser.parse_args()
@@ -657,5 +658,16 @@ if __name__ == "__main__":
     # Change to example directory
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
+    company = args.company_name
+    if not company:
+        company = f"(inferred from the ticker symbol: {args.ticker})"
+
+    print(f"""
+{def_app_name}:
+  Ticker:      {args.ticker}
+  Company:     {company}
+  Output path: {args.output_path}
+""")
+    sys.exit(0)
     # Run the example
     asyncio.run(main(args.output_path, args.ticker, args.company_name))
