@@ -3,7 +3,8 @@ pages_url    := https://the-ai-alliance.github.io/deep-research-agent-for-financ
 docs_dir     := docs
 site_dir     := ${docs_dir}/_site
 clean_dirs   := ${site_dir} ${docs_dir}/.sass-cache
-app_dir      := src/finance_deep_search
+src_dir      := src
+app_dir      := finance_deep_search
 
 # Environment variables
 MAKEFLAGS           ?= # -w --warn-undefined-variables
@@ -12,7 +13,16 @@ UNAME               ?= $(shell uname)
 ARCHITECTURE        ?= $(shell uname -m)
 
 # App defaults
-APP_OUTPUT          ?= output
+# Hack: on the command line, use `make APP_ARGS='--foo bar' target` to pass other 
+# command-line arguments, e.g., '--help', to commands executed when building targets
+# that run the app command.
+TICKER                  ?= META
+COMPANY_NAME            ?= Meta Platforms, Inc.
+ORCHESTRATOR_MODEL      ?= gpt-4o
+REPORT_GENERATION_MODEL ?= o4-mini
+OUTPUT_PATH             ?= ./output
+PROMPTS_PATH            ?= ./prompts
+APP_ARGS                ?=
 
 # Override when running `make view-local` using e.g., `JEKYLL_PORT=8000 make view-local`
 JEKYLL_PORT         ?= 4000
@@ -22,26 +32,35 @@ GIT_HASH            ?= $(shell git show --pretty="%H" --abbrev-commit |head -1)
 NOW                 ?= $(shell date +"%Y%m%d-%H%M%S")
 
 define help_message
-Quick help for this make process.
+Quick help for this make process
+
+Targets for the application:
 
 make all                # Run the application by building "app-run".
 make app-run            # Run the application with default arguments
-make app-help           # Run the application with --help to see the available arguments.
+make app-help           # Run the application with --help to see the support arguments.
+                        # Also prints the default invocation used by "app-run".
 make app-setup          # One-time setup of the application dependences.
+make test               # Run the automated tests. ("make tests" is a synonym...)
 
-make clean              # Remove built artifacts, etc.
+Targets for the GitHub pages documentation:
+
 make view-pages         # View the published GitHub pages in a browser.
-make view-local         # View the pages locally (requires Jekyll).
-                        # Tip: "JEKYLL_PORT=8000 make view-local" uses port 8000 instead of 4000!
+make view-local         # View the pages locally. Makes 'setup-jekyll' and 'run-jekyll'.
+                        # Tip: "JEKYLL_PORT=8000 make view-local" uses port 8000 instead of 4000.
+make run-jekyll         # Used by "view-local"; assumes everything is already setup.
+                        # Tip: "JEKYLL_PORT=8000 make run-jekyll" uses port 8000 instead of 4000.
+make setup-jekyll       # Install Jekyll. Ruby 3.X must be installed already. 
+                        # Only needed once for local viewing of the document.
 
-Miscellaneous tasks for help, debugging, setup, etc.
+Miscellaneous make targets for help, debugging, etc.:
 
 make help               # Prints this output.
-make print-info         # Print the current values of some make and env. variables.
-make setup-jekyll       # Install Jekyll. Make sure Ruby is installed. 
-                        # (Only needed for local viewing of the document.)
-make run-jekyll         # Used by "view-local"; assumes everything is already built.
-                        # Tip: "JEKYLL_PORT=8000 make run-jekyll" uses port 8000 instead of 4000!
+make print-info         # Print all the current values of some make and env. variables.
+make print-app-info     # Print just the values related to the app.
+make print-make-info    # Print just the values related to make, etc.
+make print-docs-info    # Print just the values related to the GitHub Pages docs.
+make clean              # Deletes these directories: ${clean_dirs}
 endef
 
 define missing_uv_message
@@ -49,8 +68,10 @@ ERROR: The Python dependency manager \'uv\' is used. Please visit https://docs.a
 endef
 
 define missing_mcp_agent_message
-ERROR: The Python dependency \'mcp-agent\' is not installed. Either run \'uv add mcp-agent\' or \'make app-setup\'.
+ERROR: The Python dependency \'mcp-agent\' is not installed. Either run \'make app-setup\' or \'uv add mcp-agent\'.
 endef
+foo:
+	@echo ${missing_mcp_agent_message}
 
 ifndef docs_dir
 $(error ERROR: There is no ${docs_dir} directory!)
@@ -93,29 +114,50 @@ endef
 
 .PHONY: all view-pages view-local clean help 
 .PHONY: setup-jekyll run-jekyll
-.PHONY: app-run app-setup app-check uv-check mcp-agent-check app-help
+.PHONY: app-run do-app-run app-setup app-check uv-check uv-cmd-check venv-check
+.PHONY: mcp-agent-check app-help test tests
+.PHONY: print-info print-app-info print-make-info print-docs-info
 
 all:: app-run
 
-app-run:: app-check
-	uv run ${app_dir}/main.py --output-path ${APP_OUTPUT} ${APP_ARGS}
+app-run:: app-check do-app-run
+do-app-run::
+	cd ${src_dir} && uv run ${app_dir}/main.py \
+		--ticker "${TICKER}" \
+		--company-name "${COMPANY_NAME}" \
+		--prompts-path "${PROMPTS_PATH}" \
+		--output-path "${OUTPUT_PATH}" \
+		--orchestrator-model "${ORCHESTRATOR_MODEL}" \
+		--report-generation-model "${REPORT_GENERATION_MODEL}" \
+		--verbose ${APP_ARGS}
+
+test tests:: uv-check
+	cd src && uv run python -m unittest discover -s tests
 
 app-check:: uv-check mcp-agent-check
-uv-check::
+
+uv-check:: uv-cmd-check venv-check
+uv-cmd-check::
 	@command -v uv > /dev/null || ( echo ${missing_uv_message} && exit 1 )
+venv-check::
+	[[ -d .venv ]] || uv venv
+
 mcp-agent-check::
 	@uv pip freeze | grep mcp-agent > /dev/null || ( echo ${missing_mcp_agent_message} && exit 1 )
 
-app-setup:: uv-check
+app-setup:: uv-check venv-check
 	uv add mcp-agent
 
 app-help:: 
-	@echo "Help on ${app_dir}/main.py:"
-	uv run ${app_dir}/main.py --help  
+	@echo "Help on ${src_dir}/${app_dir}/main.py:"
+	cd ${src_dir} && uv run ${app_dir}/main.py --help  
 	@echo
-	@echo "The default arguments passed by 'make app-run' are '--output-path ${APP_OUTPUT}'."
-	@echo "To override the argument to --output-path, use 'make APP_OUTPUT=... app-run'."
-	@echo "To add other arguments, use 'make APP_ARGS=\"...\" app-run'."
+	@echo "Run 'make print-app-info' to see the UPPER_CASE variables you can override"
+	@echo "Run 'make --just-print app-run' to see the default arguments used."
+	@echo "Here is what it prints:"
+	@${MAKE} --just-print do-app-run
+	@echo "(Some quoting is not shown for arguments containing whitespace.)"
+	@echo "To pass additional arguments, use 'make APP_ARGS=\"...\" app-run'."
 	@echo "(Note the quotes!)"
 		
 
@@ -125,25 +167,38 @@ help::
 	@echo "Run make app-help for more help on running the app."
 	@echo
 
-print-info:
-	@echo "Some of this information pertains to the website:"
-	@echo "GitHub Pages URL:    ${pages_url}"
-	@echo "current dir:         ${PWD}"
-	@echo "app dir:             ${app_dir}"
-	@echo "docs dir:            ${docs_dir}"
-	@echo "site dir:            ${site_dir}"
-	@echo "clean dirs:          ${clean_dirs} (deleted by 'make clean')"
-	@echo
-	@echo "MAKEFLAGS:           ${MAKEFLAGS}"
-	@echo "MAKEFLAGS_RECURSIVE: ${MAKEFLAGS_RECURSIVE}"
-	@echo "JEKYLL_PORT:         ${JEKYLL_PORT}"
-	@echo "UNAME:               ${UNAME}"
-	@echo "ARCHITECTURE:        ${ARCHITECTURE}"
-	@echo "GIT_HASH:            ${GIT_HASH}"
-	@echo "NOW:                 ${NOW}"
+print-info: print-app-info print-make-info print-docs-info
+print-app-info:
+	@echo "src dir:                ${src_dir}"
+	@echo "app dir:                ${app_dir} (under ${src_dir})"
+	@echo "OUTPUT_PATH             ${OUTPUT_PATH}"
+	@echo "TICKER                  ${TICKER}"
+	@echo "COMPANY_NAME            ${COMPANY_NAME}"
+	@echo "ORCHESTRATOR_MODEL      ${ORCHESTRATOR_MODEL}"
+	@echo "REPORT_GENERATION_MODEL ${REPORT_GENERATION_MODEL}"
+	@echo "APP_ARGS                ${APP_ARGS}"
+
+print-make-info:
+	@echo "MAKEFLAGS:              ${MAKEFLAGS}"
+	@echo "MAKEFLAGS_RECURSIVE:    ${MAKEFLAGS_RECURSIVE}"
+	@echo "JEKYLL_PORT:            ${JEKYLL_PORT}"
+	@echo "UNAME:                  ${UNAME}"
+	@echo "ARCHITECTURE:           ${ARCHITECTURE}"
+	@echo "GIT_HASH:               ${GIT_HASH}"
+	@echo "NOW:                    ${NOW}"
+	@echo "clean directories:      ${clean_dirs} (deleted by 'make clean')"
+
+print-docs-info:
+	@echo "GitHub Pages URL:       ${pages_url}"
+	@echo "docs dir:               ${docs_dir}"
+	@echo "site dir:               ${site_dir}"
+
 
 clean::
 	rm -rf ${clean_dirs} 
+
+## The rest of this Makefile is for running the GitHub Pages documentation 
+## website locally for testing and proofreading.
 
 view-pages::
 	@python -m webbrowser "${pages_url}" || \
