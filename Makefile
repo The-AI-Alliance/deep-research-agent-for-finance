@@ -2,7 +2,7 @@
 pages_url    := https://the-ai-alliance.github.io/deep-research-agent-for-finance/
 docs_dir     := docs
 site_dir     := ${docs_dir}/_site
-clean_dirs   := ${site_dir} ${docs_dir}/.sass-cache
+clean_dirs   := ${site_dir} ${docs_dir}/.sass-cache logs
 src_dir      := src
 app_dir      := finance_deep_search
 
@@ -136,6 +136,9 @@ do-app-run::
 		--orchestrator-model "${ORCHESTRATOR_MODEL}" \
 		--excel-writer-model "${EXCEL_WRITER_MODEL}" \
 		--verbose ${APP_ARGS}
+	@echo
+	@echo "Output files in ${OUTPUT_PATH}:"
+	@find ${OUTPUT_PATH}
 
 test tests:: uv-check
 	cd src && uv run python -m unittest discover -s tests

@@ -131,7 +131,7 @@ class DeepSearch():
         self.logger.info(f"Research result: {research_result}")
         self.logger.info(f"Writing research result to: {rr_file}")
         with open(rr_file, "w") as file:
-            file.write(content)
+            file.write(research_result)
 
         # The Excel writer task prompt
         excel_prompt = load_prompt_markdown(
@@ -172,6 +172,6 @@ class DeepSearch():
             self.logger.info(f"Excel result: {excel_result}")
             self.logger.info(f"Writing Excel result to: {er_file}")
             with open(er_file, "w") as file:
-                file.write(content)
+                file.write(excel_result)
 
         return results
