@@ -52,10 +52,10 @@ class DeepSearch():
         self.noop: bool = noop
 
         self.prompts_path: Path = Path(prompts_path)
-        self.financial_research_prompt_path: Path = 
-            self.__resolve_path(financial_research_prompt_path, prompts_path)
-        self.excel_writer_agent_prompt_path: Path = 
-            self.__resolve_path(excel_writer_agent_prompt_path, prompts_path)
+        self.financial_research_prompt_path: Path = self.__resolve_path(
+            financial_research_prompt_path, prompts_path)
+        self.excel_writer_agent_prompt_path: Path = self.__resolve_path(
+            excel_writer_agent_prompt_path, prompts_path)
 
         self.orchestrator = None
         self.token_counter = None
@@ -99,7 +99,7 @@ class DeepSearch():
         else:
             return path
 
-    async def run() -> DeepSearch:
+    async def run(self) -> DeepSearch:
         """
         The `update_loop` argument is called whenever the UX 
         needs to be updated with new content.
