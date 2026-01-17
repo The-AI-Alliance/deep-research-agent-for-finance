@@ -10,20 +10,26 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
+from typing import Callable
+
+from deep_search import DeepSearch
+
+class MarkdownDeepOrchestratorMonitor():
+    """Markdown-based monitor to expose all internal state of the Deep Orchestrator"""
+
+    def __init__(self, orchestrator: DeepOrchestrator):
+        self.orchestrator = orchestrator
+        self.start_time = time.time()
+
 
 async def markdown_main(
-    app_name: str,
-    ticker: str,
-    company_name: str,
-    orchestrator_model: str,
-    report_generation_model: str,
-    prompts_path: str,
-    output_path: str,
-    verbose: bool,
-    noop: bool):
+    args: argparse.Namespace, 
+    config: DeepOrchestratorConfig,
+    deep_search: DeepSearch,
+    make_monitor: Callable[[DeepOrchestrator], MarkdownDeepOrchestratorMonitor]):
 
-    msg = "Inside markdown_main: Markdown UX support is TODO."
-    if noop:
-        print(f"WARNING: {msg}")
+    if args.noop:
+        print(f"Inside markdown_main. Returning...")
+        return
     else:
-        raise Error(msg)
+        raise Error("Markdown support TODO.")

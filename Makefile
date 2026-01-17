@@ -16,13 +16,15 @@ ARCHITECTURE        ?= $(shell uname -m)
 # Hack: on the command line, use `make APP_ARGS='--foo bar' target` to pass other 
 # command-line arguments, e.g., '--help', to commands executed when building targets
 # that run the app command.
-TICKER                  ?= META
-COMPANY_NAME            ?= Meta Platforms, Inc.
-ORCHESTRATOR_MODEL      ?= gpt-4o
-REPORT_GENERATION_MODEL ?= o4-mini
-OUTPUT_PATH             ?= ./output
-PROMPTS_PATH            ?= ./prompts
-APP_ARGS                ?=
+TICKER                   ?= META
+COMPANY_NAME             ?= Meta Platforms, Inc.
+ORCHESTRATOR_MODEL       ?= gpt-4o
+EXCEL_WRITER_MODEL       ?= o4-mini
+PROMPTS_PATH             ?= ./prompts
+FIN_RESEARCH_PROMPT_FILE ?= financial_research_agent.md
+EXCEL_WRITER_PROMPT_FILE ?= excel_writer_agent.md
+OUTPUT_PATH              ?= ./output
+APP_ARGS                 ?=
 
 # Override when running `make view-local` using e.g., `JEKYLL_PORT=8000 make view-local`
 JEKYLL_PORT         ?= 4000
@@ -125,10 +127,12 @@ do-app-run::
 	cd ${src_dir} && uv run ${app_dir}/main.py \
 		--ticker "${TICKER}" \
 		--company-name "${COMPANY_NAME}" \
-		--prompts-path "${PROMPTS_PATH}" \
 		--output-path "${OUTPUT_PATH}" \
+		--prompts-path "${PROMPTS_PATH}" \
+		--financial-research-prompt-path "${FIN_RESEARCH_PROMPT_FILE}" \
+		--excel-writer-agent-prompt-path "${EXCEL_WRITER_PROMPT_FILE}" \
 		--orchestrator-model "${ORCHESTRATOR_MODEL}" \
-		--report-generation-model "${REPORT_GENERATION_MODEL}" \
+		--excel-writer-model "${EXCEL_WRITER_MODEL}" \
 		--verbose ${APP_ARGS}
 
 test tests:: uv-check
