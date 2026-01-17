@@ -25,8 +25,6 @@ from mcp_agent.workflows.deep_orchestrator.config import (
 )
 
 from deep_search import DeepSearch
-from rich import RichDeepOrchestratorMonitor
-from markdown import MarkdownDeepOrchestratorMonitor
 
 if __name__ == "__main__":
 
@@ -150,7 +148,7 @@ if __name__ == "__main__":
     )
 
     deep_search = DeepSearch(
-        app_name = args.app_name,
+        app_name = def_app_name,
         config = config,
         ticker = args.ticker,
         company_name = args.company_name,

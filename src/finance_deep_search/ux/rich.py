@@ -397,6 +397,8 @@ async def rich_main(
     # Initialize the rich console.
     console = Console(highlight=False, soft_wrap=False, emoji=False)
 
+    mcp_app = await deep_search.init()
+
     # Create monitor for state visibility
     monitor = RichDeepOrchestratorMonitor(deep_search.orchestrator)
 
@@ -411,16 +413,16 @@ async def rich_main(
                     update_display(layout, monitor)
                     await asyncio.sleep(0.25)  # Reduced from 0.5s
                 except Exception as e:
-                    logger.error(f"Display update error: {e}")
+                    mcp_app.logger.error(f"Display update error: {e}")
                     break
 
         # Start update loop
         update_task = asyncio.create_task(update_loop())
 
         start_time = time.time()
+        results = {}
         try:
-            async with deep_search.run() as _ds:
-
+            results = await deep_search.run()
         finally:
             # Final update
             update_display(layout, monitor)
@@ -436,25 +438,28 @@ async def rich_main(
             return s[:n] + "..." if len(s) > n else s
 
         # Show the research results
-        console.print(
-            Panel(
-                truncate(2000, deep_search.research_result),
-                title="📊 Financial Research Results (Preview)",
-                border_style="green",
-            )
-        )
-        
-        # Show excel creation result
-        if deep_search.excel_result:  # if we have a non-null value!
+        if results['research']:
             console.print(
                 Panel(
-                    truncate(2000, deep_search.excel_result),
+                    truncate(2000, results['research']),
+                    title="📊 Financial Research Results (Preview)",
+                    border_style="green",
+                )
+            )
+        else:
+            mcp_app.logger.warning("No research result!!")
+        
+        # Show excel creation result
+        if results['excel']:
+            console.print(
+                Panel(
+                    truncate(2000, results['excel']),
                     title="📈 Excel Creation Result",
                     border_style="blue",
                 )
             )
         else:
-            console.print("No Excel result!")
+            mcp_app.logger.warning("No Excel result!")
 
         # Display final statistics
         console.print("\n[bold cyan]📊 Final Statistics[/bold cyan]")
@@ -464,7 +469,7 @@ async def rich_main(
         summary_table.add_column("Metric", style="cyan", width=20)
         summary_table.add_column("Value", style="green")
 
-        orch = deep_search.orchestrator
+        orch = orchestrator
 
         summary_table.add_row("Total Time", f"{execution_time:.2f}s")
         summary_table.add_row("Iterations", str(orch.iteration))
