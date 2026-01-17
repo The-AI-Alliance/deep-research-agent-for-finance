@@ -18,12 +18,13 @@ ARCHITECTURE        ?= $(shell uname -m)
 # that run the app command.
 TICKER                   ?= META
 COMPANY_NAME             ?= Meta Platforms, Inc.
+REPORTING_CURRENCY       ?= USD
 ORCHESTRATOR_MODEL       ?= gpt-4o
 EXCEL_WRITER_MODEL       ?= o4-mini
 PROMPTS_PATH             ?= ./prompts
 FIN_RESEARCH_PROMPT_FILE ?= financial_research_agent.md
 EXCEL_WRITER_PROMPT_FILE ?= excel_writer_agent.md
-OUTPUT_PATH              ?= ./output
+OUTPUT_PATH              ?= ${PWD}/output/${TICKER}
 APP_ARGS                 ?=
 
 # Override when running `make view-local` using e.g., `JEKYLL_PORT=8000 make view-local`
@@ -128,6 +129,7 @@ do-app-run::
 		--ticker "${TICKER}" \
 		--company-name "${COMPANY_NAME}" \
 		--output-path "${OUTPUT_PATH}" \
+		--reporting-currency "${REPORTING_CURRENCY}" \
 		--prompts-path "${PROMPTS_PATH}" \
 		--financial-research-prompt-path "${FIN_RESEARCH_PROMPT_FILE}" \
 		--excel-writer-agent-prompt-path "${EXCEL_WRITER_PROMPT_FILE}" \
@@ -156,13 +158,13 @@ app-help::
 	@echo "Help on ${src_dir}/${app_dir}/main.py:"
 	cd ${src_dir} && uv run ${app_dir}/main.py --help  
 	@echo
-	@echo "Run 'make print-app-info' to see the UPPER_CASE variables you can override"
-	@echo "Run 'make --just-print app-run' to see the default arguments used."
-	@echo "Here is what it prints:"
+	@echo "TIP: Use 'make print-app-info' to see some make variables you can override."
+	@echo "TIP: Use 'make --just-print app-run' to see the default arguments used."
+	@echo "     Here is what it prints:"
+	@echo
 	@${MAKE} --just-print do-app-run
-	@echo "(Some quoting is not shown for arguments containing whitespace.)"
-	@echo "To pass additional arguments, use 'make APP_ARGS=\"...\" app-run'."
-	@echo "(Note the quotes!)"
+	@echo
+	@echo "TIP: To pass additional arguments, use 'make APP_ARGS=\"...\" app-run'. (Note the quotes!)"
 		
 
 help::
@@ -173,29 +175,38 @@ help::
 
 print-info: print-app-info print-make-info print-docs-info
 print-app-info:
-	@echo "src dir:                ${src_dir}"
-	@echo "app dir:                ${app_dir} (under ${src_dir})"
-	@echo "OUTPUT_PATH             ${OUTPUT_PATH}"
-	@echo "TICKER                  ${TICKER}"
-	@echo "COMPANY_NAME            ${COMPANY_NAME}"
-	@echo "ORCHESTRATOR_MODEL      ${ORCHESTRATOR_MODEL}"
-	@echo "REPORT_GENERATION_MODEL ${REPORT_GENERATION_MODEL}"
-	@echo "APP_ARGS                ${APP_ARGS}"
+	@echo "Company:"
+	@echo "  TICKER                   ${TICKER}"
+	@echo "  COMPANY_NAME             ${COMPANY_NAME}"
+	@echo "  REPORTING_CURRENCY       ${REPORTING_CURRENCY}"
+	@echo "Models:"
+	@echo "  ORCHESTRATOR_MODEL       ${ORCHESTRATOR_MODEL}"
+	@echo "  EXCEL_WRITER_MODEL       ${EXCEL_WRITER_MODEL}"
+	@echo "Prompts:"
+	@echo "  PROMPTS_PATH             ${PROMPTS_PATH}"
+	@echo "  FIN_RESEARCH_PROMPT_FILE ${FIN_RESEARCH_PROMPT_FILE}"
+	@echo "  EXCEL_WRITER_PROMPT_FILE ${EXCEL_WRITER_PROMPT_FILE}"
+	@echo "OUTPUT_PATH                ${OUTPUT_PATH}"
+	@echo "APP_ARGS                   ${APP_ARGS}"
+	@echo
 
 print-make-info:
-	@echo "MAKEFLAGS:              ${MAKEFLAGS}"
-	@echo "MAKEFLAGS_RECURSIVE:    ${MAKEFLAGS_RECURSIVE}"
-	@echo "JEKYLL_PORT:            ${JEKYLL_PORT}"
-	@echo "UNAME:                  ${UNAME}"
-	@echo "ARCHITECTURE:           ${ARCHITECTURE}"
-	@echo "GIT_HASH:               ${GIT_HASH}"
-	@echo "NOW:                    ${NOW}"
-	@echo "clean directories:      ${clean_dirs} (deleted by 'make clean')"
+	@echo "MAKEFLAGS:                 ${MAKEFLAGS}"
+	@echo "MAKEFLAGS_RECURSIVE:       ${MAKEFLAGS_RECURSIVE}"
+	@echo "JEKYLL_PORT:               ${JEKYLL_PORT}"
+	@echo "UNAME:                     ${UNAME}"
+	@echo "ARCHITECTURE:              ${ARCHITECTURE}"
+	@echo "GIT_HASH:                  ${GIT_HASH}"
+	@echo "NOW:                       ${NOW}"
+	@echo "clean directories:         ${clean_dirs} (deleted by 'make clean')"
+	@echo
 
 print-docs-info:
-	@echo "GitHub Pages URL:       ${pages_url}"
-	@echo "docs dir:               ${docs_dir}"
-	@echo "site dir:               ${site_dir}"
+	@echo "For the GitHub Pages website:"
+	@echo "  GitHub Pages URL:        ${pages_url}"
+	@echo "  docs dir:                ${docs_dir}"
+	@echo "  site dir:                ${site_dir}"
+	@echo
 
 
 clean::

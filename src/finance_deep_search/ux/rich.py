@@ -434,7 +434,7 @@ async def rich_main(
 
         execution_time = time.time() - start_time
         
-        def truncate(n: Int, s: str) -> str:
+        def truncate(n: int, s: str) -> str:
             return s[:n] + "..." if len(s) > n else s
 
         # Show the research results
@@ -447,7 +447,7 @@ async def rich_main(
                 )
             )
         else:
-            mcp_app.logger.warning("No research result!!")
+            mcp_app.logger.error("No research result!!")
         
         # Show excel creation result
         if results['excel']:
@@ -459,7 +459,7 @@ async def rich_main(
                 )
             )
         else:
-            mcp_app.logger.warning("No Excel result!")
+            mcp_app.logger.error("No Excel result!")
 
         # Display final statistics
         console.print("\n[bold cyan]📊 Final Statistics[/bold cyan]")
@@ -469,7 +469,10 @@ async def rich_main(
         summary_table.add_column("Metric", style="cyan", width=20)
         summary_table.add_column("Value", style="green")
 
-        orch = orchestrator
+        orch = deep_search.orchestrator
+        if not orch:
+            mcp_app.logger.error("The deep_search.orchestrator is not defined!")
+            sys.exit("The deep_search.orchestrator is not defined!")
 
         summary_table.add_row("Total Time", f"{execution_time:.2f}s")
         summary_table.add_row("Iterations", str(orch.iteration))
@@ -522,7 +525,7 @@ async def rich_main(
 
         # Display token usage if available
         if deep_search.token_counter:
-            summary = deep_search.token_counter.get_summary()
+            summary = await deep_search.token_counter.get_summary()
             if summary and hasattr(summary, "usage"):
                 console.print(
                     f"\n[bold]Total Tokens:[/bold] {summary.usage.total_tokens:,}"

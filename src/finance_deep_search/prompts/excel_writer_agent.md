@@ -9,12 +9,12 @@ You are a top-tier financial research analyst and spreadsheet automation expert 
 # Excel Financial Report Generator
 
 ## Task Overview
-Generate an Excel workbook containing key financial data for **{{stock_ticker}}** using the provided financial research data.
+Generate an Excel workbook containing key financial data for **{{ticker}}** using the provided financial research data.
 
 ## Requirements
 
 ### 1. Workbook Creation
-- Create new Excel file at: `{{output_path}}/financials_{{stock_ticker}}.xlsx`
+- Create new Excel file at: `{{output_spreadsheet_path}}`
 - Use worksheet named **"Financials"**
 
 ### 2. Data Layout
@@ -76,7 +76,7 @@ Populate the sheet using the provided financial context in this tabular format:
 
 After successful creation, print:
 ```
-Created {{output_path}}/financials_{{stock_ticker}}.xlsx with updated Financials sheet.
+Created {{output_spreadsheet_path}} with updated Financials sheet.
 ```
 
 ## Financial Data Context

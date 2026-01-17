@@ -31,29 +31,33 @@ class DeepSearch():
             config: DeepOrchestratorConfig,
             ticker: str,
             company_name: str,
+            reporting_currency: str,
             orchestrator_model_name: str,
             excel_writer_model_name: str,
             prompts_path: str,
             financial_research_prompt_path: str,
             excel_writer_agent_prompt_path: str,
             output_path: str,
+            output_spreadsheet_path: str,
             verbose: bool,
             noop: bool):
         self.app_name: str = app_name
         self.config: DeepOrchestratorConfig = config
         self.ticker: str = ticker
         self.company_name: str = company_name
+        self.reporting_currency:str = reporting_currency
         self.orchestrator_model_name: str = orchestrator_model_name
         self.excel_writer_model_name: str = excel_writer_model_name
         self.output_path: str = output_path
+        self.output_spreadsheet_path = output_spreadsheet_path
         self.verbose: bool = verbose
         self.noop: bool = noop
 
         self.prompts_path: Path = Path(prompts_path)
         self.financial_research_prompt_path: Path = self.__resolve_path(
-            financial_research_prompt_path, prompts_path)
+            financial_research_prompt_path, self.prompts_path)
         self.excel_writer_agent_prompt_path: Path = self.__resolve_path(
-            excel_writer_agent_prompt_path, prompts_path)
+            excel_writer_agent_prompt_path, self.prompts_path)
 
         if noop:
             print(f"Inside DeepSearch. Returning...")
@@ -107,9 +111,11 @@ class DeepSearch():
             self.financial_research_prompt_path)
         financial_task_prompt = format_prompt(
             financial_prompt,
+            ticker=self.ticker,
             company_name=self.company_name,
-            ticker=self.ticker, 
-            units="$ millions"
+            reporting_currency=self.reporting_currency, 
+            units="$ millions",
+            output_path=self.output_path,
         )
 
         research_result = await self.orchestrator.generate_str(
@@ -120,17 +126,25 @@ class DeepSearch():
                 max_iterations=10
             ),
         )
-        self.logger(f"Research result:\n{research_result}")
         results['research'] = research_result
+        rr_file = f"{self.output_path}/research_result.txt"
+        self.logger.info(f"Research result: {research_result}")
+        self.logger.info(f"Writing research result to: {rr_file}")
+        with open(rr_file, "w") as file:
+            file.write(content)
 
         # The Excel writer task prompt
         excel_prompt = load_prompt_markdown(
             self.excel_writer_agent_prompt_path)
         excel_instruction = format_prompt(
             excel_prompt,
-            stock_ticker=self.ticker,
+            financial_data=self.research_result,
+            ticker=self.ticker,
+            company_name=self.company_name,
+            reporting_currency=self.reporting_currency, 
+            units="$ millions",
             output_path=self.output_path,
-            financial_data=self.research_result
+            output_spreadsheet_path=self.output_spreadsheet_path,
         )
 
         excel_agent = Agent(
@@ -153,7 +167,11 @@ class DeepSearch():
                     max_iterations=10
                 ),
             )
-            self.logger(f"Excel result:\n{excel_result}")
             results['excel'] = excel_result
+            er_file = f"{self.output_path}/excel_result.txt"
+            self.logger.info(f"Excel result: {excel_result}")
+            self.logger.info(f"Writing Excel result to: {er_file}")
+            with open(er_file, "w") as file:
+                file.write(content)
 
         return results
