@@ -9,7 +9,6 @@ import re
 import sys
 import time
 from datetime import datetime
-from pathlib import Path
 
 from rich.console import Console
 from rich.table import Table
@@ -21,7 +20,6 @@ from rich.columns import Columns
 from rich import box
 
 from deep_search import DeepSearch
-from prompts import load_prompt_markdown, format_prompt
 
 from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
 from mcp_agent.workflows.deep_orchestrator.config import DeepOrchestratorConfig
@@ -34,7 +32,7 @@ class RichDeepOrchestratorMonitor():
         self.start_time = time.time()
 
     def get_budget_table(self) -> Table:
-        """Get budget status as a table"""
+        """Get budget status as a Rich Table"""
         budget = self.orchestrator.budget
         usage = budget.get_usage_pct()
         budget.get_remaining()
@@ -74,7 +72,7 @@ class RichDeepOrchestratorMonitor():
         return table
 
     def get_queue_tree(self) -> Tree:
-        """Get task queue as a tree"""
+        """Get task queue as a Rich Tree"""
         queue = self.orchestrator.queue
         tree = Tree("📋 Task Queue")
 
@@ -160,7 +158,7 @@ class RichDeepOrchestratorMonitor():
         return tree
 
     def get_plan_table(self) -> Table:
-        """Get the current plan as a table"""
+        """Get the current plan as a Rich Table"""
         table = Table(title="📝 Current Plan", box=box.ROUNDED, show_header=True)
         table.add_column("Step", style="cyan", width=3)
         table.add_column("Description", style="yellow")
@@ -199,7 +197,7 @@ class RichDeepOrchestratorMonitor():
 
     # TODO: this isn't called!!
     def get_token_stats_panel(self) -> Panel:
-        """Get token usage statistics"""
+        """Get token usage statistics as a Rich Panel"""
         lines = []
 
         # Get token breakdown from context if available
@@ -247,7 +245,7 @@ class RichDeepOrchestratorMonitor():
         return Panel("\n".join(lines), title="📊 Token Usage", border_style="blue")
 
     def get_memory_panel(self) -> Panel:
-        """Get memory status as a panel"""
+        """Get memory status as a Rich Panel"""
         memory = self.orchestrator.memory
         stats = memory.get_stats()
 
@@ -269,7 +267,7 @@ class RichDeepOrchestratorMonitor():
         return Panel(content, title="🧠 Memory", border_style="blue")
 
     def get_agents_table(self) -> Table:
-        """Get agent cache status"""
+        """Get agent cache status as a Rich Table"""
         cache = self.orchestrator.agent_cache
 
         table = Table(title="🤖 Agent Cache", box=box.SIMPLE)
@@ -295,7 +293,7 @@ class RichDeepOrchestratorMonitor():
         return table
 
     def get_policy_panel(self) -> Panel:
-        """Get policy engine status"""
+        """Get policy engine status as a Rich Panel"""
         policy = self.orchestrator.policy
 
         lines = [
@@ -308,7 +306,7 @@ class RichDeepOrchestratorMonitor():
         return Panel("\n".join(lines), title="⚙️ Policy Engine", border_style="yellow")
 
     def get_status_summary(self) -> Panel:
-        """Get overall status summary"""
+        """Get overall status summary as a Rich Panel"""
         elapsed = time.time() - self.start_time
 
         lines = [
@@ -322,7 +320,7 @@ class RichDeepOrchestratorMonitor():
 
 
 def create_display_layout() -> Layout:
-    """Create the display layout"""
+    """Create the display Rich Layout"""
     layout = Layout()
 
     # Main structure
@@ -384,6 +382,88 @@ def update_display(layout: Layout, monitor: RichDeepOrchestratorMonitor):
     )
     layout["right"].update(right_content)
 
+def display_final_statistics(console: Console, orchestrator: DeepOrchestrator):
+    # Display final statistics
+    console.print("\n[bold cyan]📊 Final Statistics[/bold cyan]")
+
+    # Create summary table
+    summary_table = Table(title="Execution Summary", box=box.DOUBLE_EDGE)
+    summary_table.add_column("Metric", style="cyan", width=20)
+    summary_table.add_column("Value", style="green")
+
+    summary_table.add_row("Total Time", f"{execution_time:.2f}s")
+    summary_table.add_row("Iterations", str(orchestrator.iteration))
+    summary_table.add_row("Replans", str(orchestrator.replan_count))
+    summary_table.add_row(
+        "Tasks Completed", str(len(orchestrator.queue.completed_task_names))
+    )
+    summary_table.add_row(
+        "Tasks Failed", str(len(orchestrator.queue.failed_task_names))
+    )
+    summary_table.add_row(
+        "Knowledge Items", str(len(orchestrator.memory.knowledge))
+    )
+    summary_table.add_row(
+        "Artifacts Created", str(len(orchestrator.memory.artifacts))
+    )
+    summary_table.add_row("Agents Cached", str(len(orchestrator.agent_cache.cache)))
+    summary_table.add_row(
+        "Cache Hit Rate",
+        f"{orchestrator.agent_cache.hits / max(1, orchestrator.agent_cache.hits + orchestrator.agent_cache.misses):.1%}",
+    )
+
+    console.print(summary_table)
+
+def display_budget_summary(console: Console, orchestrator: DeepOrchestrator):
+    # Display budget summary
+    budget_summary = orchestrator.budget.get_status_summary()
+    console.print(f"\n[yellow]{budget_summary}[/yellow]")
+
+    # Display knowledge learned
+    if orchestrator.memory.knowledge:
+        console.print("\n[bold cyan]🧠 Knowledge Extracted[/bold cyan]")
+
+        knowledge_table = Table(box=box.SIMPLE)
+        knowledge_table.add_column("Category", style="cyan")
+        knowledge_table.add_column("Key", style="yellow")
+        knowledge_table.add_column("Value", style="green", max_width=50)
+        knowledge_table.add_column("Confidence", style="magenta")
+
+        for item in orchestrator.memory.knowledge[:10]:  # Show first 10
+            knowledge_table.add_row(
+                item.category,
+                item.key[:30] + "..." if len(item.key) > 30 else item.key,
+                str(item.value)[:50] + "..."
+                if len(str(item.value)) > 50
+                else str(item.value),
+                f"{item.confidence:.2f}",
+            )
+
+        console.print(knowledge_table)
+
+def display_token_usage(console: Console, orchestrator: DeepOrchestrator):
+    """Display the token usage, if available."""
+    if deep_search.token_counter:
+        summary = await deep_search.token_counter.get_summary()
+        if summary and hasattr(summary, "usage"):
+            console.print(
+                f"\n[bold]Total Tokens:[/bold] {summary.usage.total_tokens:,}"
+            )
+            if hasattr(summary, "cost"):
+                console.print(f"[bold]Total Cost:[/bold] ${summary.cost:.4f}")
+
+def display_workspace_artifacts(console: Console, orchestrator: DeepOrchestrator):
+    """Display workspace artifacts if any were created."""
+    if orchestrator.memory.artifacts:
+        console.print("\n[bold cyan]📁 Artifacts Created[/bold cyan]")
+        for name in list(orchestrator.memory.artifacts.keys())[:5]:
+            console.print(f"  • {name}")
+
+def display_final_data(console: Console, orchestrator: DeepOrchestrator):
+    display_final_statistics(console, deep_search.orchestrator)
+    display_budget_summary(console, deep_search.orchestrator)
+    display_token_usage(console, deep_search.orchestrator)
+    display_workspace_artifacts(console, deep_search.orchestrator)
 
 async def rich_main(
     args: argparse.Namespace, 
@@ -461,80 +541,4 @@ async def rich_main(
         else:
             mcp_app.logger.error("No Excel result!")
 
-        # Display final statistics
-        console.print("\n[bold cyan]📊 Final Statistics[/bold cyan]")
-
-        # Create summary table
-        summary_table = Table(title="Execution Summary", box=box.DOUBLE_EDGE)
-        summary_table.add_column("Metric", style="cyan", width=20)
-        summary_table.add_column("Value", style="green")
-
-        orch = deep_search.orchestrator
-        if not orch:
-            mcp_app.logger.error("The deep_search.orchestrator is not defined!")
-            sys.exit("The deep_search.orchestrator is not defined!")
-
-        summary_table.add_row("Total Time", f"{execution_time:.2f}s")
-        summary_table.add_row("Iterations", str(orch.iteration))
-        summary_table.add_row("Replans", str(orch.replan_count))
-        summary_table.add_row(
-            "Tasks Completed", str(len(orch.queue.completed_task_names))
-        )
-        summary_table.add_row(
-            "Tasks Failed", str(len(orch.queue.failed_task_names))
-        )
-        summary_table.add_row(
-            "Knowledge Items", str(len(orch.memory.knowledge))
-        )
-        summary_table.add_row(
-            "Artifacts Created", str(len(orch.memory.artifacts))
-        )
-        summary_table.add_row("Agents Cached", str(len(orch.agent_cache.cache)))
-        summary_table.add_row(
-            "Cache Hit Rate",
-            f"{orch.agent_cache.hits / max(1, orch.agent_cache.hits + orch.agent_cache.misses):.1%}",
-        )
-
-        console.print(summary_table)
-
-        # Display budget summary
-        budget_summary = orch.budget.get_status_summary()
-        console.print(f"\n[yellow]{budget_summary}[/yellow]")
-
-        # Display knowledge learned
-        if orch.memory.knowledge:
-            console.print("\n[bold cyan]🧠 Knowledge Extracted[/bold cyan]")
-
-            knowledge_table = Table(box=box.SIMPLE)
-            knowledge_table.add_column("Category", style="cyan")
-            knowledge_table.add_column("Key", style="yellow")
-            knowledge_table.add_column("Value", style="green", max_width=50)
-            knowledge_table.add_column("Confidence", style="magenta")
-
-            for item in orch.memory.knowledge[:10]:  # Show first 10
-                knowledge_table.add_row(
-                    item.category,
-                    item.key[:30] + "..." if len(item.key) > 30 else item.key,
-                    str(item.value)[:50] + "..."
-                    if len(str(item.value)) > 50
-                    else str(item.value),
-                    f"{item.confidence:.2f}",
-                )
-
-            console.print(knowledge_table)
-
-        # Display token usage if available
-        if deep_search.token_counter:
-            summary = await deep_search.token_counter.get_summary()
-            if summary and hasattr(summary, "usage"):
-                console.print(
-                    f"\n[bold]Total Tokens:[/bold] {summary.usage.total_tokens:,}"
-                )
-                if hasattr(summary, "cost"):
-                    console.print(f"[bold]Total Cost:[/bold] ${summary.cost:.4f}")
-
-        # Show workspace artifacts if any were created
-        if orch.memory.artifacts:
-            console.print("\n[bold cyan]📁 Artifacts Created[/bold cyan]")
-            for name in list(orch.memory.artifacts.keys())[:5]:
-                console.print(f"  • {name}")
+        display_final_data(console, deep_search.orchestrator)
