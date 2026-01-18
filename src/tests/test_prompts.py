@@ -6,6 +6,12 @@ import unittest
 from pathlib import Path
 import os, re, sys
 
+from tests.utils import (
+    nonempty_text,
+    no_brace_text,
+    no_brace_non_empty_text,
+)
+
 from finance_deep_search.prompts import (
     split_frontmatter_and_content,
     load_prompt_markdown, format_prompt
@@ -15,10 +21,6 @@ class TestPromptUtils(unittest.TestCase):
     """
     Test the prompt-related utilities.
     """
-
-    nonempty_texts = st.text().filter(lambda s: len(s) > 0)
-    no_brace_texts = st.text().map(lambda s: re.sub(r'[{}]+', '_', s))
-    no_brace_non_empty_texts = no_brace_texts.filter(lambda s: len(s) > 0)
 
     def check(self, frontmatter: str, content: str, text: str):
         """Ignore whitespace at the beginnings and the ends."""
@@ -93,7 +95,7 @@ class TestPromptUtils(unittest.TestCase):
         text2 = f"{before_frontmatter}\n---\n{frontmatter}\n---\n{all_content2}"
         self.check(frontmatter, all_content2, text2)        
 
-    @given(st.dictionaries(no_brace_non_empty_texts, no_brace_texts), st.text(), st.text())
+    @given(st.dictionaries(no_brace_non_empty_text, no_brace_text), st.text(), st.text())
     def test_format_prompt_replaces_keys_with_values(self, 
         kvs: dict[str, str], delimiter, prefix_suffix):
         """

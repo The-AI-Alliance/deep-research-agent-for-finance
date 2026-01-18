@@ -10,10 +10,6 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path, PosixPath
-from typing import (
-    Any,
-    Dict
-)
 
 from mcp_agent.app import MCPApp
 from mcp_agent.agents.agent import Agent
@@ -24,7 +20,7 @@ from mcp_agent.workflows.deep_orchestrator.config import DeepOrchestratorConfig
 from mcp_agent.workflows.llm.augmented_llm_openai import OpenAIAugmentedLLM
 from mcp_agent.workflows.llm.augmented_llm import RequestParams
 
-from prompts import load_prompt_markdown, format_prompt
+from finance_deep_search.prompts import load_prompt_markdown, format_prompt
 
 class DeepSearch():
 
@@ -105,7 +101,7 @@ class DeepSearch():
             self.logger = app.logger
             return app
     
-    async def run(self) -> Dict[str,str]:
+    async def run(self) -> dict[str,str]:
         results = {}
 
         # Load and format the financial research task prompt
