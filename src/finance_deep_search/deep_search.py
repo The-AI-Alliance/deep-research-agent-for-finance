@@ -17,6 +17,8 @@ from typing import (
 
 from mcp_agent.app import MCPApp
 from mcp_agent.agents.agent import Agent
+from mcp_agent.logging.logger import Logger
+from mcp_agent.tracing.token_counter import TokenCounter
 from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
 from mcp_agent.workflows.deep_orchestrator.config import DeepOrchestratorConfig
 from mcp_agent.workflows.llm.augmented_llm_openai import OpenAIAugmentedLLM
@@ -67,13 +69,13 @@ class DeepSearch():
         self.mcp_app = MCPApp(name=app_name)
 
         # These are lazily initialized!
-        self.orchestrator = None
-        self.token_counter = None
-        self.logger = None
+        self.orchestrator: DeepOrchestrator = None
+        self.token_counter: TokenCounter = None
+        self.logger: Logger = None
 
         # Hold the results...
-        self.research_result = None
-        self.excel_result = None
+        self.research_result: str = None
+        self.excel_result: str = None
 
 
     def __resolve_path(self, path_str: str, possible_parent: Path) -> Path:
