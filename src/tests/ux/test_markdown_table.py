@@ -7,7 +7,7 @@ from pathlib import Path
 import os, re, sys
 from random import sample
 
-from finance_deep_search.ux.markdown import MarkdownTable
+from finance_deep_search.ux.markdown_elements import MarkdownTable
 
 from tests.utils import (
     no_linefeeds_text,
@@ -44,9 +44,11 @@ class TestMarkdownTable(unittest.TestCase):
 
     def assert_header_rows(self,
         table: MarkdownTable, 
+        exp_title: str, 
         exp_columns: list[str],
         exp_columns_justifications: list[str],
         exp_rows: list[list[str]]):
+        self.assertEqual(exp_title, table.title)
         self.assert_consistent_sizes(exp_columns, exp_columns_justifications, exp_rows)
         self.assert_consistent_sizes(table.columns, table.columns_justifications, table.rows)
         self.assertEqual(len(exp_columns), len(table.columns))
@@ -66,17 +68,22 @@ class TestMarkdownTable(unittest.TestCase):
             self.assertEqual(exp_rows, table.rows, f"<{exp_rows}> vs. <{table.rows}>")
             
             all_lines = s.split('\n')
+            index = 0
+            if len(exp_title) > 0:
+                self.assertEqual(f"Title {exp_title}", all_lines[index])
+                index += 1
             ecs_str = f"| {' | '.join(exp_columns)} |"
-            self.assertEqual(ecs_str, all_lines[0], f"<{ecs_str}> vs. <{all_lines[0]}>? (whole string = <{s}>)")
+            self.assertEqual(ecs_str, all_lines[index], f"<{ecs_str}> vs. <{all_lines[index]}>? (whole string = <{s}>)")
+            index += 1
             ecjs_str = f"| {' | '.join(ecjs)} |"
-            self.assertEqual(ecjs_str, all_lines[1], f"<{ecjs_str}> == <{all_lines[1]}>? (whole string = <{s}>)")
+            self.assertEqual(ecjs_str, all_lines[index], f"<{ecjs_str}> == <{all_lines[index]}>? (whole string = <{s}>)")
+            index += 1
 
             for i in range(len(exp_rows)):
                 exp_row = exp_rows[i]
                 row = table.rows[i]
-                er_str = '| ' + ' | '.join([str(cell) for cell in exp_row]) + ' |'
-                r_str  = '| ' + ' | '.join([str(cell) for cell in row])     + ' |'
-                self.assertEqual(er_str, r_str, f"{i}: <{er_str}> == <{r_str}>?")
+                exp_row_str = '| ' + ' | '.join([str(cell) for cell in exp_row]) + ' |'
+                self.assertEqual(exp_row_str, all_lines[index+i], f"{i}: <{exp_row_str}> == <{all_lines[index+i]}>?")
 
     @given(st.lists(no_linefeeds_text), justifications(min_size=10, max_size=20))
     def test_justify_with_valid_values(self, columns: list[str], justs_samples: list[str | None]):
@@ -118,13 +125,14 @@ class TestMarkdownTable(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     MarkdownTable.justify('-----', text+j)
 
-    def test_make_empty_table(self):
+    @given(no_linefeeds_text)
+    def test_make_empty_table_with_title(self, title: str):
         """
         Verify that a table constructed with a list of columns and default justifications
         is properly formed.
         """
-        table = MarkdownTable()
-        self.assert_header_rows(table, [], [], [])
+        table = MarkdownTable(title=title)
+        self.assert_header_rows(table, title, [], [], [])
 
     @given(st.lists(no_linefeeds_text))
     def test_make_table_with_columns_that_default_to_left_justification(self, columns: list[str]):
@@ -132,8 +140,8 @@ class TestMarkdownTable(unittest.TestCase):
         Verify that a table constructed with a list of columns and default justifications
         is properly formed.
         """
-        table = MarkdownTable(columns)
-        self.assert_header_rows(table, columns, ['left' for _ in columns], [])
+        table = MarkdownTable(columns = columns)
+        self.assert_header_rows(table, '', columns, ['left' for _ in columns], [])
 
     @given(st.lists(no_linefeeds_text), justifications(min_size=10, max_size=20))
     def test_make_table_with_columns_with_justifications(self, columns: list[str], justs_samples: list[str | None]):
@@ -142,8 +150,8 @@ class TestMarkdownTable(unittest.TestCase):
         is properly formed.
         """
         cjs, justs = self.make_columns_justifications(columns, justs_samples)
-        table = MarkdownTable(cjs)
-        self.assert_header_rows(table, columns, justs, [])
+        table = MarkdownTable(columns = cjs)
+        self.assert_header_rows(table, '', columns, justs, [])
 
     @given(st.lists(no_linefeeds_text))
     def test_table_add_columns_that_default_to_left_justification(self, columns: list[str]):
@@ -154,12 +162,12 @@ class TestMarkdownTable(unittest.TestCase):
         table = MarkdownTable()
         justs = ['left' for _ in columns]
         table.add_columns(columns)
-        self.assert_header_rows(table, columns, justs, [])
+        self.assert_header_rows(table, '', columns, justs, [])
         more_columns = [f"{col}2" for col in columns]
         more_justs = ['left' for _ in more_columns]
 
         table.add_columns(more_columns)
-        self.assert_header_rows(table, columns+more_columns, justs+more_justs, [])
+        self.assert_header_rows(table, '', columns+more_columns, justs+more_justs, [])
 
     @given(st.lists(no_linefeeds_text), justifications(min_size=10, max_size=20))
     def test_table_add_columns_with_justifications(self, columns: list[str], justs_samples: list[str | None]):
@@ -170,11 +178,11 @@ class TestMarkdownTable(unittest.TestCase):
         table = MarkdownTable()
         cjs, justs = self.make_columns_justifications(columns, justs_samples)
         table.add_columns(cjs)
-        self.assert_header_rows(table, columns, justs, [])
+        self.assert_header_rows(table, '', columns, justs, [])
         more_columns = [f"{col}2" for col in columns]
         more_cjs, more_justs = self.make_columns_justifications(more_columns, justs_samples)
         table.add_columns(more_cjs)
-        self.assert_header_rows(table, columns+more_columns, justs+more_justs, [])
+        self.assert_header_rows(table, '', columns+more_columns, justs+more_justs, [])
 
     @given(st.lists(no_linefeeds_text), justifications(min_size=10, max_size=20), st.lists(nonempty_no_linefeeds_text, min_size=1), st.integers(min_value = 1, max_value=10))
     def test_table_add_row_with_list_of_cells(self, columns: list[str], justs_samples: list[str | None], cell_samples: list[str], num_rows: int):
@@ -183,7 +191,7 @@ class TestMarkdownTable(unittest.TestCase):
         and then with rows added with all cells, is properly formed.
         """
         cjs, justs = self.make_columns_justifications(columns, justs_samples)
-        table = MarkdownTable(cjs)
+        table = MarkdownTable(columns = cjs)
         len_cols = len(columns)
         rows = []
         if len_cols > 0:
@@ -192,7 +200,7 @@ class TestMarkdownTable(unittest.TestCase):
                 row = make_n_samples(cell_samples, len_cols)
                 rows.append(row)
                 table.add_row(row)
-        self.assert_header_rows(table, columns, justs, rows)
+        self.assert_header_rows(table, '', columns, justs, rows)
 
     @given(st.lists(nonempty_no_linefeeds_text), justifications(min_size=10, max_size=20), st.lists(nonempty_no_linefeeds_text, min_size=1), st.integers(min_value = 1, max_value=10))
     def test_table_add_row_with_list_of_tuples(self, columns: list[str], justs_samples: list[str | None], cell_samples: list[str], num_rows: int):
@@ -201,7 +209,7 @@ class TestMarkdownTable(unittest.TestCase):
         and then with rows added using (column,cell) pairs, is properly formed.
         """
         cjs, justs = self.make_columns_justifications(columns, justs_samples)
-        table = MarkdownTable(cjs)
+        table = MarkdownTable(columns = cjs)
         len_cols = len(columns)
         rows = []
         if len_cols > 0:
@@ -214,7 +222,7 @@ class TestMarkdownTable(unittest.TestCase):
                 table.add_row(row)
                 rows.append(row)
         rows_lists = [table.row_dict_to_list(dict(row)) for row in rows]
-        self.assert_header_rows(table, columns, justs, rows_lists)
+        self.assert_header_rows(table, '', columns, justs, rows_lists)
 
     @given(st.lists(nonempty_no_linefeeds_text), justifications(min_size=10, max_size=20), st.lists(nonempty_no_linefeeds_text, min_size=1), st.integers(min_value = 1, max_value=10))
     def test_table_add_row_with_dict(self, columns: list[str], justs_samples: list[str | None], cell_samples: list[str], num_rows: int):
@@ -223,7 +231,7 @@ class TestMarkdownTable(unittest.TestCase):
         and then with rows added using (column,cell) pairs, is properly formed.
         """
         cjs, justs = self.make_columns_justifications(columns, justs_samples)
-        table = MarkdownTable(cjs)
+        table = MarkdownTable(columns = cjs)
         len_cols = len(columns)
         rows = []
         if len_cols > 0:
@@ -236,7 +244,7 @@ class TestMarkdownTable(unittest.TestCase):
                 table.add_row(row)
                 rows.append(row)
         rows_lists = [table.row_dict_to_list(dict(row)) for row in rows]
-        self.assert_header_rows(table, columns, justs, rows_lists)
+        self.assert_header_rows(table, '', columns, justs, rows_lists)
 
 
     @given(st.lists(nonempty_no_linefeeds_text, min_size=1), nonempty_no_linefeeds_text)
@@ -245,7 +253,7 @@ class TestMarkdownTable(unittest.TestCase):
         Verify that calling add_row with a tuple containing an unknown column name
         as the first value raises an error.
         """
-        table = MarkdownTable(columns)
+        table = MarkdownTable(columns = columns)
         set_columns = set(columns)
         if not other_text in set_columns:
             with self.assertRaises(ValueError):
@@ -257,7 +265,7 @@ class TestMarkdownTable(unittest.TestCase):
         Verify that calling add_row with a map containing an unknown column name
         as a key raises an error.
         """
-        table = MarkdownTable(columns)
+        table = MarkdownTable(columns = columns)
         set_columns = set(columns)
         if not other_text in set_columns:
             with self.assertRaises(ValueError):
@@ -268,7 +276,7 @@ class TestMarkdownTable(unittest.TestCase):
         """
         Verify that row_dict_to_list properly constructs a row with a partial set of valid keys.
         """
-        table = MarkdownTable(columns)
+        table = MarkdownTable(columns = columns)
         sub_len = int(len(columns)/2)
         if sub_len == 0:
             sub_len = 1
@@ -284,7 +292,7 @@ class TestMarkdownTable(unittest.TestCase):
         """
         Verify that row_dict_to_list raises an error if a key is not a recognized column name.
         """
-        table = MarkdownTable(columns)
+        table = MarkdownTable(columns = columns)
         set_columns = set(columns)
         if not other_text in set_columns:
             with self.assertRaises(ValueError):
