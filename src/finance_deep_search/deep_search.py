@@ -17,6 +17,10 @@ from mcp_agent.logging.logger import Logger
 from mcp_agent.tracing.token_counter import TokenCounter
 from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
 from mcp_agent.workflows.deep_orchestrator.config import DeepOrchestratorConfig
+# TODO: Import these dynamically based on the provider flag below, so the dependencies
+# aren't required when not used.
+from mcp_agent.workflows.llm.augmented_llm_anthropic import AnthropicAugmentedLLM
+# from mcp_agent.workflows.llm.augmented_llm_ollama import OllamaAugmentedLLM
 from mcp_agent.workflows.llm.augmented_llm_openai import OpenAIAugmentedLLM
 from mcp_agent.workflows.llm.augmented_llm import RequestParams
 
@@ -36,6 +40,7 @@ class DeepSearch():
             reporting_currency: str,
             orchestrator_model_name: str,
             excel_writer_model_name: str,
+            provider: str,
             prompts_path: str,
             financial_research_prompt_path: str,
             excel_writer_agent_prompt_path: str,
@@ -43,23 +48,35 @@ class DeepSearch():
             output_spreadsheet_path: str,
             verbose: bool,
             noop: bool):
-        self.app_name: str = app_name
-        self.config: DeepOrchestratorConfig = config
-        self.ticker: str = ticker
-        self.company_name: str = company_name
-        self.reporting_currency:str = reporting_currency
-        self.orchestrator_model_name: str = orchestrator_model_name
-        self.excel_writer_model_name: str = excel_writer_model_name
-        self.output_path: str = output_path
+        self.app_name = app_name
+        self.config = config
+        self.ticker = ticker
+        self.company_name = company_name
+        self.reporting_currency = reporting_currency
+        self.orchestrator_model_name = orchestrator_model_name
+        self.excel_writer_model_name = excel_writer_model_name
+        self.provider = provider
+        self.output_path = output_path
         self.output_spreadsheet_path = output_spreadsheet_path
-        self.verbose: bool = verbose
-        self.noop: bool = noop
+        self.verbose = verbose
+        self.noop = noop
 
         self.prompts_path: Path = Path(prompts_path)
         self.financial_research_prompt_path: Path = self.__resolve_path(
             financial_research_prompt_path, self.prompts_path)
         self.excel_writer_agent_prompt_path: Path = self.__resolve_path(
             excel_writer_agent_prompt_path, self.prompts_path)
+
+        self.llm_factory = None
+        match self.provider:
+            case 'anthropic':
+                self.llm_factory = AnthropicAugmentedLLM
+            case 'openai' | 'ollama':
+                self.llm_factory = OpenAIAugmentedLLM
+            # case 'ollama':
+            #     self.llm_factory = OllamaAIAugmentedLLM
+            case _:
+                raise ValueError(f"Unrecognized provider: {self.provider}")
 
         if noop:
             print(f"Inside DeepSearch. Returning...")
@@ -91,7 +108,7 @@ class DeepSearch():
 
             # Create the Deep Orchestrator with configuration
             self.orchestrator = DeepOrchestrator(
-                llm_factory=OpenAIAugmentedLLM,
+                llm_factory=self.llm_factory,
                 config=self.config,
                 context=app.context,
             )
@@ -158,7 +175,7 @@ class DeepSearch():
 
         async with excel_agent:
             excel_llm = await excel_agent.attach_llm(
-                OpenAIAugmentedLLM
+                self.llm_factory
             )
 
             excel_result = await excel_llm.generate_str(

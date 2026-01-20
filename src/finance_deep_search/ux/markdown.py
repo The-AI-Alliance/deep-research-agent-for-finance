@@ -391,10 +391,10 @@ class MarkdownDisplay():
         return section
 
     def add_financial_results(self, results: str) -> MarkdownSection:
-        return add_section("📊 Financial Research Results (Preview)", [results])
+        return self.add_section("📊 Financial Research Results (Preview)", [results])
 
     def add_excel_results(self, results: str) -> MarkdownSection:
-        return add_section("📈 Excel Creation Result", [results])
+        return self.add_section("📈 Excel Creation Result", [results])
     
 
     def get_final_statistics(self) -> MarkdownSection:
@@ -426,7 +426,7 @@ class MarkdownDisplay():
             ["Cache Hit Rate",
             f"{self.orchestrator.agent_cache.hits / max(1, self.orchestrator.agent_cache.hits + self.orchestrator.agent_cache.misses):.1%}"]
         )
-        return add_section("📊 Final Statistics", [], {summary_table.title, summary_table})
+        return self.add_section("📊 Final Statistics", [], {summary_table.title, summary_table})
 
     def get_budget_summary(self) -> MarkdownSection:
         budget_summary = self.orchestrator.budget.get_status_summary_table()
@@ -452,7 +452,7 @@ class MarkdownDisplay():
                     f"{item.confidence:.2f}",
                 ])
 
-        return add_section("🧠 Knowledge Extracted", [], {knowledge_table.title, knowledge_table})
+        return self.add_section("🧠 Knowledge Extracted", [], {knowledge_table.title, knowledge_table})
 
     async def get_token_usage(self) -> MarkdownSection:
         """Display the token usage, if available."""
@@ -464,7 +464,7 @@ class MarkdownDisplay():
                 if hasattr(summary, "cost"):
                     summary_info.append(f"* Total Cost: ${summary.cost:.4f}")
 
-        return add_section("Total Tokens", summary_info)
+        return self.add_section("Total Tokens", summary_info)
 
     def get_workspace_artifacts(self) -> MarkdownSection:
         """Display workspace artifacts if any were created."""
@@ -474,7 +474,7 @@ class MarkdownDisplay():
             for name in list(self.orchestrator.memory.artifacts.keys())[:5]:
                 artifacts_info.append(f"* {name}")
 
-        return add_section("📁 Artifacts Created", artifacts_info)
+        return self.add_section("📁 Artifacts Created", artifacts_info)
 
     def get_final_data(self) -> list[MarkdownSection]:
         """
@@ -543,7 +543,7 @@ async def markdown_main(
     else:
         research_results = "No research results!!"
 
-    fr = display.add_financial_results(self, research_results)
+    fr = display.add_financial_results(research_results)
     print(fr)
     mcp_app.logger.error(research_results)
     
@@ -554,7 +554,7 @@ async def markdown_main(
     else:
         excel_results = "No excel results!!"
 
-    er = display.add_excel_results(self, excel_results)
+    er = display.add_excel_results(excel_results)
     print(er)
     mcp_app.logger.error(excel_results)
 

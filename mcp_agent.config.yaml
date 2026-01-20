@@ -1,12 +1,16 @@
+# see https://docs.mcp-agent.com/reference/configuration
 $schema: ../../../schema/mcp-agent.config.schema.json
 
+name: deep_research_agent
 execution_engine: asyncio
+
 logger:
   transports: [file]
   level: debug
   progress_display: true
   path_settings:
-    path_pattern: "../../logs/mcp-agent-{unique_id}.jsonl"
+    # Logs rel
+    path_pattern: "../logs/deep-research-agent-{unique_id}.jsonl"
     unique_id: "timestamp" # Options: "timestamp" or "session_id"
     timestamp_format: "%Y%m%d_%H%M%S"
 
@@ -28,5 +32,22 @@ mcp:
       command: "uvx"
       args: ["excel-mcp-server", "stdio"]
       
+# for OpenAI. Since Ollama and OpenAI use the same config settings, because
+# the same `OpenAIAugmentedLLM` is used, you'll have to uncomment this section
+# and comment out the next "openai" section when you do inference with OpenAI.
+# Automated solution TBD...
+# s
+# openai:
+#   default_model: "gpt-4o-mini"
+#   reasoning_effort: "medium"
+#   base_url: "https://api.openai.com/v1"
+  
+# for ollama
 openai:
-  default_model: "gpt-4o-mini"
+  default_model: "llama3.1:3b" # "gpt-oss:20b"
+  reasoning_effort: "medium"
+  base_url: "http://localhost:11434/v1"
+  api_key: "ignored"
+
+anthropic:
+  default_model: "claude-3-5-sonnet-20241022"

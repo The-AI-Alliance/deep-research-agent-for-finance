@@ -130,9 +130,6 @@ app-run-md::
 	$(MAKE) UX=markdown app-run
 app-run-rich:: app-run
 app-run:: app-check do-app-run
-#	uv run ${src_dir}/${app_dir}/main.py
-#	uv run python ${src_dir}/${app_dir}/main.py
-#	cd ${src_dir} && uv run ${app_dir}/main.py
 do-app-run::
 	cd ${src_dir} && uv run main.py \
 		--ticker "${TICKER}" \
@@ -169,7 +166,7 @@ app-setup:: uv-check venv-check
 
 app-help:: 
 	@echo "Help on ${src_dir}/${app_dir}/main.py:"
-	cd ${src_dir} && uv run ${app_dir}/main.py --help  
+	cd ${src_dir} && uv run main.py --help  
 	@echo
 	@echo "TIP: Use 'make print-app-info' to see some make variables you can override."
 	@echo "TIP: Use 'make --just-print app-run' to see the default arguments used."

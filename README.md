@@ -1,5 +1,13 @@
 # AI in Finance Example App
 
+> [!TODO]
+> Update this file for the latest changes... 
+> * Use of `uvx mcp-agent config builder`.
+> * Refactoring of `main.py` and UX options.
+> * Changes to the CLI and `make` targets.
+> * Changes to mcp_agent.config.yaml, 
+>     * e.g., where logs are written.
+
 A finance deep research agent designed to collect comprehensive information about publicly-traded companies and generate detailed investment research reports.
 
 <p align="center">

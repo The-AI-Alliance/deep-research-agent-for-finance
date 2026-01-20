@@ -377,7 +377,7 @@ class MarkdownTree(MarkdownElement):
         or else return `MarkdownTree.default_bullet`.
         """
         return self.__tri(self.bullet, default, MarkdownTree.default_bullet,
-            enforce_valid_bullet)
+            MarkdownTree.enforce_valid_bullet)
 
     def get_indentation(self, default: str = None) -> str:
         """

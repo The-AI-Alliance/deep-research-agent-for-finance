@@ -36,7 +36,15 @@ if __name__ == "__main__":
     def_excel_writer_agent_prompt_file = "excel_writer_agent.md"
 
     parser = argparse.ArgumentParser(
-        description="Deep Finance Research using orchestrated AI agents"
+        description="Deep Finance Research using orchestrated AI agents",
+        epilog="""
+Due to current limitations, you must use either OpenAI, Anthropic, or local models
+served by ollama, and you have to tell us which one using the `--provider` argument,
+although it defaults to 'openai'. The same provider must be used for BOTH the 
+orchestrator and excel writer models, so specify them accordingly. The default is 'openai',
+which works for both OpenAI and Ollama, but you currently have to edit mcp_agent.config.yaml
+to use the correct settings!
+"""
     )
     parser.add_argument(
         "--ticker",
@@ -85,6 +93,12 @@ if __name__ == "__main__":
         help="The model used for writing results to Excel (default: o4-mini); a less powerful model is sufficient."
     )
     parser.add_argument(
+        "--provider",
+        choices=["openai", "anthropic", "ollama"],
+        default="openai",
+        help="The inference provider. Where is the model served? See the note at the bottom of this help. (Default: openai)"
+    )
+    parser.add_argument(
         "-u", "--ux",
         choices=["rich", "markdown"],
         default="rich",
@@ -123,6 +137,7 @@ if __name__ == "__main__":
   Models:
     Orchestrator:        {args.orchestrator_model}
     Excel Writer:        {args.excel_writer_model}
+    Provider:            {args.provider}
   Prompts:
     Path:                {args.prompts_path}
     Financial Research prompt file: 
@@ -165,6 +180,7 @@ if __name__ == "__main__":
         reporting_currency = args.reporting_currency,
         orchestrator_model_name = args.orchestrator_model,
         excel_writer_model_name = args.excel_writer_model,
+        provider = args.provider,
         prompts_path = args.prompts_path,
         financial_research_prompt_path = args.financial_research_prompt_path,
         excel_writer_agent_prompt_path = args.excel_writer_agent_prompt_path,
