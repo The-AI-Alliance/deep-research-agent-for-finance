@@ -70,7 +70,7 @@ class TestMarkdownTable(unittest.TestCase):
             all_lines = s.split('\n')
             index = 0
             if len(exp_title) > 0:
-                self.assertEqual(f"Title {exp_title}", all_lines[index])
+                self.assertEqual(f"Table: {exp_title}", all_lines[index])
                 index += 1
             ecs_str = f"| {' | '.join(exp_columns)} |"
             self.assertEqual(ecs_str, all_lines[index], f"<{ecs_str}> vs. <{all_lines[index]}>? (whole string = <{s}>)")
@@ -129,10 +129,11 @@ class TestMarkdownTable(unittest.TestCase):
     def test_make_empty_table_with_title(self, title: str):
         """
         Verify that a table constructed with a list of columns and default justifications
-        is properly formed.
+        is effectively an empty string when rendered.
         """
         table = MarkdownTable(title=title)
         self.assert_header_rows(table, title, [], [], [])
+        self.assertEqual('', str(table))
 
     @given(st.lists(no_linefeeds_text))
     def test_make_table_with_columns_that_default_to_left_justification(self, columns: list[str]):
@@ -152,6 +153,18 @@ class TestMarkdownTable(unittest.TestCase):
         cjs, justs = self.make_columns_justifications(columns, justs_samples)
         table = MarkdownTable(columns = cjs)
         self.assert_header_rows(table, '', columns, justs, [])
+
+
+    @given(no_linefeeds_text, st.lists(no_linefeeds_text), justifications(min_size=10, max_size=20))
+    def test_make_table_with_columns_with_justifications(self, 
+        title: str, columns: list[str], justs_samples: list[str | None]):
+        """
+        Verify that a table constructed with a title and a list of columns with justifications,
+        but no rows is still rendered as an empty table string.
+        """
+        cjs, justs = self.make_columns_justifications(columns, justs_samples)
+        table = MarkdownTable(title=title, columns = cjs)
+        self.assert_header_rows(table, title, columns, justs, [])
 
     @given(st.lists(no_linefeeds_text))
     def test_table_add_columns_that_default_to_left_justification(self, columns: list[str]):

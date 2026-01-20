@@ -19,7 +19,7 @@ from rich.layout import Layout
 from rich.columns import Columns
 from rich import box
 
-from deep_search import DeepSearch
+from finance_deep_search.deep_search import DeepSearch
 
 from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
 from mcp_agent.workflows.deep_orchestrator.config import DeepOrchestratorConfig
@@ -419,6 +419,7 @@ def display_budget_summary(console: Console, orchestrator: DeepOrchestrator):
     budget_summary = orchestrator.budget.get_status_summary()
     console.print(f"\n[yellow]{budget_summary}[/yellow]")
 
+def display_knowledge_summary(console: Console, orchestrator: DeepOrchestrator):
     # Display knowledge learned
     if orchestrator.memory.knowledge:
         console.print("\n[bold cyan]🧠 Knowledge Extracted[/bold cyan]")
@@ -462,8 +463,11 @@ def display_workspace_artifacts(console: Console, orchestrator: DeepOrchestrator
 def display_final_data(console: Console, orchestrator: DeepOrchestrator):
     display_final_statistics(console, deep_search.orchestrator)
     display_budget_summary(console, deep_search.orchestrator)
+    display_knowledge_summary(console, deep_search.orchestrator)
     display_token_usage(console, deep_search.orchestrator)
     display_workspace_artifacts(console, deep_search.orchestrator)
+
+execution_time = None
 
 async def rich_main(
     args: argparse.Namespace, 
@@ -477,7 +481,7 @@ async def rich_main(
     # Initialize the rich console.
     console = Console(highlight=False, soft_wrap=False, emoji=False)
 
-    mcp_app = await deep_search.init()
+    mcp_app = await deep_search.setup()
 
     # Create monitor for state visibility
     monitor = RichDeepOrchestratorMonitor(deep_search.orchestrator)

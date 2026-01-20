@@ -24,7 +24,7 @@ from mcp_agent.workflows.deep_orchestrator.config import (
     BudgetConfig,
 )
 
-from deep_search import DeepSearch
+from finance_deep_search.deep_search import DeepSearch
 
 if __name__ == "__main__":
 
@@ -176,10 +176,10 @@ if __name__ == "__main__":
 
     # Run the example
     if args.ux == "rich":
-        from ux.rich import rich_main
+        from finance_deep_search.ux.rich import rich_main
         asyncio.run(rich_main(args, config, deep_search))
     elif args.ux == "markdown":
-        from ux.markdown import markdown_main
+        from finance_deep_search.ux.markdown import markdown_main
         asyncio.run(markdown_main(args, config, deep_search))
     else:
         # The "ux" argument definition should prevent unexpected values, 

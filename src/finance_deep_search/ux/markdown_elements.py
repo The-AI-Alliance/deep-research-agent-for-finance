@@ -11,6 +11,7 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
+from typing import Callable
 
 from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
 from mcp_agent.workflows.deep_orchestrator.config import DeepOrchestratorConfig
@@ -36,15 +37,17 @@ class MarkdownElement():
 
 class MarkdownSection(MarkdownElement):
     def __init__(self, 
-        level: int,
         title: str,
+        level: int = 1,
         content: list[MarkdownElement | str] = [],
         subsections: dict[str,MarkdownElement] = {}):
         """
         Construct a Markdown section with heading level, title string, and an optional 
-        list of lines for the initial content. For subsections, use `add_subsections`.
+        list of strings and `MarkdownElements` for the initial content, and an optional
+        dictionary of subsections.
         The level >= 1, although numbers bigger than 6 or so don't make much sense.
         The title must be non-empty, since it is needed to render the section header.
+        Don't pass `MarkdownSections` as `content`; use the `subsections` instead.
         """
         super().__init__(title)
         assert title, "MarkdownSection titles can't be empty!"
@@ -54,33 +57,39 @@ class MarkdownSection(MarkdownElement):
         # implementation feature that insertion order is preserved.
         self.content: list[MarkdownElement] = []
         self.subsections: list[MarkdownElement] = {}
-        self.add_intro_lines(content)
+        self.add_intro_content(content)
         self.add_subsections(subsections)
 
-    def set_intro_lines(self, content: list[MarkdownElement | str]) -> str:
+    def set_intro_content(self, content: list[MarkdownElement | str]) -> str:
         """
         Replace the lines (or elements like tables, ...) for the content at the top
         of the section. Note that subsections added using `add_subsections` 
         will be rendered _below_ the content at the top.
+        Don't pass `MarkdownSections` as `content`; use the `subsections` instead.
         """
         self.content = []
-        self.add_intro_lines(content)
+        self.add_intro_content(content)
 
-    def add_intro_lines(self, content: list[MarkdownElement | str]) -> str:
+    def add_intro_content(self, content: list[MarkdownElement | str]) -> str:
         """
         Add lines (or elements like tables, ...) to the content at the top
         of the section. Note that subsections added using `add_subsections` 
         will be rendered _below_ the content at the top.
+        Don't pass `MarkdownSections` as `content`; use the `subsections` instead.
         """
-        for line in content:
-            if type(line) is MarkdownElement:
-                self.content.append(line)
+        for item in content:
+            if isinstance(item, MarkdownSection):
+                raise ValueError(f"Don't pass MarkdownSections as intro content. Use add/set_subsections instead! item = {item}")
+            elif isinstance(item, MarkdownElement):
+                self.content.append(item)
             else:
-                self.content.append(MarkdownElement(title=line))
+                self.content.append(MarkdownElement(title=str(item)))
 
     def set_subsections(self, subsections: dict[str,MarkdownElement] | list[MarkdownElement]):
         """
         Replace the subsections.
+        NOTE: All the levels will be reset to to the parent's level + 1, unless they
+        are already >= level+1!
         """
         self.subsections = {}
         self.add_subsections(subsections)
@@ -97,27 +106,32 @@ class MarkdownSection(MarkdownElement):
         Storing in a dict allows subsequent updating of a subsection by referring to it by its
         key. Similarly, a `ValueError` is raised if any keys in the new subsections that
         already exist in the current subsections.
+        NOTE: All the levels will be reset to to the parent's level + 1, unless they
+        are already >= level+1!
         """
         ss = subsections
         if type(subsections) is list:
             ss = dict([(s.title, s) for s in subsections])
 
+        bad_elements = []
         bad_keys = []
-        bad_levels = []
         for key, s in ss.items():
             if key in self.subsections:
                 bad_keys.append(key) 
-            level = s.level
-            if level <= self.level:
-                bad_levels.append(level) 
+
+            if not isinstance(s, MarkdownSection):
+                bad_elements.append(str(s))
+            else:
+                level = s.level
+                if s.level <= self.level:
+                    s.level = self.level+1 # reset!
         error = 'add_subsections():'
         if len(bad_keys) > 0:
             error += f" All new subsections must have a unique key. bad keys = {bad_keys}. Existing keys = <{self.subsections.keys()}>, new keys = <{ss.keys()}>"
-        if len(bad_levels) > 0:
-            error += f" All levels for new subsections must be > self.level ({self.level}). Bad levels = <{bad_levels}>."
-        if len(bad_keys) > 0 or len(bad_levels) > 0:
-            raise ValueError(
-                f"add_subsections(): All new subsections must have a unique key. Existing keys = <{self.subsections.keys()}>. Attempted added keys = <{ss.keys()}>")
+        if len(bad_elements) > 0:
+            error += f" Only MarkdownSections may be added as subsections. Bad elements = <{bad_elements}>."
+        if len(bad_keys) > 0 or len(bad_elements) > 0:
+            raise ValueError(error)
 
         self.subsections.update(ss)
 
@@ -237,7 +251,7 @@ class MarkdownTable(MarkdownElement):
     def __str__(self) -> str:
         title_str = ''
         if len(self.title) > 0:
-            title_str = f"Table {self.title}\n"
+            title_str = f"Table: {self.title}\n"
 
         if len(self.columns) == 0:
             return ''
@@ -287,6 +301,7 @@ class MarkdownTree(MarkdownElement):
 
     default_bullet = '*'
     default_indentation = '  '
+
     def __init__(self, 
         label: str | int | float, 
         bullet: str = None, 
@@ -294,36 +309,55 @@ class MarkdownTree(MarkdownElement):
         super().__init__(label)
         self.children: [MarkdownTree] = []
         self.label = label
-        if bullet and not MarkdownTree.validate_bullet(bullet):
-            raise ValueError(f"Disallowed bullet value {bullet}. Must be '*', '-', a number, or a letter.")
         self.bullet = bullet
+        if bullet:
+            MarkdownTree.enforce_valid_bullet(bullet)
         self.indentation = indentation
 
-    def add(self, child: MarkdownElement | str):
-        "Add a sub bullet."
-        if type(child) is MarkdownTree:
-            self.children.append(child)
-        elif type(child) is MarkdownElement:
-            self.children.append(child.title) # Will be converted it to MTree!
-        else:
-            self.children.append(MarkdownTree(str(child)))
+    def add(self, child: MarkdownElement | str) -> MarkdownElement:
+        """
+        Add a sub bullet and return it.
+        Python doesn't allow the `child` or return type to be declared
+        `MarkdownTree`, because it is being defined! However, we convert
+        `child` to a tree if it is not one already, and we return the tree,
+        even though the declaration suggests a `MarkdownElement` can be
+        returned.
+        """
+        def to_tree(child: MarkdownElement | str) -> MarkdownTree:
+            if type(child) is MarkdownTree:
+                return child
+            elif type(child) is MarkdownElement:
+                return MarkdownTree(label=child.title)
+            else:
+                return MarkdownTree(label=str(child))
+            
+        c = to_tree(child)
+        self.children.append(c)
+        return c
 
-    def add_children(self, children: list[MarkdownElement | str]):
-        "Add multiple sub bullets."
-        for child in children:
-            self.add(child)
+    def add_children(self, children: list[MarkdownElement | str]) -> list[MarkdownElement]:
+        """
+        Add multiple sub bullets and return them.
+        Python doesn't allow the `children` or return type to be declared
+        `list[MarkdownTree]`, because `MarkdownTree` is being defined! However,
+        we convert the `children` to trees, if they are not trees already, and 
+        we return the list of trees, even though the declaration suggests a
+        `list[MarkdownElement]` can be returned.
+        """
+        return [self.add(child) for child in children]
 
-    def __tri(self, first: str | None, second: str | None, third: str) -> str:
+    def __tri(self, first: str | None, second: str | None, third: str, 
+        check: Callable[[str],str | None] = lambda s: s) -> str:
         if first:
-            return first
+            return check(first)
         elif second:
-            return second
+            return check(second)
         else:
-            return third
+            return check(third)
 
     def as_strs(self, level: int, parent_bullet: str, parent_indent: str) -> list[str]:
-        bullet = self.__tri(self.bullet, parent_bullet, MarkdownTree.default_bullet)
-        indent = self.__tri(self.indentation, parent_indent, MarkdownTree.default_indentation)
+        bullet = self.get_bullet(default=parent_bullet)
+        indent = self.get_indentation(default=parent_indent)
         indent_str = level*indent
         lines = [f"{indent_str}{bullet} {self.label}"]
         for child in self.children:
@@ -337,12 +371,27 @@ class MarkdownTree(MarkdownElement):
     number_re = re.compile(r'^\d+$')
     letter_re = re.compile(r'^\W$')
 
-    def get_bullet(self) -> str:
-        return self.bullet if self.bullet else MarkdownTree.default_bullet
+    def get_bullet(self, default: str = None) -> str:
+        """
+        Return the defined bullet, or return `default`, if defined,
+        or else return `MarkdownTree.default_bullet`.
+        """
+        return self.__tri(self.bullet, default, MarkdownTree.default_bullet,
+            enforce_valid_bullet)
 
-    def get_indentation(self) -> str:
-        return self.indentation if self.indentation else MarkdownTree.default_indentation
-        
+    def get_indentation(self, default: str = None) -> str:
+        """
+        Return the defined indentation, or return `default`, if defined,
+        or else return `MarkdownTree.default_indentation`.
+        """
+        return self.__tri(self.indentation, default, MarkdownTree.default_indentation)
+
+    def enforce_valid_bullet(bullet: str) -> str:
+        if MarkdownTree.validate_bullet(bullet):
+            return bullet
+        else:
+            raise ValueError(f"Disallowed bullet value {bullet}. Must be '*', '-', a number, or a letter.")
+
     def validate_bullet(bullet: str) -> bool:
         if bullet == '*' or bullet == '-' \
             or MarkdownTree.number_re.match(bullet) or MarkdownTree.letter_re.match(bullet):

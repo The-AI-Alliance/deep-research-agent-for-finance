@@ -9,7 +9,7 @@ import os
 import re
 import sys
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
@@ -20,7 +20,7 @@ from finance_deep_search.deep_search import DeepSearch
 from finance_deep_search.ux.markdown_elements import (
     MarkdownElement,
     MarkdownSection,
-    MarkdownTable
+    MarkdownTable,
     MarkdownTree
 )
 
@@ -30,6 +30,7 @@ class MarkdownDeepOrchestratorMonitor():
     def __init__(self, orchestrator: DeepOrchestrator):
         self.orchestrator = orchestrator
         self.start_time = time.time()
+        self.execution_time = self.start_time - self.start_time
 
     def get_budget_table(self) -> MarkdownTable:
         """Get budget status as a Markdown Table"""
@@ -40,9 +41,9 @@ class MarkdownDeepOrchestratorMonitor():
         table = MarkdownTable(title="💰 Budget")
         table.add_columns([
             ("Resource", 'left'),
-            ("Used",     'right')
-            ("Limit",    'right')
-            ("Usage %",  'right')
+            ("Used",     'right'),
+            ("Limit",    'right'),
+            ("Usage %",  'right'),
         ])
 
         # Tokens
@@ -195,7 +196,7 @@ class MarkdownDeepOrchestratorMonitor():
         return table
 
     # TODO: this isn't called!!
-    def get_token_stats_panel(self, level: int = 1) -> MarkdownSection:
+    def get_token_stats_section(self) -> MarkdownSection:
         """Get token usage statistics as a Markdown section"""
         lines = []
 
@@ -241,9 +242,9 @@ class MarkdownDeepOrchestratorMonitor():
         if not lines:
             lines.append("[dim]No token usage data available yet[/dim]")
 
-        return MarkdownSection(level = level, title="📊 Token Usage", content=lines)
+        return MarkdownSection(title="📊 Token Usage", content=lines)
 
-    def get_memory_panel(self, level: int = 1) -> MarkdownSection:
+    def get_memory_section(self) -> MarkdownSection:
         """Get memory status as a Markdown section"""
         memory = self.orchestrator.memory
         stats = memory.get_stats()
@@ -262,7 +263,7 @@ class MarkdownDeepOrchestratorMonitor():
             for item in memory.knowledge[-3:]:
                 lines.append(f"  • {item.key[:40]}: {str(item.value)[:40]}...")
 
-        return MarkdownSection(level=level, title="🧠 Memory", content=lines)
+        return MarkdownSection(title="🧠 Memory", content=lines)
 
     def get_agents_table(self) -> MarkdownTable:
         """Get agent cache status as a Markdown Table"""
@@ -289,174 +290,205 @@ class MarkdownDeepOrchestratorMonitor():
 
         return table
 
-    def get_policy_panel(self, level: int = 1) -> MarkdownSection:
+    def get_policy_table(self) -> MarkdownTable:
         """Get policy engine status as a Markdown section"""
         policy = self.orchestrator.policy
 
-        lines = [
-            f"[cyan]Consecutive Failures:[/cyan] {policy.consecutive_failures}/{policy.max_consecutive_failures}",
-            f"[cyan]Total Successes:[/cyan] {policy.total_successes}",
-            f"[cyan]Total Failures:[/cyan] {policy.total_failures}",
-            f"[cyan]Failure Rate:[/cyan] {policy.get_failure_rate():.1%}",
-        ]
+        table = MarkdownTable(title="⚙️ Policy Engine", 
+            columns=[('Quantity', 'left'),('Value', 'right')])
+        table.add_row(["Consecutive Failures", policy.consecutive_failures/policy.max_consecutive_failures])
+        table.add_row(["Total Successes", policy.total_successes])
+        table.add_row(["Total Failures", policy.total_failures])
+        table.add_row(["Failure Rate", f"{policy.get_failure_rate():.1%}"])
+        return table
 
-        return MarkdownSection(level=level, title="⚙️ Policy Engine", content=lines)
+    def get_status_summary_table(self) -> MarkdownTable:
+        """Get overall status summary as a Markdown table"""
+        self.update_execution_time()
 
-    def get_status_summary(self, level: int = 1) -> MarkdownSection:
-        """Get overall status summary as a Markdown section"""
-        elapsed = time.time() - self.start_time
+        table = MarkdownTable(title="📊 Status", 
+            columns=[('Quantity', 'left'),('Value', 'right')])
+        table.add_row(["Objective", f"{self.orchestrator.objective[:100]}..."])
+        table.add_row(["Iteration", self.orchestrator.iteration/self.orchestrator.config.execution.max_iterations])
+        table.add_row(["Replans",   self.orchestrator.replan_count/self.orchestrator.config.execution.max_replans])
+        table.add_row(["Elapsed",   self.execution_time])
+        return table
 
-        lines = [
-            f"[cyan]Objective:[/cyan]\n        {self.orchestrator.objective[:100]}...",
-            f"[cyan]Iteration:[/cyan] {self.orchestrator.iteration}/{self.orchestrator.config.execution.max_iterations}",
-            f"[cyan]Replans:[/cyan] {self.orchestrator.replan_count}/{self.orchestrator.config.execution.max_replans}",
-            f"[cyan]Elapsed:[/cyan] {elapsed:.1f}s",
-        ]
-
-        return MarkdownSection(level=level, title="📊 Status", content=lines)
+    def update_execution_time(self) -> timedelta:
+        self.end_time = time.time()
+        self.execution_time = self.end_time - self.start_time
+        return self.execution_time
 
 class MarkdownDisplay():
-    def __init__(self, title: str, top_level: int = 1):
+    def __init__(self, title: str,
+        orchestrator: DeepOrchestrator, 
+        monitor: MarkdownDeepOrchestratorMonitor):
         """Create the display Markdown"""
-        self.top_level: int = top_level
-        self.layout = MarkdownSection(level=top_level, title=title)
+        self.layout = MarkdownSection(title=title)
+        self.orchestrator = orchestrator
+        self.monitor = monitor
 
         # Main structure
-        layout.add_subsections(
-            MarkdownSection(level=top_level+1, title="header"),
-            MarkdownSection(level=top_level+1, title="top_section"),
-            MarkdownSection(level=top_level+1, title="buffer"),
-            MarkdownSection(level=top_level+1, title="bottom_section"),
-        )
+        self.layout.add_subsections([
+            MarkdownSection(title="header"),
+            MarkdownSection(title="top_section"),
+            MarkdownSection(title="buffer"),
+            MarkdownSection(title="bottom_section"),
+        ])
 
         # Top section - queue, plan, and memory
-        layout["top_section"].add_subsections(
-            MarkdownSection(level=top_level+2, title="queue", ratio=3),  # More space for queue/plan
-            MarkdownSection(level=top_level+2, title="memory", ratio=2),  # Less for memory
-        )
+        self.layout["top_section"].add_subsections([
+            MarkdownSection(title="queue"),
+            MarkdownSection(title="memory"),
+        ])
 
         # Bottom section - budget, status, and agents
-        layout["bottom_section"].add_subsections(
-            MarkdownSection(level=top_level+2, title="left"),
-            MarkdownSection(level=top_level+2, title="center"),
-            MarkdownSection(level=top_level+2, title="right"),
-        )
+        self.layout["bottom_section"].add_subsections({
+            'left':   MarkdownSection(title="💰 Runtime Budget Statistics"),
+            'center': MarkdownSection(title="📊 Status Summary"),
+            'right':  MarkdownSection(title="⚙️ Policy Engine"),
+        })
 
-    def update(self, monitor: RichDeepOrchestratorMonitor):
+    def update(self) -> MarkdownSection:
         """Update the display with the current state"""
+        self.monitor.update_execution_time()
 
         # Header - replace
-        self.layout["header"] = MarkdownSection(level=top_level+1,
-            title="Deep Finance Research", style="bold blue")
+        self.layout["header"] = MarkdownSection(title="Deep Finance Research")
 
-        layout["buffer"].clear()
+        self.layout["buffer"].clear()
 
         # Top section - Queue and Plan side by side
-        queue_plan_content = [monitor.get_queue_tree(), monitor.get_plan_table()]
-        top_section = layout["top_section"]
-        top_section["queue"].set_subsections(queue_plan_content)
+        queue_plan_content = [self.monitor.get_queue_tree(), self.monitor.get_plan_table()]
+        top_section = self.layout["top_section"]
+        top_section["queue"].set_intro_content(queue_plan_content)
 
         # Memory section
-        top_section["memory"].set_subsections([monitor.get_memory_panel()])
+        top_section["memory"].set_subsections([self.monitor.get_memory_section()])
 
         # Bottom section
-        bottom_section = layout["bottom_section"]
+        bottom_section = self.layout["bottom_section"]
         
         # Left column - Budget
-        bottom_section["left"].set_subsections([monitor.get_budget_table()])
+        bottom_section["left"].set_intro_content([self.monitor.get_budget_table()])
 
         # Center column - Status
-        bottom_section["center"].set_subsections([monitor.get_status_summary()])
-
+        bottom_section["center"].set_intro_content([self.monitor.get_status_summary_table()])
         # Right column - Combined Policy and Agents in a vertical layout
-        right_content = [monitor.get_policy_panel(), monitor.get_agents_table()]
-        bottom_section["right"].set_subsections(right_content)
+        bottom_section["right"].set_intro_content(
+            [self.monitor.get_policy_table(), self.monitor.get_agents_table()])
+        
+        return self.layout
 
     def __str__(self) -> str:
         return str(layout)
 
-    def display_final_statistics(console: Console, orchestrator: DeepOrchestrator):
-        # Display final statistics
-        console.print("\n[bold cyan]📊 Final Statistics[/bold cyan]")
+    def add_section(self, title: str, 
+        content: list[MarkdownElement | str] = [], 
+        subsections: dict[str, MarkdownElement] = {}) -> MarkdownSection:
+        section = MarkdownSection(title=title, content=content, subsections=subsections)
+        self.layout.add_subsection([section])
+        return section
+
+    def add_financial_results(self, results: str) -> MarkdownSection:
+        return add_section("📊 Financial Research Results (Preview)", [results])
+
+    def add_excel_results(self, results: str) -> MarkdownSection:
+        return add_section("📈 Excel Creation Result", [results])
+    
+
+    def get_final_statistics(self) -> MarkdownSection:
+        """Get final statistics for display"""
 
         # Create summary table
-        summary_table = Table(title="Execution Summary", box=box.DOUBLE_EDGE)
-        summary_table.add_column("Metric", style="cyan", width=20)
-        summary_table.add_column("Value", style="green")
+        summary_table = MarkdownTable(title="Execution Summary", 
+            columns = ["Metric", "Value"])
+        
+        summary_table.add_row(["Total Time", f"{self.monitor.update_execution_time()}"])
+        summary_table.add_row(["Iterations", str(self.orchestrator.iteration)])
+        summary_table.add_row(["Replans", str(self.orchestrator.replan_count)])
+        summary_table.add_row(
+            ["Tasks Completed", str(len(self.orchestrator.queue.completed_task_names))]
+        )
+        summary_table.add_row(
+            ["Tasks Failed", str(len(self.orchestrator.queue.failed_task_names))]
+        )
+        summary_table.add_row(
+            ["Knowledge Items", str(len(self.orchestrator.memory.knowledge))]
+        )
+        summary_table.add_row(
+            ["Artifacts Created", str(len(self.orchestrator.memory.artifacts))]
+        )
+        summary_table.add_row(
+            ["Agents Cached", str(len(self.orchestrator.agent_cache.cache))]
+        )
+        summary_table.add_row(
+            ["Cache Hit Rate",
+            f"{self.orchestrator.agent_cache.hits / max(1, self.orchestrator.agent_cache.hits + self.orchestrator.agent_cache.misses):.1%}"]
+        )
+        return add_section("📊 Final Statistics", [], {summary_table.title, summary_table})
 
-        summary_table.add_row("Total Time", f"{execution_time:.2f}s")
-        summary_table.add_row("Iterations", str(orchestrator.iteration))
-        summary_table.add_row("Replans", str(orchestrator.replan_count))
-        summary_table.add_row(
-            "Tasks Completed", str(len(orchestrator.queue.completed_task_names))
-        )
-        summary_table.add_row(
-            "Tasks Failed", str(len(orchestrator.queue.failed_task_names))
-        )
-        summary_table.add_row(
-            "Knowledge Items", str(len(orchestrator.memory.knowledge))
-        )
-        summary_table.add_row(
-            "Artifacts Created", str(len(orchestrator.memory.artifacts))
-        )
-        summary_table.add_row("Agents Cached", str(len(orchestrator.agent_cache.cache)))
-        summary_table.add_row(
-            "Cache Hit Rate",
-            f"{orchestrator.agent_cache.hits / max(1, orchestrator.agent_cache.hits + orchestrator.agent_cache.misses):.1%}",
-        )
+    def get_budget_summary(self) -> MarkdownSection:
+        budget_summary = self.orchestrator.budget.get_status_summary_table()
+        return add_Table("Budget Summary", [budget_summary])
 
-        console.print(summary_table)
-
-    def display_budget_summary(console: Console, orchestrator: DeepOrchestrator):
-        # Display budget summary
-        budget_summary = orchestrator.budget.get_status_summary()
-        console.print(f"\n[yellow]{budget_summary}[/yellow]")
-
+    def get_knowledge_summary(self) -> MarkdownSection:
+        knowledge_table = 'None available...'
         # Display knowledge learned
-        if orchestrator.memory.knowledge:
-            console.print("\n[bold cyan]🧠 Knowledge Extracted[/bold cyan]")
-
-            knowledge_table = Table(box=box.SIMPLE)
-            knowledge_table.add_column("Category", style="cyan")
-            knowledge_table.add_column("Key", style="yellow")
-            knowledge_table.add_column("Value", style="green", max_width=50)
-            knowledge_table.add_column("Confidence", style="magenta")
-
-            for item in orchestrator.memory.knowledge[:10]:  # Show first 10
-                knowledge_table.add_row(
+        if self.orchestrator.memory.knowledge:
+            knowledge_table = MarkdownTable(title='', columns = [
+                "Category",
+                "Key",
+                "Value",
+                "Confidence",
+            ])
+            for item in self.orchestrator.memory.knowledge[:10]:  # Show first 10
+                knowledge_table.add_row([
                     item.category,
                     item.key[:30] + "..." if len(item.key) > 30 else item.key,
                     str(item.value)[:50] + "..."
                     if len(str(item.value)) > 50
                     else str(item.value),
                     f"{item.confidence:.2f}",
-                )
+                ])
 
-            console.print(knowledge_table)
+        return add_section("🧠 Knowledge Extracted", [], {knowledge_table.title, knowledge_table})
 
-    def display_token_usage(console: Console, orchestrator: DeepOrchestrator):
+    async def get_token_usage(self) -> MarkdownSection:
         """Display the token usage, if available."""
+        summary_info = ["Token usage not available"]
         if deep_search.token_counter:
             summary = await deep_search.token_counter.get_summary()
             if summary and hasattr(summary, "usage"):
-                console.print(
-                    f"\n[bold]Total Tokens:[/bold] {summary.usage.total_tokens:,}"
-                )
+                summary_info = [f"* Total Tokens: {summary.usage.total_tokens}"]
                 if hasattr(summary, "cost"):
-                    console.print(f"[bold]Total Cost:[/bold] ${summary.cost:.4f}")
+                    summary_info.append(f"* Total Cost: ${summary.cost:.4f}")
 
-    def display_workspace_artifacts(console: Console, orchestrator: DeepOrchestrator):
+        return add_section("Total Tokens", summary_info)
+
+    def get_workspace_artifacts(self) -> MarkdownSection:
         """Display workspace artifacts if any were created."""
-        if orchestrator.memory.artifacts:
-            console.print("\n[bold cyan]📁 Artifacts Created[/bold cyan]")
-            for name in list(orchestrator.memory.artifacts.keys())[:5]:
-                console.print(f"  • {name}")
+        artifacts_info = ["Workspace artifacts usage not available"]
+        if self.orchestrator.memory.artifacts:
+            artifacts_info = ["📁 Artifacts Created:"]
+            for name in list(self.orchestrator.memory.artifacts.keys())[:5]:
+                artifacts_info.append(f"* {name}")
 
-    def display_final_data(console: Console, orchestrator: DeepOrchestrator):
-        display_final_statistics(console, deep_search.orchestrator)
-        display_budget_summary(console, deep_search.orchestrator)
-        display_token_usage(console, deep_search.orchestrator)
-        display_workspace_artifacts(console, deep_search.orchestrator)
+        return add_section("📁 Artifacts Created", artifacts_info)
+
+    def get_final_data(self) -> list[MarkdownSection]:
+        """
+        Returns the list of Markdown sections for the final data, but they are also
+        added to the whole document, so you can also just print the whole thing.
+        """
+        self.monitor.update_execution_time()
+        return [
+            get_final_statistics(),
+            get_budget_summary(),
+            get_knowledge_summary(),
+            get_token_usage(),
+            get_workspace_artifacts(),
+        ]
 
 async def markdown_main(
     args: argparse.Namespace, 
@@ -467,3 +499,64 @@ async def markdown_main(
         print(f"Inside markdown_main. Returning...")
         return
 
+    mcp_app = await deep_search.setup()
+
+    monitor = MarkdownDeepOrchestratorMonitor(deep_search.orchestrator)
+
+    display = MarkdownDisplay("Deep Research Agent for Finance", 
+        deep_search.orchestrator, monitor)
+
+    # Update display in background
+    async def update_loop():
+        while True:
+            try:
+                doc = display.update()
+                print(doc)
+                await asyncio.sleep(0.25)  # Reduced from 0.5s
+            except Exception as e:
+                mcp_app.logger.error(f"Display update error: {e}")
+                break
+
+    # Start update loop
+    update_task = asyncio.create_task(update_loop())
+
+    results = {}
+    try:
+        results = await deep_search.run()
+    finally:
+        # Final update
+        doc = display.update()
+        print(doc)
+        update_task.cancel()
+        try:
+            await update_task
+        except asyncio.CancelledError:
+            pass
+    
+    def truncate(n: int, s: str) -> str:
+        return s[:n] + "..." if len(s) > n else s
+
+    # Show the research results
+    research_results = ''
+    if results['research']:
+        research_results = truncate(5000, results['research'])
+    else:
+        research_results = "No research results!!"
+
+    fr = display.add_financial_results(self, research_results)
+    print(fr)
+    mcp_app.logger.error(research_results)
+    
+
+    excel_results = ''
+    if results['excel']:
+        excel_results = truncate(5000, results['excel'])
+    else:
+        excel_results = "No excel results!!"
+
+    er = display.add_excel_results(self, excel_results)
+    print(er)
+    mcp_app.logger.error(excel_results)
+
+    for section in display.get_final_data():
+        print(section)

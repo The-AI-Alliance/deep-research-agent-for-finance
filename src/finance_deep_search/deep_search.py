@@ -23,7 +23,11 @@ from mcp_agent.workflows.llm.augmented_llm import RequestParams
 from finance_deep_search.prompts import load_prompt_markdown, format_prompt
 
 class DeepSearch():
-
+    """
+    Wrapper around mcp_agent for the deep research app.
+    See the help in main.py for details and requirements for
+    the arguments used to construct instances.
+    """
     def __init__(self,
             app_name: str,
             config: DeepOrchestratorConfig,
@@ -81,7 +85,7 @@ class DeepSearch():
         else:
             return path
 
-    async def init(self) -> MCPApp:
+    async def setup(self) -> MCPApp:
         async with self.mcp_app.run() as app:
             # Run the orchestrator
 

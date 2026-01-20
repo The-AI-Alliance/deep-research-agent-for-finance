@@ -21,10 +21,11 @@ COMPANY_NAME             ?= Meta Platforms, Inc.
 REPORTING_CURRENCY       ?= USD
 ORCHESTRATOR_MODEL       ?= gpt-4o
 EXCEL_WRITER_MODEL       ?= o4-mini
-PROMPTS_PATH             ?= ./prompts
+PROMPTS_PATH             ?= ${app_dir}/prompts
 FIN_RESEARCH_PROMPT_FILE ?= financial_research_agent.md
 EXCEL_WRITER_PROMPT_FILE ?= excel_writer_agent.md
 OUTPUT_PATH              ?= ${PWD}/output/${TICKER}
+UX                       ?= rich
 APP_ARGS                 ?=
 
 # Override when running `make view-local` using e.g., `JEKYLL_PORT=8000 make view-local`
@@ -40,7 +41,9 @@ Quick help for this make process
 Targets for the application:
 
 make all                # Run the application by building "app-run".
-make app-run            # Run the application with default arguments
+make app-run            # Run the application with default arguments.
+make app-run-rich       # Run the application with the Rich console UI (also the default).
+make app-run-md         # Run the application with the streaming Markdown "UI".
 make app-help           # Run the application with --help to see the support arguments.
                         # Also prints the default invocation used by "app-run".
 make app-setup          # One-time setup of the application dependences.
@@ -117,15 +120,21 @@ endef
 
 .PHONY: all view-pages view-local clean help 
 .PHONY: setup-jekyll run-jekyll
-.PHONY: app-run do-app-run app-setup app-check uv-check uv-cmd-check venv-check
+.PHONY: app-run app-run-rich app-run md do-app-run app-setup app-check uv-check uv-cmd-check venv-check
 .PHONY: mcp-agent-check app-help test tests
 .PHONY: print-info print-app-info print-make-info print-docs-info
 
 all:: app-run
 
+app-run-md:: 
+	$(MAKE) UX=markdown app-run
+app-run-rich:: app-run
 app-run:: app-check do-app-run
+#	uv run ${src_dir}/${app_dir}/main.py
+#	uv run python ${src_dir}/${app_dir}/main.py
+#	cd ${src_dir} && uv run ${app_dir}/main.py
 do-app-run::
-	cd ${src_dir} && uv run ${app_dir}/main.py \
+	cd ${src_dir} && uv run main.py \
 		--ticker "${TICKER}" \
 		--company-name "${COMPANY_NAME}" \
 		--output-path "${OUTPUT_PATH}" \
@@ -135,13 +144,14 @@ do-app-run::
 		--excel-writer-agent-prompt-path "${EXCEL_WRITER_PROMPT_FILE}" \
 		--orchestrator-model "${ORCHESTRATOR_MODEL}" \
 		--excel-writer-model "${EXCEL_WRITER_MODEL}" \
-		--verbose ${APP_ARGS}
+		--verbose ${APP_ARGS} \
+		--ux ${UX}
 	@echo
 	@echo "Output files in ${OUTPUT_PATH}:"
 	@find ${OUTPUT_PATH}
 
 test tests:: uv-check
-	cd src && uv run python -m unittest discover -s tests
+	cd ${src_dir} && uv run python -m unittest discover
 
 app-check:: uv-check mcp-agent-check
 
