@@ -18,6 +18,8 @@ from json.decoder import JSONDecodeError
 from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
 from mcp_agent.workflows.deep_orchestrator.config import DeepOrchestratorConfig
 
+from openai.types.chat import ChatCompletionMessage
+
 from finance_deep_search.deep_search import DeepSearch
 from finance_deep_search.string_utils import (
     replace_variables,
@@ -343,6 +345,7 @@ class MarkdownDisplay():
         monitor: MarkdownDeepOrchestratorMonitor):
         """Create the display Markdown"""
         self.layout = MarkdownSection(title=title)
+        self.deep_search = deep_search
         self.orchestrator = orchestrator
         self.monitor = monitor
 
@@ -423,8 +426,10 @@ class MarkdownDisplay():
             mu = MarkdownUtil
             content = mu.to_markdown(obj, bullet='*', indent='\t', key_format='**%s:**')
         except (JSONDecodeError, TypeError) as err:
-            deep_search.logger.warning(f"{err} raised while parsing Excel results: {results}")
-            content = results.split('\n')
+            self.deep_search.logger.warning(f"{err} raised while parsing Excel results: {results}")
+            content = ["We tried to parse the results, but we were unsuccessful. Here are the raw results:", "```text"]
+            content.extend(results.split('\n'))
+            content.append('```')
         return self.add_section("📈 Excel Creation Result", [content])
     
 
@@ -553,7 +558,8 @@ async def markdown_main(
 
     results = {}
     try:
-        results = await deep_search.run()
+        #results = await deep_search.run()
+        time.sleep(5)
     finally:
         # Final update
         doc = display.update()

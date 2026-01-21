@@ -85,25 +85,45 @@ class TestStringUtils(unittest.TestCase):
         mu = MarkdownUtil()
         actual = mu.to_markdown(kvs1, bullet, indent, key_format)
         expected_str = '\n'.join(expected)
-        self.assertEqual(expected, actual, f"<\n{'\n'.join(expected)}\n> != <\n{'\n'.join(actual)}\n>, kvs = <{kvs}>")
+        actual_str = '\n'.join(actual)
+        self.assertEqual(expected, actual, f"<\n{expected_str}\n> != <\n{actual_str}\n>, kvs = <{kvs}>")
+
+    def test_MarkdownUtil_to_markdown_on_real_sample(self):
+        """A real sample we encountered; a sanity check."""
+        obj = {
+            "name": "excel_write_data_to_excel", 
+            "parameters": {
+                "data": "[['Account', 'FY N-3', 'FY N-2', 'FY N-1', 'FY N (Our Model)', 'FY N (Guidance/Consensus)']]", 
+                "filepath": "{{output_spreadsheet_path}}", 
+                "sheet_name": "Financials", 
+                "start_cell": "(A1)"
+            }
+        }
+        mu = MarkdownUtil()
+        actual = mu.to_markdown(obj, '*', '++', '_%s:_')
+        expected = [
+            "++* _name:_ excel_write_data_to_excel",
+            "++* _parameters:_",
+            "++++* _data:_ [['Account', 'FY N-3', 'FY N-2', 'FY N-1', 'FY N (Our Model)', 'FY N (Guidance/Consensus)']]", 
+            "++++* _filepath:_ {{output_spreadsheet_path}}", 
+            "++++* _sheet_name:_ Financials", 
+            "++++* _start_cell:_ (A1)"
+        ]
+        expected_str = '\n'.join(expected)
+        actual_str = '\n'.join(actual)
+        self.assertEqual(expected, actual, f"<\n{expected_str}\n> != <\n{actual_str}\n>")
 
     @given(
         st.lists(no_brace_text, max_size=10),
         st.sampled_from(['', '_', '-']))
     def test_clean_json_string_removes_bad_content(self, strs: list[str], replacement: str):
+        # The generated strings can contain the sequence! So clean them:
+        strs2 = [s.replace(r'\\','foo') for s in strs]
         escape = r'\\'
-        bad = escape + escape.join(strs) + escape
-        expected = replacement + replacement.join(strs) + replacement
+        bad = escape + escape.join(strs2) + escape
+        expected = replacement + replacement.join(strs2) + replacement
         actual = clean_json_string(bad, replacement)
         self.assertEqual(expected, actual, f"bad = <{bad}>, actual = <{actual}>, expected = <{expected}>")
-
-    # def test_MarkdownUtil_to_markdown_on_real_sample(self):
-    #     """A real sample we encountered; a sanity check."""
-    #     {"name": "excel_write_data_to_excel", "parameters": {"data": "[[\'Account\', \'FY N-3\', \'FY N-2\', \'FY N-1\', \'FY N (Our Model)\', \'FY N (Guidance/Consensus)\\\']]", "filepath": "{{output_spreadsheet_path}}", "sheet_name": "Financials", "start_cell": "(A1)"}}
-    #     mu = MarkdownUtil()
-    #     actual = mu.to_markdown(kvs1, bullet, indent, key_format)
-    #     expected_str = '\n'.join(expected)
-    #     self.assertEqual(expected, actual, f"<\n{'\n'.join(expected)}\n> != <\n{'\n'.join(actual)}\n>, kvs = <{kvs}>")
 
 if __name__ == "__main__":
     unittest.main()
