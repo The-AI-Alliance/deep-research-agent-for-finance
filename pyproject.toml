@@ -1,7 +1,7 @@
 [project]
 name = "deep-research-agent-for-finance"
-version = "0.2.0"
-description = "Add your description here"
+version = "0.3.0"
+description = "An MCP-based application for doing deep financial research on publicly listed companies."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -10,4 +10,9 @@ dependencies = [
     "ollama>=0.6.1",
     "openai>=1.96.0",
     "openpyxl>=3.1.5",
+]
+
+[dependency-groups]
+dev = [
+    "hypothesis>=6.150.2",
 ]
