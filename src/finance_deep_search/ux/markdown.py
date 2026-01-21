@@ -19,6 +19,11 @@ from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
 from mcp_agent.workflows.deep_orchestrator.config import DeepOrchestratorConfig
 
 from finance_deep_search.deep_search import DeepSearch
+from finance_deep_search.string_utils import (
+    replace_variables,
+    clean_json_string,
+    MarkdownUtil
+)
 
 from finance_deep_search.ux.markdown_elements import (
     MarkdownElement,
@@ -410,9 +415,13 @@ class MarkdownDisplay():
     def add_excel_results(self, results: str) -> MarkdownSection:
         content = []
         try:
-            obj = json.loads(results)
+            # Handle an observed problem with returned results; '\\' that will cause json
+            # parsing to fail.
+            res2 = clean_json_string(results, '')
+            obj = json.loads(res2)
             # format as nested bullets:
-
+            mu = MarkdownUtil
+            content = mu.to_markdown(obj, bullet='*', indent='\t', key_format='**%s:**')
         except (JSONDecodeError, TypeError) as err:
             deep_search.logger.warning(f"{err} raised while parsing Excel results: {results}")
             content = results.split('\n')

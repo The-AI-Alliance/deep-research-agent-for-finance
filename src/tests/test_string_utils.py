@@ -12,7 +12,11 @@ from tests.utils import (
     no_brace_non_empty_text,
 )
 
-from finance_deep_search.string_utils import replace_variables, MarkdownUtil
+from finance_deep_search.string_utils import (
+    replace_variables, 
+    clean_json_string, 
+    MarkdownUtil
+)
 
 class TestStringUtils(unittest.TestCase):
     """
@@ -45,7 +49,7 @@ class TestStringUtils(unittest.TestCase):
         st.sampled_from(['*', '-']),
         st.sampled_from(['  ', '--']),
         st.sampled_from(["%s", '**%s:%%', '_%s_', '**_%s:_**']))
-    def test_MarkdownUtil_returns_markdown(self, 
+    def test_MarkdownUtil_to_markdown_returns_list_of_formatted_strings(self, 
         kvs1: dict[str, any], kvs2: dict[str, any], 
         int_val: int, float_val: float, tuple_val: tuple[str, str],
         bullet: str, indent: str, key_format: str):
@@ -82,6 +86,24 @@ class TestStringUtils(unittest.TestCase):
         actual = mu.to_markdown(kvs1, bullet, indent, key_format)
         expected_str = '\n'.join(expected)
         self.assertEqual(expected, actual, f"<\n{'\n'.join(expected)}\n> != <\n{'\n'.join(actual)}\n>, kvs = <{kvs}>")
+
+    @given(
+        st.lists(no_brace_text, max_size=10),
+        st.sampled_from(['', '_', '-']))
+    def test_clean_json_string_removes_bad_content(self, strs: list[str], replacement: str):
+        escape = r'\\'
+        bad = escape + escape.join(strs) + escape
+        expected = replacement + replacement.join(strs) + replacement
+        actual = clean_json_string(bad, replacement)
+        self.assertEqual(expected, actual, f"bad = <{bad}>, actual = <{actual}>, expected = <{expected}>")
+
+    # def test_MarkdownUtil_to_markdown_on_real_sample(self):
+    #     """A real sample we encountered; a sanity check."""
+    #     {"name": "excel_write_data_to_excel", "parameters": {"data": "[[\'Account\', \'FY N-3\', \'FY N-2\', \'FY N-1\', \'FY N (Our Model)\', \'FY N (Guidance/Consensus)\\\']]", "filepath": "{{output_spreadsheet_path}}", "sheet_name": "Financials", "start_cell": "(A1)"}}
+    #     mu = MarkdownUtil()
+    #     actual = mu.to_markdown(kvs1, bullet, indent, key_format)
+    #     expected_str = '\n'.join(expected)
+    #     self.assertEqual(expected, actual, f"<\n{'\n'.join(expected)}\n> != <\n{'\n'.join(actual)}\n>, kvs = <{kvs}>")
 
 if __name__ == "__main__":
     unittest.main()

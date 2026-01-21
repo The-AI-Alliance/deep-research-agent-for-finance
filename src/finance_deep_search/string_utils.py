@@ -8,6 +8,14 @@ def replace_variables(string: str, **variables: dict[str,any]) -> str:
         string = string.replace('{{{{'+key+'}}}}', str(value))    
     return string
 
+def clean_json_string(s: str, replacement: str = '') -> str:
+    """
+    Handle an observed problem with returned results that should be valid JSON:
+    * '\\' that will cause parsing to fail. All occurrences are replaced with `replacement`.
+    * other issues TBD...
+    """
+    return s.replace(r'\\', replacement)
+
 class MarkdownUtil():
     def __init__(self, 
         default_bullet: str = '*',
@@ -82,25 +90,3 @@ class MarkdownUtil():
 
     def next_indent(self, indent: str) -> str:
         return indent*2 if len(indent) > 0 else '\t'
-
-def try_to_markdown():
-    return to_markdown(bullet='*', indent='-', key_decorator='**_', values=[1,2,3], key_values={
-        'key1': {
-            'key11': 'value11',
-            'key12': ['value12a', 'value12b', 'value12c'],
-            'key13': {'key13a':'value12a', 'key13b':'value12b', 'key13c':'value12c'},
-            'key14': 14,
-            'key15': ('15', 'five'),
-        },
-        'key2': {
-            'key21': 'value21',
-            'key22': ['value22a', 'value22b', 'value22c'],
-            'key23': {'key23a':'value22a', 'key23b':'value22b', 'key23c':'value22c'},
-            'key24': 24,
-            'key25': ('25', 'five'),
-        },
-    })
-
-if __name__ == "__main__":
-    lines = try_to_markdown()
-    print('\n'.join(lines))
