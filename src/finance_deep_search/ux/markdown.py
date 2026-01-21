@@ -12,6 +12,9 @@ import time
 from datetime import datetime, timedelta
 from pathlib import Path
 
+import json
+from json.decoder import JSONDecodeError
+
 from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
 from mcp_agent.workflows.deep_orchestrator.config import DeepOrchestratorConfig
 
@@ -81,16 +84,16 @@ class MarkdownDeepOrchestratorMonitor():
 
         # Completed steps
         if queue.completed_steps:
-            completed = tree.add("[green]✅ Completed Steps")
+            completed = tree.add("✅ Completed Steps")
             for step in queue.completed_steps[-2:]:  # Last 2 steps only
                 step_node = completed.add(f"[dim]{step.description[:60]}...")
                 # Show first 3 tasks if many, otherwise all
                 tasks_to_show = step.tasks[:3] if len(step.tasks) > 3 else step.tasks
                 for task in tasks_to_show:
                     if task.status == "completed":
-                        icon = "[green]✓[/green]"
+                        icon = "✓"
                     elif task.status == "failed":
-                        icon = "[red]✗[/red]"
+                        icon = "✗"
                     else:
                         icon = "•"
                     step_node.add(f"[dim]{icon} {task.description[:40]}...")
@@ -244,33 +247,42 @@ class MarkdownDeepOrchestratorMonitor():
 
         return MarkdownSection(title="📊 Token Usage", content=lines)
 
-    def get_memory_section(self) -> MarkdownSection:
-        """Get memory status as a Markdown section"""
+    def get_memory_table(self) -> MarkdownTable:
+        """Get memory status as a Markdown table"""
         memory = self.orchestrator.memory
         stats = memory.get_stats()
 
-        lines = [
-            f"[cyan]Artifacts:[/cyan] {stats['artifacts']}",
-            f"[cyan]Knowledge Items:[/cyan] {stats['knowledge_items']}",
-            f"[cyan]Task Results:[/cyan] {stats['task_results']}",
-            f"[cyan]Categories:[/cyan] {stats['knowledge_categories']}",
-            f"[cyan]Est. Tokens:[/cyan] {stats['estimated_tokens']:,}",
-        ]
+        table = MarkdownTable(title="🧠 Memory",
+            columns = [("Quantity", 'left'), ("Value", 'right')])
 
-        # Add recent knowledge items
+        table.add_row(["Artifacts",       stats['artifacts']])
+        table.add_row(["Knowledge Items", stats['knowledge_items']])
+        table.add_row(["Task Results",    stats['task_results']])
+        table.add_row(["Categories",      stats['knowledge_categories']])
+        table.add_row(["Est. Tokens",     stats['estimated_tokens']])
+        return table
+
+    def get_knowledge_table(self) -> MarkdownTable:
+        """Get recent knowledge items"""
+
+        table = MarkdownTable(title="🧠 Recent Memory Knowledge (last three...)",
+            columns = [("Quantity", 'left'), ("Value", 'right')])
+
+        memory = self.orchestrator.memory
         if memory.knowledge:
-            lines.append("\n[yellow]Recent Knowledge:[/yellow]")
             for item in memory.knowledge[-3:]:
-                lines.append(f"  • {item.key[:40]}: {str(item.value)[:40]}...")
+                table.add_row([item.key[:40], str(item.value)[:40]])
+        else:
+            table.add_row(["None", ""])
 
-        return MarkdownSection(title="🧠 Memory", content=lines)
+        return table
 
     def get_agents_table(self) -> MarkdownTable:
         """Get agent cache status as a Markdown Table"""
         cache = self.orchestrator.agent_cache
 
-        table = MarkdownTable(title="🤖 Agent Cache")
-        table.add_columns([("Metric", 'left'), ("Value", 'right')])
+        table = MarkdownTable(title="🤖 Agent Cache",
+            columns = [("Metric", 'left'), ("Value", 'right')])
 
         table.add_row(["Cached Agents", str(len(cache.cache))])
         table.add_row(["Cache Hits", str(cache.hits)])
@@ -321,6 +333,7 @@ class MarkdownDeepOrchestratorMonitor():
 
 class MarkdownDisplay():
     def __init__(self, title: str,
+        deep_search: DeepSearch,
         orchestrator: DeepOrchestrator, 
         monitor: MarkdownDeepOrchestratorMonitor):
         """Create the display Markdown"""
@@ -329,72 +342,81 @@ class MarkdownDisplay():
         self.monitor = monitor
 
         # Main structure
-        self.layout.add_subsections([
-            MarkdownSection(title="header"),
-            MarkdownSection(title="top_section"),
-            MarkdownSection(title="buffer"),
-            MarkdownSection(title="bottom_section"),
-        ])
+        self.layout.add_subsections({
+            "top_section": MarkdownSection(title="App Runtime Stats"),
+            "botton_section": MarkdownSection(title="Financial Results"),
+        })
 
         # Top section - queue, plan, and memory
-        self.layout["top_section"].add_subsections([
-            MarkdownSection(title="queue"),
-            MarkdownSection(title="memory"),
-        ])
+        self.layout["top_section"].add_subsections({
+            "queue": MarkdownSection(title="Task Queue"),
+            "plan": MarkdownSection(title="Current Plan"),
+            "memory": MarkdownSection(title="Memory"),
+        })
 
-        # Bottom section - budget, status, and agents
-        self.layout["bottom_section"].add_subsections({
-            'left':   MarkdownSection(title="💰 Runtime Budget Statistics"),
-            'center': MarkdownSection(title="📊 Status Summary"),
-            'right':  MarkdownSection(title="⚙️ Policy Engine"),
+        # Bottom section - budget, status, and agents, and final results added later.
+        self.layout["botton_section"].add_subsections({
+            'budget': MarkdownSection(title="💰 Runtime Budget Statistics"),
+            'status': MarkdownSection(title="📊 Status Summary"),
+            'policy': MarkdownSection(title="⚙️ Policy Engine"),
         })
 
     def update(self) -> MarkdownSection:
         """Update the display with the current state"""
         self.monitor.update_execution_time()
 
-        # Header - replace
-        self.layout["header"] = MarkdownSection(title="Deep Finance Research")
-
-        self.layout["buffer"].clear()
-
-        # Top section - Queue and Plan side by side
-        queue_plan_content = [self.monitor.get_queue_tree(), self.monitor.get_plan_table()]
         top_section = self.layout["top_section"]
-        top_section["queue"].set_intro_content(queue_plan_content)
+        top_section["queue"].set_intro_content([self.monitor.get_queue_tree()])
+        top_section["plan"].set_intro_content([self.monitor.get_plan_table()])
+        top_section["memory"].set_intro_content([
+            self.monitor.get_memory_table(),
+            self.monitor.get_knowledge_table()])
 
-        # Memory section
-        top_section["memory"].set_subsections([self.monitor.get_memory_section()])
-
-        # Bottom section
-        bottom_section = self.layout["bottom_section"]
-        
-        # Left column - Budget
-        bottom_section["left"].set_intro_content([self.monitor.get_budget_table()])
-
-        # Center column - Status
-        bottom_section["center"].set_intro_content([self.monitor.get_status_summary_table()])
-        # Right column - Combined Policy and Agents in a vertical layout
-        bottom_section["right"].set_intro_content(
+        bottom_section = self.layout["botton_section"] 
+        bottom_section["budget"].set_intro_content([self.monitor.get_budget_table()])
+        bottom_section["status"].set_intro_content([self.monitor.get_status_summary_table()])
+        bottom_section["policy"].set_intro_content(
             [self.monitor.get_policy_table(), self.monitor.get_agents_table()])
         
         return self.layout
 
     def __str__(self) -> str:
-        return str(layout)
+        return str(self.layout)
 
     def add_section(self, title: str, 
         content: list[MarkdownElement | str] = [], 
         subsections: dict[str, MarkdownElement] = {}) -> MarkdownSection:
         section = MarkdownSection(title=title, content=content, subsections=subsections)
-        self.layout.add_subsection([section])
+        self.layout.add_subsections([section])
         return section
 
     def add_financial_results(self, results: str) -> MarkdownSection:
-        return self.add_section("📊 Financial Research Results (Preview)", [results])
+        content = []
+        if isinstance(results, ChatCompletionMessage):
+            content = results.content.split('\n')
+            table = MarkdownTable(title="Chat Metadata",
+                columns = [("Item", 'left'), ("Value", 'right')])
+            table.add_row(['refusal', str(results.refusal)])
+            table.add_row(['role', str(results.role)])
+            table.add_row(['annotations', str(results.annotations)])
+            table.add_row(['audio', str(results.audio)])
+            table.add_row(['function_call', str(results.function_call)])
+            table.add_row(['tool_calls', str(results.tool_calls)])
+        else:
+            content = [results]
+
+        return self.add_section("📊 Financial Research Results (Preview)", [content])
 
     def add_excel_results(self, results: str) -> MarkdownSection:
-        return self.add_section("📈 Excel Creation Result", [results])
+        content = []
+        try:
+            obj = json.loads(results)
+            # format as nested bullets:
+
+        except (JSONDecodeError, TypeError) as err:
+            deep_search.logger.warning(f"{err} raised while parsing Excel results: {results}")
+            content = results.split('\n')
+        return self.add_section("📈 Excel Creation Result", [content])
     
 
     def get_final_statistics(self) -> MarkdownSection:
@@ -426,11 +448,11 @@ class MarkdownDisplay():
             ["Cache Hit Rate",
             f"{self.orchestrator.agent_cache.hits / max(1, self.orchestrator.agent_cache.hits + self.orchestrator.agent_cache.misses):.1%}"]
         )
-        return self.add_section("📊 Final Statistics", [], {summary_table.title, summary_table})
+        return self.add_section("📊 Final Statistics", [summary_table])
 
     def get_budget_summary(self) -> MarkdownSection:
-        budget_summary = self.orchestrator.budget.get_status_summary_table()
-        return add_Table("Budget Summary", [budget_summary])
+        budget_summary = self.orchestrator.budget.get_status_summary()
+        return self.add_section("Budget Summary", [budget_summary])
 
     def get_knowledge_summary(self) -> MarkdownSection:
         knowledge_table = 'None available...'
@@ -452,7 +474,7 @@ class MarkdownDisplay():
                     f"{item.confidence:.2f}",
                 ])
 
-        return self.add_section("🧠 Knowledge Extracted", [], {knowledge_table.title, knowledge_table})
+        return self.add_section("🧠 Knowledge Extracted", [knowledge_table])
 
     async def get_token_usage(self) -> MarkdownSection:
         """Display the token usage, if available."""
@@ -483,11 +505,11 @@ class MarkdownDisplay():
         """
         self.monitor.update_execution_time()
         return [
-            get_final_statistics(),
-            get_budget_summary(),
-            get_knowledge_summary(),
-            get_token_usage(),
-            get_workspace_artifacts(),
+            self.get_final_statistics(),
+            self.get_budget_summary(),
+            self.get_knowledge_summary(),
+            self.get_token_usage(),
+            self.get_workspace_artifacts(),
         ]
 
 async def markdown_main(
@@ -504,7 +526,7 @@ async def markdown_main(
     monitor = MarkdownDeepOrchestratorMonitor(deep_search.orchestrator)
 
     display = MarkdownDisplay("Deep Research Agent for Finance", 
-        deep_search.orchestrator, monitor)
+        deep_search, deep_search.orchestrator, monitor)
 
     # Update display in background
     async def update_loop():
@@ -512,7 +534,7 @@ async def markdown_main(
             try:
                 doc = display.update()
                 print(doc)
-                await asyncio.sleep(0.25)  # Reduced from 0.5s
+                await asyncio.sleep(10.0)
             except Exception as e:
                 mcp_app.logger.error(f"Display update error: {e}")
                 break
@@ -538,25 +560,31 @@ async def markdown_main(
 
     # Show the research results
     research_results = ''
-    if results['research']:
+    if results.get('research'):
         research_results = truncate(5000, results['research'])
     else:
         research_results = "No research results!!"
 
+    mcp_app.logger.info(research_results)
     fr = display.add_financial_results(research_results)
-    print(fr)
-    mcp_app.logger.error(research_results)
     
 
     excel_results = ''
-    if results['excel']:
+    if results.get('excel'):
         excel_results = truncate(5000, results['excel'])
     else:
         excel_results = "No excel results!!"
 
+    mcp_app.logger.info(excel_results)
     er = display.add_excel_results(excel_results)
-    print(er)
-    mcp_app.logger.error(excel_results)
 
     for section in display.get_final_data():
         print(section)
+
+    if args.output_path:
+        with open(f"{args.output_path}/results.markdown", 'w') as file:
+            file.write(str(display))
+
+    final_msg = f"Final results and app statistics written to {args.output_path}/results.markdown"
+    print(final_msg)
+    mcp_app.logger.info(final_msg)

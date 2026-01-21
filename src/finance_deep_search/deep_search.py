@@ -85,6 +85,7 @@ class DeepSearch():
 
         # Initialize MCP App.
         self.mcp_app = MCPApp(name=app_name)
+        self.logger = self.mcp_app.logger
 
         # These are lazily initialized!
         self.orchestrator: DeepOrchestrator = None
