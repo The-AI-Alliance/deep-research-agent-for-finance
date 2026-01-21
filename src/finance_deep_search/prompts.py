@@ -1,4 +1,4 @@
-# Common utilities
+# Common prompt utilities
 from pathlib import Path
 import re
 
@@ -40,13 +40,3 @@ def load_prompt_markdown(prompt_path: Path) -> str:
         content = f.read()
         frontmatter, content = split_frontmatter_and_content(content)
         return content
-
-def format_prompt(prompt_content: str, **variables) -> str:
-    """
-    Format a prompt template with the given variables.
-    """
-    for key, value in variables.items():
-        prompt_content = prompt_content.replace('{{{{'+key+'}}}}', str(value))
-    
-    return prompt_content
-

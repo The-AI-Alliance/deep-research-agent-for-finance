@@ -64,7 +64,7 @@ to use the correct settings!
     parser.add_argument(
         "--output-path",
         default=def_output_path,
-        help=f"Path where Excel output files will be saved. (Default: {def_output_path})"
+        help=f"Path where Excel and other output files will be saved. (Default: {def_output_path})"
     )
     parser.add_argument(
         "--prompts-path",

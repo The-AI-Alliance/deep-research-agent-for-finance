@@ -1,4 +1,4 @@
-# Unit tests for the "utils" module using Hypothesis for property-based testing.
+# Unit tests for the "prompt utils" module using Hypothesis for property-based testing.
 # https://hypothesis.readthedocs.io/en/latest/
 
 from hypothesis import given, strategies as st
@@ -14,7 +14,7 @@ from tests.utils import (
 
 from finance_deep_search.prompts import (
     split_frontmatter_and_content,
-    load_prompt_markdown, format_prompt
+    load_prompt_markdown,
 )
 
 class TestPromptUtils(unittest.TestCase):
@@ -94,23 +94,6 @@ class TestPromptUtils(unittest.TestCase):
         self.check(frontmatter, all_content1, text1)        
         text2 = f"{before_frontmatter}\n---\n{frontmatter}\n---\n{all_content2}"
         self.check(frontmatter, all_content2, text2)        
-
-    @given(st.dictionaries(no_brace_non_empty_text, no_brace_text), st.text(), st.text())
-    def test_format_prompt_replaces_keys_with_values(self, 
-        kvs: dict[str, str], delimiter, prefix_suffix):
-        """
-        Verify that the keys are are properly replaced with the corresponding values
-        in the text.
-        We ignore whitespace at the beginnings and the ends of strings.
-        """
-        key_strs = ['{{{{'+str(key)+'}}}}' for key in kvs.keys()]
-        text = f'{prefix_suffix}{delimiter.join(key_strs)}{prefix_suffix}'
-        expected_text = f'{prefix_suffix}{delimiter.join(kvs.values())}{prefix_suffix}'
-        actual_text = format_prompt(text, **kvs)
-        et = expected_text.strip()
-        at = actual_text.strip()
-        self.assertEqual(et, at,
-            f'<{et}> != <{at}> (kvs: {kvs}, text = {text})')
 
     @given(st.text(), st.text())
     def test_load_prompt_markdown_returns_the_content_only(self,

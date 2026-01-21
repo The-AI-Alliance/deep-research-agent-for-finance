@@ -44,7 +44,7 @@ mcp:
   
 # for ollama
 openai:
-  default_model: "llama3.1:3b" # "gpt-oss:20b"
+  default_model: "llama3.2:3B" # "gpt-oss:20b"
   reasoning_effort: "medium"
   base_url: "http://localhost:11434/v1"
   api_key: "ignored"

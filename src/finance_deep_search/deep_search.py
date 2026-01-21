@@ -24,7 +24,8 @@ from mcp_agent.workflows.llm.augmented_llm_anthropic import AnthropicAugmentedLL
 from mcp_agent.workflows.llm.augmented_llm_openai import OpenAIAugmentedLLM
 from mcp_agent.workflows.llm.augmented_llm import RequestParams
 
-from finance_deep_search.prompts import load_prompt_markdown, format_prompt
+from finance_deep_search.prompts import load_prompt_markdown
+from finance_deep_search.string_utils import replace_variables
 
 class DeepSearch():
     """
@@ -128,7 +129,7 @@ class DeepSearch():
         # Load and format the financial research task prompt
         financial_prompt = load_prompt_markdown(
             self.financial_research_prompt_path)
-        financial_task_prompt = format_prompt(
+        financial_task_prompt = replace_variables(
             financial_prompt,
             ticker=self.ticker,
             company_name=self.company_name,
@@ -155,7 +156,7 @@ class DeepSearch():
         # The Excel writer task prompt
         excel_prompt = load_prompt_markdown(
             self.excel_writer_agent_prompt_path)
-        excel_instruction = format_prompt(
+        excel_instruction = replace_variables(
             excel_prompt,
             financial_data=self.research_result,
             ticker=self.ticker,
