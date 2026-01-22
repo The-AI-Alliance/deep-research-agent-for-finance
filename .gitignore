@@ -9,6 +9,7 @@ temp/
 # For this app, some inference responses are saved to files like this:
 output/**/*_result.txt
 output/**/raw-results.markdown
+output/**/research-results.markdown
 
 # Releases
 releases/*.temp
