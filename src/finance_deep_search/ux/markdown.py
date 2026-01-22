@@ -613,10 +613,6 @@ async def markdown_main(
     config: DeepOrchestratorConfig,
     deep_search: DeepSearch):
 
-    if args.noop:
-        print(f"Inside markdown_main. Returning...")
-        return
-
     mcp_app = await deep_search.setup()
 
     monitor = MarkdownDeepOrchestratorMonitor(deep_search.orchestrator)

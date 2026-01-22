@@ -442,7 +442,7 @@ def display_knowledge_summary(console: Console, orchestrator: DeepOrchestrator):
 
         console.print(knowledge_table)
 
-def display_token_usage(console: Console, orchestrator: DeepOrchestrator):
+async def display_token_usage(console: Console, orchestrator: DeepOrchestrator):
     """Display the token usage, if available."""
     if deep_search.token_counter:
         summary = await deep_search.token_counter.get_summary()
@@ -460,11 +460,11 @@ def display_workspace_artifacts(console: Console, orchestrator: DeepOrchestrator
         for name in list(orchestrator.memory.artifacts.keys())[:5]:
             console.print(f"  • {name}")
 
-def display_final_data(console: Console, orchestrator: DeepOrchestrator):
+async def display_final_data(console: Console, orchestrator: DeepOrchestrator):
     display_final_statistics(console, deep_search.orchestrator)
     display_budget_summary(console, deep_search.orchestrator)
     display_knowledge_summary(console, deep_search.orchestrator)
-    display_token_usage(console, deep_search.orchestrator)
+    await display_token_usage(console, deep_search.orchestrator)
     display_workspace_artifacts(console, deep_search.orchestrator)
 
 execution_time = None
@@ -473,10 +473,6 @@ async def rich_main(
     args: argparse.Namespace, 
     config: DeepOrchestratorConfig,
     deep_search: DeepSearch):
-
-    if args.noop:
-        print(f"Inside rich_main. Returning...")
-        return
 
     # Initialize the rich console.
     console = Console(highlight=False, soft_wrap=False, emoji=False)
@@ -550,7 +546,7 @@ async def rich_main(
         with open(f"{args.output_path}/results.markdown", 'w') as file:
             file.write(str(display))
 
-    display_final_data(console, deep_search.orchestrator)
+    await display_final_data(console, deep_search.orchestrator)
 
     final_msg = f"Final output written to {args.output_path}"
     console.print(f"\n[bold]{final_msg}[/bold]")

@@ -48,8 +48,7 @@ class DeepSearch():
             output_path: str,
             output_spreadsheet_path: str,
             short_run: str,
-            verbose: bool,
-            noop: bool):
+            verbose: bool):
         self.app_name = app_name
         self.config = config
         self.ticker = ticker
@@ -62,7 +61,6 @@ class DeepSearch():
         self.output_spreadsheet_path = output_spreadsheet_path
         self.short_run = short_run
         self.verbose = verbose
-        self.noop = noop
         self.start_time = datetime.now().strftime('%Y-%m-%d %H:%M%:%S')
 
         self.prompts_path: Path = Path(prompts_path)
@@ -81,10 +79,6 @@ class DeepSearch():
             #     self.llm_factory = OllamaAIAugmentedLLM
             case _:
                 raise ValueError(f"Unrecognized provider: {self.provider}")
-
-        if noop:
-            print(f"Inside DeepSearch. Returning...")
-            return
 
         # Initialize MCP App.
         self.mcp_app = MCPApp(name=app_name)
@@ -117,8 +111,6 @@ class DeepSearch():
             "excel_writer_agent_prompt_path": self.excel_writer_agent_prompt_path,
             "start_time": self.start_time,
             "short_run": self.short_run,
-            # "verbose": self.verbose,
-            # "noop": self.noop,
         }
 
     def __resolve_path(self, path_str: str, possible_parent: Path) -> Path:

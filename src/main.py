@@ -114,11 +114,6 @@ to use the correct settings!
         action='store_true',
         help="Print some extra output. Useful for some testing and debugging scenarios."
     )
-    parser.add_argument(
-        "-n", "--noop",
-        action='store_true',
-        help="Just print some things that would be done, but don't actually do them - useful for debugging."
-    )
     
     args = parser.parse_args()
     
@@ -155,7 +150,6 @@ to use the correct settings!
   Current working dir:   {pwd}
   Short run?             {args.short_run}
   Verbose?               {args.verbose}
-  No op?                 {args.noop}
 """)
         # Just to give the user time to see the above before the UX starts.
         time.sleep(2.0)  
@@ -211,7 +205,6 @@ to use the correct settings!
         output_spreadsheet_path = output_spreadsheet_path,
         short_run = args.short_run,
         verbose = args.verbose,
-        noop = args.noop
     )
 
     # Run the example
