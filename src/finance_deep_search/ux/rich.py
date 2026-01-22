@@ -545,4 +545,13 @@ async def rich_main(
         else:
             mcp_app.logger.error("No Excel result!")
 
-        display_final_data(console, deep_search.orchestrator)
+
+    if args.output_path:
+        with open(f"{args.output_path}/results.markdown", 'w') as file:
+            file.write(str(display))
+
+    display_final_data(console, deep_search.orchestrator)
+
+    final_msg = f"Final output written to {args.output_path}"
+    console.print(f"\n[bold]{final_msg}[/bold]")
+

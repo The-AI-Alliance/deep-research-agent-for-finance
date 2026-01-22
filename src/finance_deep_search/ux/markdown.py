@@ -93,7 +93,7 @@ class MarkdownDeepOrchestratorMonitor():
         if queue.completed_steps:
             completed = tree.add("✅ Completed Steps")
             for step in queue.completed_steps[-2:]:  # Last 2 steps only
-                step_node = completed.add(f"[dim]{step.description[:60]}...")
+                step_node = completed.add(f"{step.description[:60]}...")
                 # Show first 3 tasks if many, otherwise all
                 tasks_to_show = step.tasks[:3] if len(step.tasks) > 3 else step.tasks
                 for task in tasks_to_show:
@@ -103,15 +103,15 @@ class MarkdownDeepOrchestratorMonitor():
                         icon = "✗"
                     else:
                         icon = "•"
-                    step_node.add(f"[dim]{icon} {task.description[:40]}...")
+                    step_node.add(f"{task.description[:40]}...")
                 if len(step.tasks) > 3:
-                    step_node.add(f"[dim italic]... +{len(step.tasks) - 3} more tasks")
+                    step_node.add(f"... +{len(step.tasks) - 3} more tasks")
 
         # Current/Active step - prioritize showing active and failed tasks
         current_step = queue.get_next_step()
         if current_step:
-            active = tree.add("[yellow]▶ Active Step")
-            active_node = active.add(f"[yellow]{current_step.description[:60]}...")
+            active = tree.add("▶ Active Step")
+            active_node = active.add(f"{current_step.description[:60]}...")
 
             # Sort tasks to prioritize: in_progress > failed > pending > completed
             def task_priority(task):
@@ -128,11 +128,11 @@ class MarkdownDeepOrchestratorMonitor():
 
             for task in tasks_to_show:
                 if task.status == "in_progress":
-                    icon = "[yellow]⟳[/yellow]"
+                    icon = "⟳"
                 elif task.status == "failed":
-                    icon = "[red]✗[/red]"
+                    icon = "✗"
                 elif task.status == "completed":
-                    icon = "[green]✓[/green]"
+                    icon = "✓"
                 else:
                     icon = "•"
                 active_node.add(f"{icon} {task.description[:40]}...")
@@ -152,21 +152,21 @@ class MarkdownDeepOrchestratorMonitor():
                     if status_counts.get("completed", 0) > 0:
                         parts.append(f"{status_counts['completed']} done")
                     active_node.add(
-                        f"[dim italic]... +{remaining} more ({', '.join(parts)})"
+                        f"... +{remaining} more ({', '.join(parts)})"
                     )
 
         # Pending steps (just count)
         if queue.pending_steps:
-            _pending = tree.add(f"[dim]⏳ {len(queue.pending_steps)} Pending Steps")
+            _pending = tree.add(f"⏳ {len(queue.pending_steps)} Pending Steps")
 
         # Failed tasks summary if any
         if queue.failed_task_names:
-            failed = tree.add(f"[red]❌ {len(queue.failed_task_names)} Failed Tasks")
+            failed = tree.add(f"❌ {len(queue.failed_task_names)} Failed Tasks")
             for task_name in list(queue.failed_task_names)[:2]:
-                failed.add(f"[red dim]{task_name}")
+                failed.add(f"{task_name}")
 
         # Queue summary
-        tree.add(f"[blue]📊 {queue.get_progress_summary()}")
+        tree.add(f"📊 {queue.get_progress_summary()}")
 
         return tree
 
@@ -188,11 +188,11 @@ class MarkdownDeepOrchestratorMonitor():
         for i, step in enumerate(plan.steps, 1):
             # Determine status
             if step in queue.completed_steps:
-                status = "[green]✓ Done[/green]"
+                status = "✓ Done"
             elif step == queue.get_next_step():
-                status = "[yellow]→ Active[/yellow]"
+                status = "→ Active"
             else:
-                status = "[dim]Pending[/dim]"
+                status = "Pending"
 
             table.add_row([
                 str(i),
@@ -220,20 +220,20 @@ class MarkdownDeepOrchestratorMonitor():
                 summary = counter.get_summary()
                 if summary and hasattr(summary, "usage"):
                     usage = summary.usage
-                    lines.append(f"[cyan]Total Tokens:[/cyan] {usage.total_tokens:,}")
-                    lines.append(f"[cyan]Input Tokens:[/cyan] {usage.input_tokens:,}")
-                    lines.append(f"[cyan]Output Tokens:[/cyan] {usage.output_tokens:,}")
+                    lines.append(f"Total Tokens: {usage.total_tokens:,}")
+                    lines.append(f"Input Tokens: {usage.input_tokens:,}")
+                    lines.append(f"Output Tokens: {usage.output_tokens:,}")
 
                     # Cost if available
                     if hasattr(summary, "cost"):
                         lines.append(
-                            f"[cyan]Estimated Cost:[/cyan] ${summary.cost:.4f}"
+                            f"Estimated Cost: ${summary.cost:.4f}"
                         )
 
                     # Get top consumers
                     node = counter.find_node(self.orchestrator.name)
                     if node and node.children:
-                        lines.append("\n[yellow]Top Consumers:[/yellow]")
+                        lines.append("\nTop Consumers:")
                         sorted_children = sorted(
                             node.children,
                             key=lambda n: n.usage.total_tokens,
@@ -250,7 +250,7 @@ class MarkdownDeepOrchestratorMonitor():
                             )
 
         if not lines:
-            lines.append("[dim]No token usage data available yet[/dim]")
+            lines.append("]No token usage data available yet")
 
         return MarkdownSection(title="📊 Token Usage", content=lines)
 
@@ -321,8 +321,8 @@ class MarkdownDeepOrchestratorMonitor():
         table.add_row(["Failure Rate", f"{policy.get_failure_rate():.1%}"])
         return table
 
-    def get_status_summary_table(self) -> MarkdownTable:
-        """Get overall status summary as a Markdown table"""
+    def get_status_summary_content(self) -> (MarkdownTable, MarkdownSection):
+        """Get overall status summary as a Markdown table and other content."""
         self.update_execution_time()
 
         table = MarkdownTable(title="📊 Status", 
@@ -331,7 +331,16 @@ class MarkdownDeepOrchestratorMonitor():
         table.add_row(["Iteration", self.orchestrator.iteration/self.orchestrator.config.execution.max_iterations])
         table.add_row(["Replans",   self.orchestrator.replan_count/self.orchestrator.config.execution.max_replans])
         table.add_row(["Elapsed",   self.execution_time])
-        return table
+
+        content = [
+            "The _full objective_ abbreviated in the table above is shown next.",
+            "Note that `{{foo}}` strings are part of the prompt that were replaced with appropriate values, e.g., `{{ticker}}` is replaced with the ticker symbol.",
+            "\n",
+        ]
+        content.extend([f"> {line}" for line in self.orchestrator.objective.split('\n')])
+        content.extend(["\n", "(End of the objective listing...)"])
+        objective = MarkdownSection(title="Full Objective", content=content)
+        return (table, objective)
 
     def update_execution_time(self) -> timedelta:
         self.end_time = time.time()
@@ -341,33 +350,43 @@ class MarkdownDeepOrchestratorMonitor():
 class MarkdownDisplay():
     def __init__(self, title: str,
         deep_search: DeepSearch,
-        orchestrator: DeepOrchestrator, 
         monitor: MarkdownDeepOrchestratorMonitor):
         """Create the display Markdown"""
-        self.layout = MarkdownSection(title=title)
         self.deep_search = deep_search
-        self.orchestrator = orchestrator
+        self.orchestrator = self.deep_search.orchestrator
         self.monitor = monitor
+        self.layout = MarkdownDisplay.__make_layout(title, self.deep_search.properties())
+
+    def __make_layout(title: str, properties: dict[str,any]) -> MarkdownSection:
+        layout = MarkdownSection(title=title)
+        
+        # Make a Markdown table of the runtime properties. First wrap the keys in `...`
+        # to render as fixed-width/code font.
+        top_table = MarkdownTable("This run's properties", ['Property', 'Value'])
+        for key, value in properties.items():
+            top_table.add_row([f"`{key}`", value])
+        layout.add_intro_content([top_table])
 
         # Main structure
-        self.layout.add_subsections({
+        layout.add_subsections({
             "top_section": MarkdownSection(title="App Runtime Stats"),
             "botton_section": MarkdownSection(title="Financial Results"),
         })
 
         # Top section - queue, plan, and memory
-        self.layout["top_section"].add_subsections({
+        layout["top_section"].add_subsections({
             "queue": MarkdownSection(title="Task Queue"),
             "plan": MarkdownSection(title="Current Plan"),
             "memory": MarkdownSection(title="Memory"),
         })
 
         # Bottom section - budget, status, and agents, and final results added later.
-        self.layout["botton_section"].add_subsections({
+        layout["botton_section"].add_subsections({
             'budget': MarkdownSection(title="💰 Runtime Budget Statistics"),
             'status': MarkdownSection(title="📊 Status Summary"),
             'policy': MarkdownSection(title="⚙️ Policy Engine"),
         })
+        return layout
 
     def update(self) -> MarkdownSection:
         """Update the display with the current state"""
@@ -382,7 +401,9 @@ class MarkdownDisplay():
 
         bottom_section = self.layout["botton_section"] 
         bottom_section["budget"].set_intro_content([self.monitor.get_budget_table()])
-        bottom_section["status"].set_intro_content([self.monitor.get_status_summary_table()])
+        summary_table, summary_obj_section = self.monitor.get_status_summary_content()
+        bottom_section["status"].set_intro_content([summary_table])
+        bottom_section["status"].set_subsections([summary_obj_section])
         bottom_section["policy"].set_intro_content(
             [self.monitor.get_policy_table(), self.monitor.get_agents_table()])
         
@@ -398,40 +419,102 @@ class MarkdownDisplay():
         self.layout.add_subsections([section])
         return section
 
-    def add_financial_results(self, results: str) -> MarkdownSection:
-        content = []
-        if isinstance(results, ChatCompletionMessage):
-            content = results.content.split('\n')
-            table = MarkdownTable(title="Chat Metadata",
-                columns = [("Item", 'left'), ("Value", 'right')])
-            table.add_row(['refusal', str(results.refusal)])
-            table.add_row(['role', str(results.role)])
-            table.add_row(['annotations', str(results.annotations)])
-            table.add_row(['audio', str(results.audio)])
-            table.add_row(['function_call', str(results.function_call)])
-            table.add_row(['tool_calls', str(results.tool_calls)])
-        else:
-            content = [results]
-
-        return self.add_section("📊 Financial Research Results (Preview)", [content])
-
-    def add_excel_results(self, results: str) -> MarkdownSection:
-        content = []
+    def __parse_json(self, s: str, context: str = '', log_failure: bool = False) -> (str, list[str]):
         try:
             # Handle an observed problem with returned results; '\\' that will cause json
             # parsing to fail.
-            res2 = clean_json_string(results, '')
-            obj = json.loads(res2)
+            s2 = clean_json_string(s, '')
+            obj = json.loads(s2)
             # format as nested bullets:
             mu = MarkdownUtil
-            content = mu.to_markdown(obj, bullet='*', indent='\t', key_format='**%s:**')
+            md_str = mu.to_markdown(obj, bullet='*', indent='\t', key_format='**%s:**')
+            return ('', md_str)
         except (JSONDecodeError, TypeError) as err:
-            self.deep_search.logger.warning(f"{err} raised while parsing Excel results: {results}")
-            content = ["We tried to parse the results, but we were unsuccessful. Here are the raw results:", "```text"]
-            content.extend(results.split('\n'))
-            content.append('```')
-        return self.add_section("📈 Excel Creation Result", [content])
-    
+            err_msg = f"{err} raised while parsing attempting to parse {context} results."
+            if log_failure:
+                self.deep_search.logger.warning(f"{err_msg}: input = {s}")
+            return (err_msg, None)
+
+    def add_financial_results(self, results: str, error: list[str] = None) -> MarkdownSection:
+        def make_metadata_table(
+            refusal: str,
+            role: str,
+            annotations: str,
+            audio: str,
+            function_call: str,
+            tool_calls: str) -> MarkdownTable:
+            table = MarkdownTable(title="Chat Metadata",
+                columns = [("Item", 'left'), ("Value", 'right')])
+            table.add_row(['refusal', str(refusal)])
+            table.add_row(['role', str(role)])
+            table.add_row(['annotations', str(annotations)])
+            table.add_row(['audio', str(audio)])
+            table.add_row(['function_call', str(function_call)])
+            table.add_row(['tool_calls', str(tool_calls)])
+            return table
+
+        all_content = [
+            f"See also the directory `{self.deep_search.output_path}` for results files.", 
+            "\n",
+            "The parsed content returned:", 
+            '\n'
+        ]
+        if error:
+            content = [f"> {line}" for line in error]
+        else:
+            if isinstance(results, ChatCompletionMessage):
+                content = re.split(r'\\+n', results.content)
+                content.append(make_metadata_table(
+                    results.refusal,
+                    results.role,
+                    results.annotations,
+                    results.audio,
+                    results.function_call,
+                    results.tool_calls))
+            else:
+                # It might be a `str(ChatCompletionMessage)` if the OpenAI API was used!
+                if results.startswith("ChatCompletion"):
+                    # Try parsing it with the following _ugly_ hack to extract just the
+                    # `content` from the string:
+                    try:
+                        s2 = re.sub(r"""ChatCompletion([^=]+)\s*=\s*['"]""", '', results)
+                        s3 = re.sub(r"""['"],\s*refusal=.*$""", '', s2)
+                        content = re.split(r'\\+n', s3)
+                    except:  # bail out...
+                        content = re.split(r'\\+n', results)
+                else:
+                    # Try parsing as JSON. It probably isn't JSON, but try...
+                    (err_msg, content) = self.__parse_json(results)
+                    if not content:
+                        content = re.split(r'\\+n', results)
+        all_content.extend([f"> {line}" for line in content])
+        all_content.extend(['\n', "(End of parsed content.)"])
+            
+        return self.add_section("📊 Financial Research Results (Preview)", all_content)
+
+    def add_excel_results(self, results: str, error: list[str] = None) -> MarkdownSection:
+        all_content = [
+            f"See also the directory `{self.deep_search.output_path}` for results files.", 
+            "\n"
+        ]
+        if error:
+            content = error
+        else:
+            (err_msg, content2) = self.__parse_json(results, 'Excel', True)
+            if content2:
+                content = content2
+            else:
+                all_content.extend([ 
+                    f"We tried to parse the Excel JSON(?) results, but we were unsuccessful.",
+                    f"(The model may have generated invalid JSON: Error message = `{err_msg}`", 
+                    "\n",
+                    "Here are the raw results:",
+                    "\n",
+                ])
+                content = re.split(r'\\+n', results)
+        all_content.extend([f"> {line}" for line in content]) 
+        all_content.extend(['\n', "(End of parsed content.)"])
+        return self.add_section("📈 Excel Creation Result", all_content)    
 
     def get_final_statistics(self) -> MarkdownSection:
         """Get final statistics for display"""
@@ -493,13 +576,12 @@ class MarkdownDisplay():
     async def get_token_usage(self) -> MarkdownSection:
         """Display the token usage, if available."""
         summary_info = ["Token usage not available"]
-        if deep_search.token_counter:
-            summary = await deep_search.token_counter.get_summary()
+        if self.deep_search.token_counter:
+            summary = await self.deep_search.token_counter.get_summary()
             if summary and hasattr(summary, "usage"):
                 summary_info = [f"* Total Tokens: {summary.usage.total_tokens}"]
                 if hasattr(summary, "cost"):
                     summary_info.append(f"* Total Cost: ${summary.cost:.4f}")
-
         return self.add_section("Total Tokens", summary_info)
 
     def get_workspace_artifacts(self) -> MarkdownSection:
@@ -512,7 +594,7 @@ class MarkdownDisplay():
 
         return self.add_section("📁 Artifacts Created", artifacts_info)
 
-    def get_final_data(self) -> list[MarkdownSection]:
+    async def get_final_data(self) -> list[MarkdownSection]:
         """
         Returns the list of Markdown sections for the final data, but they are also
         added to the whole document, so you can also just print the whole thing.
@@ -522,7 +604,7 @@ class MarkdownDisplay():
             self.get_final_statistics(),
             self.get_budget_summary(),
             self.get_knowledge_summary(),
-            self.get_token_usage(),
+            await self.get_token_usage(),
             self.get_workspace_artifacts(),
         ]
 
@@ -540,7 +622,7 @@ async def markdown_main(
     monitor = MarkdownDeepOrchestratorMonitor(deep_search.orchestrator)
 
     display = MarkdownDisplay("Deep Research Agent for Finance", 
-        deep_search, deep_search.orchestrator, monitor)
+        deep_search, monitor)
 
     # Update display in background
     async def update_loop():
@@ -558,8 +640,7 @@ async def markdown_main(
 
     results = {}
     try:
-        #results = await deep_search.run()
-        time.sleep(5)
+        results = await deep_search.run()
     finally:
         # Final update
         doc = display.update()
@@ -574,30 +655,39 @@ async def markdown_main(
         return s[:n] + "..." if len(s) > n else s
 
     # Show the research results
-    research_results = ''
-    if results.get('research'):
-        research_results = truncate(5000, results['research'])
+    research_error = None
+    research_results = results.get('research')
+    if research_results:
+        # research_results = truncate(50000, results['research'])
+        mcp_app.logger.info(truncate(1000, research_results))
     else:
-        research_results = "No research results!!"
+        research_error = ["No research results!!", "Check the logs for diagnostic information."]
+        for line in research_error:
+            mcp_app.logger.error(line)
 
-    mcp_app.logger.info(research_results)
-    fr = display.add_financial_results(research_results)
+    fr = display.add_financial_results(research_results, research_error)
     
-
-    excel_results = ''
+    excel_results = None
+    excel_error = None
     if results.get('excel'):
-        excel_results = truncate(5000, results['excel'])
+        excel_results = truncate(50000, results['excel'])
+        mcp_app.logger.info(excel_results)
     else:
-        excel_results = "No excel results!!"
+        excel_error = [
+            "No Excel results!", 
+            f"Check the logs for diagnostic information."
+        ]
+        for line in excel_error:
+            mcp_app.logger.error(line)
+    
+    er = display.add_excel_results(excel_results, excel_error)
 
-    mcp_app.logger.info(excel_results)
-    er = display.add_excel_results(excel_results)
-
-    for section in display.get_final_data():
+    final_sections = await display.get_final_data()
+    for section in final_sections:
         print(section)
 
     if args.output_path:
-        with open(f"{args.output_path}/results.markdown", 'w') as file:
+        with open(f"{args.output_path}/research-results.markdown", 'w') as file:
             file.write(str(display))
 
     final_msg = f"Final results and app statistics written to {args.output_path}/results.markdown"

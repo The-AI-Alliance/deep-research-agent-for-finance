@@ -105,6 +105,11 @@ to use the correct settings!
         help="The 'UX' to use. Use 'rich' (the default) for a rich console UX and 'markdown' for streaming updates in markdown syntax."
     )
     parser.add_argument(
+        '--short-run',
+        action='store_true',
+        help="Sets some low maximum thresholds to create a shorter run. This is primarily a debugging tool, as lower iterations, for example, means lower quality results."
+    )
+    parser.add_argument(
         '-v', '--verbose',
         action='store_true',
         help="Print some extra output. Useful for some testing and debugging scenarios."
@@ -148,6 +153,7 @@ to use the correct settings!
   Output path:           {args.output_path}
     For spreadsheet:     {output_spreadsheet_path}
   Current working dir:   {pwd}
+  Short run?             {args.short_run}
   Verbose?               {args.verbose}
   No op?                 {args.noop}
 """)
@@ -155,21 +161,38 @@ to use the correct settings!
         time.sleep(2.0)  
 
     # Create configuration for the Deep Orchestrator
-    config = DeepOrchestratorConfig(
-        name="DeepFinancialResearcher",
-        available_servers=["fetch", "filesystem", "yfmcp", "financial-datasets"],
-        execution=ExecutionConfig(
+    if args.short_run:
+        execution_config=ExecutionConfig(
+            max_iterations=2,
+            max_replans=2,
+            max_task_retries=2,
+            enable_parallel=True,
+            enable_filesystem=True,
+        )
+        budget_config=BudgetConfig(
+            max_tokens=10000,
+            max_cost=0.20,
+            max_time_minutes=2,
+        )
+    else:
+        execution_config=ExecutionConfig(
             max_iterations=25,
             max_replans=2,
             max_task_retries=5,
             enable_parallel=True,
             enable_filesystem=True,
-        ),
-        budget=BudgetConfig(
+        )
+        budget_config=BudgetConfig(
             max_tokens=100000,
             max_cost=1.00,
             max_time_minutes=10,
-        ),
+        )
+
+    config = DeepOrchestratorConfig(
+        name="DeepFinancialResearcher",
+        available_servers=["fetch", "filesystem", "yfmcp", "financial-datasets"],
+        execution=execution_config,
+        budget=budget_config,
     )
 
     deep_search = DeepSearch(
@@ -186,6 +209,7 @@ to use the correct settings!
         excel_writer_agent_prompt_path = args.excel_writer_agent_prompt_path,
         output_path = args.output_path,
         output_spreadsheet_path = output_spreadsheet_path,
+        short_run = args.short_run,
         verbose = args.verbose,
         noop = args.noop
     )

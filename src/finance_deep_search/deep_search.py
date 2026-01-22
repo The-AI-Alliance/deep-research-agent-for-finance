@@ -47,6 +47,7 @@ class DeepSearch():
             excel_writer_agent_prompt_path: str,
             output_path: str,
             output_spreadsheet_path: str,
+            short_run: str,
             verbose: bool,
             noop: bool):
         self.app_name = app_name
@@ -59,8 +60,10 @@ class DeepSearch():
         self.provider = provider
         self.output_path = output_path
         self.output_spreadsheet_path = output_spreadsheet_path
+        self.short_run = short_run
         self.verbose = verbose
         self.noop = noop
+        self.start_time = datetime.now().strftime('%Y-%m-%d %H:%M%:%S')
 
         self.prompts_path: Path = Path(prompts_path)
         self.financial_research_prompt_path: Path = self.__resolve_path(
@@ -96,6 +99,27 @@ class DeepSearch():
         self.research_result: str = None
         self.excel_result: str = None
 
+    def properties(self) -> dict[str,str]:
+        """Return a dictionary of the properties for this instance. Useful for reports."""
+        return {
+            "app_name": self.app_name,
+            "config": self.config,
+            "ticker": self.ticker,
+            "company_name": self.company_name,
+            "reporting_currency": self.reporting_currency,
+            "orchestrator_model_name": self.orchestrator_model_name,
+            "excel_writer_model_name": self.excel_writer_model_name,
+            "provider": self.provider,
+            "output_path": self.output_path,
+            "output_spreadsheet_path": self.output_spreadsheet_path,
+            "prompts_path": self.prompts_path,
+            "financial_research_prompt_path": self.financial_research_prompt_path,
+            "excel_writer_agent_prompt_path": self.excel_writer_agent_prompt_path,
+            "start_time": self.start_time,
+            "short_run": self.short_run,
+            # "verbose": self.verbose,
+            # "noop": self.noop,
+        }
 
     def __resolve_path(self, path_str: str, possible_parent: Path) -> Path:
         path = Path(path_str)
@@ -139,20 +163,23 @@ class DeepSearch():
             output_path=self.output_path,
         )
 
+        max_iterations = 1 if self.short_run else 10
+
         research_result = await self.orchestrator.generate_str(
             message=financial_task_prompt,
             request_params=RequestParams(
                 model=self.orchestrator_model_name, 
                 temperature=0.7, 
-                max_iterations=10
+                max_iterations=max_iterations
             ),
         )
         results['research'] = research_result
         rr_file = f"{self.output_path}/research_result.txt"
-        self.logger.info(f"Research result: {research_result}")
+        self.logger.info(f"Python type of research_result object: {type(research_result)}")
         self.logger.info(f"Writing research result to: {rr_file}")
         with open(rr_file, "w") as file:
-            file.write(research_result)
+            for line in research_result.split('\n'):
+                file.write(line)
 
         # The Excel writer task prompt
         excel_prompt = load_prompt_markdown(
@@ -185,7 +212,7 @@ class DeepSearch():
                 request_params=RequestParams(
                     model=self.excel_writer_model_name, 
                     temperature=0.7, 
-                    max_iterations=10
+                    max_iterations=max_iterations
                 ),
             )
             results['excel'] = excel_result

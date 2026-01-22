@@ -2,7 +2,7 @@
 pages_url    := https://the-ai-alliance.github.io/deep-research-agent-for-finance/
 docs_dir     := docs
 site_dir     := ${docs_dir}/_site
-clean_dirs   := ${site_dir} ${docs_dir}/.sass-cache logs
+clean_dirs   := logs ${site_dir} ${docs_dir}/.sass-cache logs
 src_dir      := src
 app_dir      := finance_deep_search
 
@@ -44,6 +44,7 @@ make all                # Run the application by building "app-run".
 make app-run            # Run the application with default arguments.
 make app-run-rich       # Run the application with the Rich console UI (also the default).
 make app-run-md         # Run the application with the streaming Markdown "UI".
+make app-run-markdown   # Same as "make app-run-md".
 make app-help           # Run the application with --help to see the support arguments.
                         # Also prints the default invocation used by "app-run".
 make app-setup          # One-time setup of the application dependences.
@@ -120,13 +121,13 @@ endef
 
 .PHONY: all view-pages view-local clean help 
 .PHONY: setup-jekyll run-jekyll
-.PHONY: app-run app-run-rich app-run md do-app-run app-setup app-check uv-check uv-cmd-check venv-check
+.PHONY: app-run app-run-rich app-run-md app-run-markdown do-app-run app-setup app-check uv-check uv-cmd-check venv-check
 .PHONY: mcp-agent-check app-help test tests
 .PHONY: print-info print-app-info print-make-info print-docs-info
 
 all:: app-run
 
-app-run-md:: 
+app-run-md app-run-markdown:: 
 	$(MAKE) UX=markdown app-run
 app-run-rich:: app-run
 app-run:: app-check do-app-run

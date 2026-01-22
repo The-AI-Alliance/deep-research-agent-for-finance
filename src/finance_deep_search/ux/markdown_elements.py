@@ -251,7 +251,7 @@ class MarkdownTable(MarkdownElement):
     def __str__(self) -> str:
         title_str = ''
         if len(self.title) > 0:
-            title_str = f"Table: {self.title}\n"
+            title_str = f"\n**Table: {self.title}**\n"
 
         if len(self.columns) == 0:
             return ''
