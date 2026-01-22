@@ -21,6 +21,7 @@ COMPANY_NAME             ?= Meta Platforms, Inc.
 REPORTING_CURRENCY       ?= USD
 ORCHESTRATOR_MODEL       ?= gpt-4o
 EXCEL_WRITER_MODEL       ?= o4-mini
+PROVIDER                 ?= openai
 PROMPTS_PATH             ?= ${app_dir}/prompts
 FIN_RESEARCH_PROMPT_FILE ?= financial_research_agent.md
 EXCEL_WRITER_PROMPT_FILE ?= excel_writer_agent.md
@@ -142,8 +143,10 @@ do-app-run::
 		--excel-writer-agent-prompt-path "${EXCEL_WRITER_PROMPT_FILE}" \
 		--orchestrator-model "${ORCHESTRATOR_MODEL}" \
 		--excel-writer-model "${EXCEL_WRITER_MODEL}" \
-		--verbose ${APP_ARGS} \
-		--ux ${UX}
+		--provider "${PROVIDER}" \
+		--verbose \
+		--ux ${UX} \
+		${APP_ARGS}
 	@echo
 	@echo "Output files in ${OUTPUT_PATH}:"
 	@find ${OUTPUT_PATH}
@@ -227,8 +230,9 @@ clean::
 ## website locally for testing and proofreading.
 
 view-pages::
-	@python -m webbrowser "${pages_url}" || \
-		$(error "ERROR: I could not open the GitHub Pages URL. Try ⌘-click or ^-click on this URL instead: ${pages_url}")
+	@uname | grep -q Darwin && open ${pages_url} || \
+		(echo "I could not open the GitHub Pages URL myself. Try ⌘-click or ^-click on this URL, or copy and paste it into a browser:" && \
+		echo "  ${pages_url}")
 
 view-local:: setup-jekyll run-jekyll
 

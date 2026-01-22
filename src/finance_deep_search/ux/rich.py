@@ -444,8 +444,8 @@ def display_knowledge_summary(console: Console, orchestrator: DeepOrchestrator):
 
 async def display_token_usage(console: Console, orchestrator: DeepOrchestrator):
     """Display the token usage, if available."""
-    if deep_search.token_counter:
-        summary = await deep_search.token_counter.get_summary()
+    if orchestrator.context.token_counter:
+        summary = await orchestrator.context.token_counter.get_summary()
         if summary and hasattr(summary, "usage"):
             console.print(
                 f"\n[bold]Total Tokens:[/bold] {summary.usage.total_tokens:,}"
@@ -461,13 +461,13 @@ def display_workspace_artifacts(console: Console, orchestrator: DeepOrchestrator
             console.print(f"  • {name}")
 
 async def display_final_data(console: Console, orchestrator: DeepOrchestrator):
-    display_final_statistics(console, deep_search.orchestrator)
-    display_budget_summary(console, deep_search.orchestrator)
-    display_knowledge_summary(console, deep_search.orchestrator)
-    await display_token_usage(console, deep_search.orchestrator)
-    display_workspace_artifacts(console, deep_search.orchestrator)
+    display_final_statistics(console, orchestrator)
+    display_budget_summary(console, orchestrator)
+    display_knowledge_summary(console, orchestrator)
+    await display_token_usage(console, orchestrator)
+    display_workspace_artifacts(console, orchestrator)
 
-execution_time = None
+execution_time = 0.0
 
 async def rich_main(
     args: argparse.Namespace, 
@@ -526,6 +526,10 @@ async def rich_main(
                     border_style="green",
                 )
             )
+            if args.output_path:
+                with open(f"{args.output_path}/raw-results.markdown", 'w') as file:
+                    file.write("'Raw' Results:\n")
+                    file.write(results['research'])
         else:
             mcp_app.logger.error("No research result!!")
         
@@ -542,12 +546,8 @@ async def rich_main(
             mcp_app.logger.error("No Excel result!")
 
 
-    if args.output_path:
-        with open(f"{args.output_path}/results.markdown", 'w') as file:
-            file.write(str(display))
-
     await display_final_data(console, deep_search.orchestrator)
 
-    final_msg = f"Final output written to {args.output_path}"
+    final_msg = f"Final output files written to {args.output_path}"
     console.print(f"\n[bold]{final_msg}[/bold]")
 

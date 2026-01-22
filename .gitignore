@@ -8,6 +8,7 @@ temp/
 
 # For this app, some inference responses are saved to files like this:
 output/**/*_result.txt
+output/**/raw-results.markdown
 
 # Releases
 releases/*.temp
@@ -44,8 +45,10 @@ cucumber.log
 # Mac file system indexing files:
 .DS_Store
 
-# Credentials
+# Credentials. The second pattern matches "mcp_agent.secrets.yaml", which
+# mcp-agent uses to find your secrets.
 *.secrets
+*.secrets.yaml
 
 # Created by https://www.toptal.com/developers/gitignore/api/python
 # Edit at https://www.toptal.com/developers/gitignore?templates=python
@@ -286,6 +289,5 @@ node_modules
 # LSF license
 pac.entitlement
 
-# MCP Agent logs and secrets
+# MCP Agent logs
 logs/
-*.secrets.yaml
