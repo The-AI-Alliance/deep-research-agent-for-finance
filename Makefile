@@ -1,10 +1,12 @@
 
-pages_url    := https://the-ai-alliance.github.io/deep-research-agent-for-finance/
-docs_dir     := docs
-site_dir     := ${docs_dir}/_site
-clean_dirs   := logs ${site_dir} ${docs_dir}/.sass-cache logs
-src_dir      := src
-app_dir      := finance_deep_search
+pages_url       := https://the-ai-alliance.github.io/deep-research-agent-for-finance/
+docs_dir        := docs
+site_dir        := ${docs_dir}/_site
+clean_code_dirs := logs ${src_dir}/.hypothesis
+clean_doc_dirs  := ${site_dir} ${docs_dir}/.sass-cache
+clean_dirs      := ${clean_code_dirs} ${clean_doc_dirs}
+src_dir         := src
+app_dir         := finance_deep_search
 
 # Environment variables
 MAKEFLAGS           ?= # -w --warn-undefined-variables
@@ -68,6 +70,8 @@ make print-info         # Print all the current values of some make and env. var
 make print-app-info     # Print just the values related to the app.
 make print-make-info    # Print just the values related to make, etc.
 make print-docs-info    # Print just the values related to the GitHub Pages docs.
+make clean_code         # Deletes these directories: ${clean_code_dirs}
+make clean_docs         # Deletes these directories: ${clean_docs_dirs}
 make clean              # Deletes these directories: ${clean_dirs}
 endef
 
@@ -120,18 +124,18 @@ define ruby_installation_message
 See ruby-lang.org for installation instructions.
 endef
 
-.PHONY: all view-pages view-local clean help 
+.PHONY: all view-pages view-local clean clean_code clean_docs help 
 .PHONY: setup-jekyll run-jekyll
 .PHONY: app-run app-run-rich app-run-md app-run-markdown do-app-run app-setup app-check uv-check uv-cmd-check venv-check
 .PHONY: mcp-agent-check app-help test tests
-.PHONY: print-info print-app-info print-make-info print-docs-info
+.PHONY: print-info print-app-info print-make-info print-docs-info show-output-files
 
 all:: app-run
 
 app-run-md app-run-markdown:: 
 	$(MAKE) UX=markdown app-run
 app-run-rich:: app-run
-app-run:: app-check do-app-run
+app-run:: app-check do-app-run show-output-files
 do-app-run::
 	cd ${src_dir} && uv run main.py \
 		--ticker "${TICKER}" \
@@ -147,9 +151,10 @@ do-app-run::
 		--verbose \
 		--ux ${UX} \
 		${APP_ARGS}
+show-output-files::
 	@echo
 	@echo "Output files in ${OUTPUT_PATH}:"
-	@find ${OUTPUT_PATH}
+	@cd ${OUTPUT_PATH} && find . -type f -exec ls -lh {} \;
 
 test tests:: uv-check
 	cd ${src_dir} && uv run python -m unittest discover
@@ -212,6 +217,8 @@ print-make-info:
 	@echo "ARCHITECTURE:              ${ARCHITECTURE}"
 	@echo "GIT_HASH:                  ${GIT_HASH}"
 	@echo "NOW:                       ${NOW}"
+	@echo "clean code directories:    ${clean_code_dirs} (deleted by 'make clean_code')"
+	@echo "clean docs directories:    ${clean_docs_dirs} (deleted by 'make clean_docs')"
 	@echo "clean directories:         ${clean_dirs} (deleted by 'make clean')"
 	@echo
 
@@ -223,8 +230,12 @@ print-docs-info:
 	@echo
 
 
-clean::
-	rm -rf ${clean_dirs} 
+clean_code:: clean_code clean_docs
+clean_code::
+	rm -rf ${clean_code_dirs} 
+clean_docs::
+	rm -rf ${clean_docs_dirs} 
+
 
 ## The rest of this Makefile is for running the GitHub Pages documentation 
 ## website locally for testing and proofreading.
