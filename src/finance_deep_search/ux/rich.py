@@ -330,7 +330,7 @@ class RichDisplay():
         self.monitor = monitor
         self.args = args
         self.console = Console(highlight=False, soft_wrap=False, emoji=False)
-        self.layout = RichDisplay.__create_layout()
+        self.layout = self.__create_layout()
         self.start_time = time.time()
         self.execution_time = 0.0
 
@@ -533,9 +533,9 @@ class RichDisplay():
 
 def rich_init(title: str, deep_search: DeepSearch, args: argparse.Namespace) -> RichDisplay:
     monitor = RichDeepOrchestratorMonitor(deep_search.orchestrator)
-    display = RichDisplay(title, deep_search, monitor, args):
+    display = RichDisplay(title, deep_search, monitor, args)
     return display
 
-def rich_run_live(display: RichDisplay, f: callable[[None],None]):
+def rich_run_live(display: RichDisplay, f):
     with Live(display.layout, console=display.console, refresh_per_second=4, screen=True, transient=False) as _live:
         f(display)

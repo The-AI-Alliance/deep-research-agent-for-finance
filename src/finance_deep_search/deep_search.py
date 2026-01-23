@@ -19,7 +19,7 @@ from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
 from mcp_agent.workflows.deep_orchestrator.config import DeepOrchestratorConfig
 # TODO: Import these dynamically based on the provider flag below, so the dependencies
 # aren't required when not used.
-from mcp_agent.workflows.llm.augmented_llm_anthropic import AnthropicAugmentedLLM
+# from mcp_agent.workflows.llm.augmented_llm_anthropic import AnthropicAugmentedLLM
 # from mcp_agent.workflows.llm.augmented_llm_ollama import OllamaAugmentedLLM
 from mcp_agent.workflows.llm.augmented_llm_openai import OpenAIAugmentedLLM
 from mcp_agent.workflows.llm.augmented_llm import RequestParams

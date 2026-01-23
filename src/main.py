@@ -94,7 +94,7 @@ to use the correct settings!
     )
     parser.add_argument(
         "--provider",
-        choices=["openai", "anthropic", "ollama"],
+        choices=["openai", "anthropic", "ollama"], 
         default="openai",
         help="The inference provider. Where is the model served? See the note at the bottom of this help. (Default: openai)"
     )
@@ -207,7 +207,7 @@ to use the correct settings!
         verbose = args.verbose,
     )
 
-    mcp_app = deep_search.setup()
+    mcp_app = await deep_search.setup()
 
     # Run the example
     display  = None
@@ -276,5 +276,5 @@ to use the correct settings!
 
         await display.final_data_update(final_messages)
 
-    run_live(do_work)
+    run_live(display, do_work)
 

@@ -646,8 +646,8 @@ class MarkdownDisplay():
 
 def markdown_init(title: str, deep_search: DeepSearch, args: argparse.Namespace) -> MarkdownDisplay:
     monitor = MarkdownDeepOrchestratorMonitor(deep_search.orchestrator)
-    display = MarkdownDisplay(title, deep_search, monitor, args):
+    display = MarkdownDisplay(title, deep_search, monitor, args)
     return display
 
-def markdown_run_live(display: MarkdownDisplay, f: callable[[None],None]):
+def markdown_run_live(display: MarkdownDisplay, f):
     f(display)
