@@ -14,7 +14,15 @@ def clean_json_string(s: str, replacement: str = '') -> str:
     * '\\' that will cause parsing to fail. All occurrences are replaced with `replacement`.
     * other issues TBD...
     """
-    return s.replace(r'\\', replacement)
+    return s.replace('\\\\', replacement)
+
+def truncate(s: str, n: int, ellipsis: str = None) -> str:
+    if len(s) > n:
+        sn = s[:n] 
+        e_str = ellipsis if ellipsis else ''  # yes, ellipsis could be '' and we reassign it ''
+        return sn+e_str
+    else:
+        return s
 
 class MarkdownUtil():
     def __init__(self, 

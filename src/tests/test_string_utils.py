@@ -15,6 +15,7 @@ from tests.utils import (
 from finance_deep_search.string_utils import (
     replace_variables, 
     clean_json_string, 
+    truncate,
     MarkdownUtil
 )
 
@@ -39,6 +40,19 @@ class TestStringUtils(unittest.TestCase):
         at = actual_text.strip()
         self.assertEqual(et, at,
             f'<{et}> != <{at}> (kvs: {kvs}, text = {text})')
+
+    @given(st.text(max_size=25), st.integers(min_value=0, max_value=20), st.sampled_from(['', '...']))
+    def test_truncate(self, s: str, n: int, ellipsis: str):
+        """
+        Verify that truncate correctly returns a truncated string of length n or len(s),
+        whichever is smaller, and if the string is truncated, the ellipsis is appended to it.
+        """
+        sn = truncate(s, n, ellipsis)
+        len_s = len(s) 
+        if len_s <= n:
+            self.assertEqual(s, sn)
+        else:
+            self.assertEqual(s[:n]+ellipsis, sn)
 
     @given(
         st.dictionaries(no_brace_non_empty_text, no_brace_text),
@@ -113,17 +127,20 @@ class TestStringUtils(unittest.TestCase):
         actual_str = '\n'.join(actual)
         self.assertEqual(expected, actual, f"<\n{expected_str}\n> != <\n{actual_str}\n>")
 
+    no_escape_text = st.text().filter(lambda s: s.find(r'\\') < 0)
+
     @given(
-        st.lists(no_brace_text, max_size=10),
+        st.lists(no_escape_text, max_size=10),
         st.sampled_from(['', '_', '-']))
     def test_clean_json_string_removes_bad_content(self, strs: list[str], replacement: str):
         # The generated strings can contain the sequence! So clean them:
-        strs2 = [s.replace(r'\\','foo') for s in strs]
         escape = r'\\'
-        bad = escape + escape.join(strs2) + escape
-        expected = replacement + replacement.join(strs2) + replacement
+        for s in strs:
+            self.assertTrue(s.find(r'\\') < 0, f"bad generated string = <{s}> (all = <{strs}>)")
+        bad = escape + escape.join(strs) + escape
+        expected = replacement + replacement.join(strs) + replacement
         actual = clean_json_string(bad, replacement)
-        self.assertEqual(expected, actual, f"bad = <{bad}>, actual = <{actual}>, expected = <{expected}>")
+        self.assertEqual(expected, actual, f"strs = <{strs}>, bad = <{bad}>, actual = <{actual}>, expected = <{expected}>")
 
 if __name__ == "__main__":
     unittest.main()

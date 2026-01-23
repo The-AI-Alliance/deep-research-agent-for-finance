@@ -24,6 +24,7 @@ from finance_deep_search.deep_search import DeepSearch
 from finance_deep_search.string_utils import (
     replace_variables,
     clean_json_string,
+    truncate,
     MarkdownUtil
 )
 
@@ -647,15 +648,11 @@ async def markdown_main(
         except asyncio.CancelledError:
             pass
     
-    def truncate(n: int, s: str) -> str:
-        return s[:n] + "..." if len(s) > n else s
-
     # Show the research results
     research_error = None
     research_results = results.get('research')
     if research_results:
-        # research_results = truncate(50000, results['research'])
-        mcp_app.logger.info(truncate(1000, research_results))
+        mcp_app.logger.info(truncate(research_results, 1000, '...'))
     else:
         research_error = ["No research results!!", "Check the logs for diagnostic information."]
         for line in research_error:
@@ -666,7 +663,7 @@ async def markdown_main(
     excel_results = None
     excel_error = None
     if results.get('excel'):
-        excel_results = truncate(50000, results['excel'])
+        excel_results = truncate(results['excel'], 50000, '...')
         mcp_app.logger.info(excel_results)
     else:
         excel_error = [

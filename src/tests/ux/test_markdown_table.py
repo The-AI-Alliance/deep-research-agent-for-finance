@@ -69,8 +69,11 @@ class TestMarkdownTable(unittest.TestCase):
             
             all_lines = s.split('\n')
             index = 0
+            # skip blank lines:
+            while len(all_lines[index]) == 0:
+                index += 1
             if len(exp_title) > 0:
-                self.assertEqual(f"Table: {exp_title}", all_lines[index])
+                self.assertEqual(f"**Table: {exp_title}**", all_lines[index], f"s = <{s}>")
                 index += 1
             ecs_str = f"| {' | '.join(exp_columns)} |"
             self.assertEqual(ecs_str, all_lines[index], f"<{ecs_str}> vs. <{all_lines[index]}>? (whole string = <{s}>)")

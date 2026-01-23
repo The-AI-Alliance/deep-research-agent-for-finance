@@ -20,6 +20,7 @@ from rich.columns import Columns
 from rich import box
 
 from finance_deep_search.deep_search import DeepSearch
+from finance_deep_search.string_utils import truncate
 
 from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
 from mcp_agent.workflows.deep_orchestrator.config import DeepOrchestratorConfig
@@ -514,14 +515,11 @@ async def rich_main(
 
         execution_time = time.time() - start_time
         
-        def truncate(n: int, s: str) -> str:
-            return s[:n] + "..." if len(s) > n else s
-
         # Show the research results
         if results['research']:
             console.print(
                 Panel(
-                    truncate(2000, results['research']),
+                    truncate(results['research'], 2000, '...'),
                     title="📊 Financial Research Results (Preview)",
                     border_style="green",
                 )
@@ -537,7 +535,7 @@ async def rich_main(
         if results['excel']:
             console.print(
                 Panel(
-                    truncate(2000, results['excel']),
+                    truncate(results['excel'], 2000, '...'),
                     title="📈 Excel Creation Result",
                     border_style="blue",
                 )
