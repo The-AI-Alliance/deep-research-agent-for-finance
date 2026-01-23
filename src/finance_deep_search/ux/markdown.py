@@ -351,12 +351,19 @@ class MarkdownDeepOrchestratorMonitor():
 class MarkdownDisplay():
     def __init__(self, title: str,
         deep_search: DeepSearch,
-        monitor: MarkdownDeepOrchestratorMonitor):
-        """Create the display Markdown"""
+        monitor: MarkdownDeepOrchestratorMonitor,
+        args: argparse.Namespace,
+        print_on_update: bool = True):
+        """
+        Create the Markdown display. 
+        TODO: Make print_on_update user configurable...
+        """
         self.deep_search = deep_search
         self.orchestrator = self.deep_search.orchestrator
         self.monitor = monitor
         self.layout = MarkdownDisplay.__make_layout(title, self.deep_search.properties())
+        self.args = args
+        self.research_results_file f"{self.args.output_path}/research-results.markdown"
 
     def __make_layout(title: str, properties: dict[str,any]) -> MarkdownSection:
         layout = MarkdownSection(title=title)
@@ -390,7 +397,11 @@ class MarkdownDisplay():
         return layout
 
     def update(self) -> MarkdownSection:
-        """Update the display with the current state"""
+        """
+        Update the display with the current state. For 'behavioral' compatibility
+        with the Rich UX, this method also calls print, if `self.print_on_update`
+        is true.
+        """
         self.monitor.update_execution_time()
 
         top_section = self.layout["top_section"]
@@ -408,6 +419,8 @@ class MarkdownDisplay():
         bottom_section["policy"].set_intro_content(
             [self.monitor.get_policy_table(), self.monitor.get_agents_table()])
         
+        if self.print_on_update:
+            print(self.layout)
         return self.layout
 
     def __str__(self) -> str:
@@ -436,7 +449,7 @@ class MarkdownDisplay():
                 self.deep_search.logger.warning(f"{err_msg}: input = {s}")
             return (err_msg, None)
 
-    def add_financial_results(self, results: str, error: list[str] = None) -> MarkdownSection:
+    def add_financial_results(self, results: str) -> MarkdownSection:
         def make_metadata_table(
             refusal: str,
             role: str,
@@ -460,9 +473,7 @@ class MarkdownDisplay():
             "The parsed content returned:", 
             '\n'
         ]
-        if error:
-            content = [f"> {line}" for line in error]
-        else:
+        if results:
             if isinstance(results, ChatCompletionMessage):
                 content = re.split(r'\\+n', results.content)
                 content.append(make_metadata_table(
@@ -488,19 +499,20 @@ class MarkdownDisplay():
                     (err_msg, content) = self.__parse_json(results)
                     if not content:
                         content = re.split(r'\\+n', results)
+        else:
+            content = ["No research results! See the log file for details."]
+
         all_content.extend([f"> {line}" for line in content])
         all_content.extend(['\n', "(End of parsed content.)"])
             
         return self.add_section("📊 Financial Research Results (Preview)", all_content)
 
-    def add_excel_results(self, results: str, error: list[str] = None) -> MarkdownSection:
+    def add_excel_results(self, results: str) -> MarkdownSection:
         all_content = [
             f"See also the directory `{self.deep_search.output_path}` for results files.", 
             "\n"
         ]
-        if error:
-            content = error
-        else:
+        if results:
             (err_msg, content2) = self.__parse_json(results, 'Excel', True)
             if content2:
                 content = content2
@@ -513,9 +525,16 @@ class MarkdownDisplay():
                     "\n",
                 ])
                 content = re.split(r'\\+n', results)
+        else:
+            content = ["No excel results! See the log file for details."]
+
         all_content.extend([f"> {line}" for line in content]) 
         all_content.extend(['\n', "(End of parsed content.)"])
         return self.add_section("📈 Excel Creation Result", all_content)    
+
+    def report_results(self, research_results: str, excel_results: str):
+        self.add_financial_results(research_results)
+        self.add_excel_results(excel_results)
 
     def get_final_statistics(self) -> MarkdownSection:
         """Get final statistics for display"""
@@ -595,94 +614,40 @@ class MarkdownDisplay():
 
         return self.add_section("📁 Artifacts Created", artifacts_info)
 
-    async def get_final_data(self) -> list[MarkdownSection]:
+    async def final_data_update(self) -> list[MarkdownSection]:
         """
-        Returns the list of Markdown sections for the final data, but they are also
-        added to the whole document, so you can also just print the whole thing.
+        Prints and also returns the list of Markdown sections for the final data.
+        They are also added to the whole document by the other methods called here
+        and the whole document is printed to a markdown file.
         """
         self.monitor.update_execution_time()
-        return [
+        sections = [
             self.get_final_statistics(),
             self.get_budget_summary(),
             self.get_knowledge_summary(),
             await self.get_token_usage(),
             self.get_workspace_artifacts(),
         ]
+        for section in sections:
+            print(section)
 
-async def markdown_main(
-    args: argparse.Namespace, 
-    config: DeepOrchestratorConfig,
-    deep_search: DeepSearch):
+        all_sections = str(display)
+        with open(self.research_results_file, 'w') as file:
+            file.write(all_sections)
+        return sections
 
-    mcp_app = await deep_search.setup()
+    def final_messages(self, final_messages: list[str]):
+        final_messages.append(
+            f"Research results and application status data written to {self.research_results_file}.")
+        for fm in final_messages:
+            print(fm)
+            self.deep_search.logger.info(fm)
 
+
+def markdown_init(title: str, deep_search: DeepSearch, args: argparse.Namespace) -> MarkdownDisplay:
     monitor = MarkdownDeepOrchestratorMonitor(deep_search.orchestrator)
+    display = MarkdownDisplay(title, deep_search, monitor, args):
+    return display
 
-    display = MarkdownDisplay("Deep Research Agent for Finance", 
-        deep_search, monitor)
-
-    # Update display in background
-    async def update_loop():
-        while True:
-            try:
-                doc = display.update()
-                print(doc)
-                await asyncio.sleep(10.0)
-            except Exception as e:
-                mcp_app.logger.error(f"Display update error: {e}")
-                break
-
-    # Start update loop
-    update_task = asyncio.create_task(update_loop())
-
-    results = {}
-    try:
-        results = await deep_search.run()
-    finally:
-        # Final update
-        doc = display.update()
-        print(doc)
-        update_task.cancel()
-        try:
-            await update_task
-        except asyncio.CancelledError:
-            pass
-    
-    # Show the research results
-    research_error = None
-    research_results = results.get('research')
-    if research_results:
-        mcp_app.logger.info(truncate(research_results, 1000, '...'))
-    else:
-        research_error = ["No research results!!", "Check the logs for diagnostic information."]
-        for line in research_error:
-            mcp_app.logger.error(line)
-
-    fr = display.add_financial_results(research_results, research_error)
-    
-    excel_results = None
-    excel_error = None
-    if results.get('excel'):
-        excel_results = truncate(results['excel'], 50000, '...')
-        mcp_app.logger.info(excel_results)
-    else:
-        excel_error = [
-            "No Excel results!", 
-            f"Check the logs for diagnostic information."
-        ]
-        for line in excel_error:
-            mcp_app.logger.error(line)
-    
-    er = display.add_excel_results(excel_results, excel_error)
-
-    final_sections = await display.get_final_data()
-    for section in final_sections:
-        print(section)
-
-    if args.output_path:
-        with open(f"{args.output_path}/research-results.markdown", 'w') as file:
-            file.write(str(display))
-
-    final_msg = f"Final results and app statistics written to {args.output_path}/results.markdown"
-    print(final_msg)
-    mcp_app.logger.info(final_msg)
+def markdown_run_live(display: MarkdownDisplay, f: callable[[None],None]):
+    f(display)

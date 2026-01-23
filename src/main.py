@@ -207,17 +207,74 @@ to use the correct settings!
         verbose = args.verbose,
     )
 
+    mcp_app = deep_search.setup()
+
     # Run the example
+    display  = None
+    run_live = None
+    update_iteration_time = 1.0
     if args.ux == "rich":
-        from finance_deep_search.ux.rich import rich_main
-        asyncio.run(rich_main(args, config, deep_search))
+        from finance_deep_search.ux.rich import rich_init, rich_run_live
+        display = rich_init("Deep Research Agent for Finance", deep_search, args)
+        run_live = rich_run_live
+        update_iteration_time = 0.5
     elif args.ux == "markdown":
-        from finance_deep_search.ux.markdown import markdown_main
-        asyncio.run(markdown_main(args, config, deep_search))
+        from finance_deep_search.ux.markdown import markdown_init, markdown_run_live
+        display = markdown_init("Deep Research Agent for Finance", deep_search, args)
+        run_live = markdown_run_live
+        update_iteration_time = 10.0  # Update the Markdown "display" far less frequently.
     else:
         # The "ux" argument definition should prevent unexpected values, 
         # but just in case...
         raise ValueError(f"Unknown value for 'ux': {args.ux}")
 
-    print(f"\nFinished: See output files under {args.output_path}, e.g., the spreadsheet should be: {output_spreadsheet_path}")
+    async def update_loop():
+        while True:
+            try:
+                display.update()
+                await asyncio.sleep(update_iteration_time)
+            except Exception as e:
+                mcp_app.logger.error(f"Display update error: {e}")
+                break
+
+    async def do_work(display):
+        # Start update loop
+        update_task = asyncio.create_task(update_loop())
+
+        results = {}
+        try:
+            results = await deep_search.run()
+        finally:
+            # Final update
+            display.update()
+            update_task.cancel()
+            try:
+                await update_task
+            except asyncio.CancelledError:
+                pass
+
+        # Show the results
+        research_results = results.get('research')
+        if research_results:
+            mcp_app.logger.info(truncate(research_results, 2000, '...'))
+        else:
+            mcp_app.logger.error("No research results!!")
+
+        excel_results = results.get('excel')
+        if excel_results:
+            mcp_app.logger.info(truncate(excel_results, 2000, '...'))
+        else:
+            mcp_app.logger.error("No Excel results!!")
+
+        display.report_results(research_results, excel_results)
+
+        final_messages = [
+            "\n",
+            f"Finished: See output files under {args.output_path}.",
+            f"For example, the spreadsheet should be: {output_spreadsheet_path}",
+        ]
+
+        await display.final_data_update(final_messages)
+
+    run_live(do_work)
 
