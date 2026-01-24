@@ -72,7 +72,7 @@ class DeepSearch():
         self.llm_factory = None
         match self.provider:
             case 'anthropic':
-                self.llm_factory = AnthropicAugmentedLLM
+                pass #self.llm_factory = AnthropicAugmentedLLM
             case 'openai' | 'ollama':
                 self.llm_factory = OpenAIAugmentedLLM
             # case 'ollama':
@@ -80,11 +80,9 @@ class DeepSearch():
             case _:
                 raise ValueError(f"Unrecognized provider: {self.provider}")
 
-        # Initialize MCP App.
-        self.mcp_app = MCPApp(name=app_name)
-        self.logger = self.mcp_app.logger
 
         # These are lazily initialized!
+        self.mcp_app: MCPApp = None
         self.orchestrator: DeepOrchestrator = None
         self.token_counter: TokenCounter = None
         self.logger: Logger = None
@@ -121,6 +119,10 @@ class DeepSearch():
             return path
 
     async def setup(self) -> MCPApp:
+        # Initialize MCP App.
+        self.mcp_app = MCPApp(name=self.app_name)
+        self.logger = self.mcp_app.logger
+
         async with self.mcp_app.run() as app:
             # Run the orchestrator
 
