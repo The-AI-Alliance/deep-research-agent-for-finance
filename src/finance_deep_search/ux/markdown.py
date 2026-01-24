@@ -24,7 +24,6 @@ from finance_deep_search.deep_search import DeepSearch
 from finance_deep_search.string_utils import (
     replace_variables,
     clean_json_string,
-    truncate,
     MarkdownUtil
 )
 
@@ -358,12 +357,13 @@ class MarkdownDisplay():
         Create the Markdown display. 
         TODO: Make print_on_update user configurable...
         """
+        self.print_on_update = print_on_update
         self.deep_search = deep_search
         self.orchestrator = self.deep_search.orchestrator
         self.monitor = monitor
         self.layout = MarkdownDisplay.__make_layout(title, self.deep_search.properties())
         self.args = args
-        self.research_results_file f"{self.args.output_path}/research-results.markdown"
+        self.research_results_file = f"{self.args.output_path}/research-results.markdown"
 
     def __make_layout(title: str, properties: dict[str,any]) -> MarkdownSection:
         layout = MarkdownSection(title=title)
@@ -631,12 +631,12 @@ class MarkdownDisplay():
         for section in sections:
             print(section)
 
-        all_sections = str(display)
+        all_sections = str(self)
         with open(self.research_results_file, 'w') as file:
             file.write(all_sections)
         return sections
 
-    def final_messages(self, final_messages: list[str]):
+    def show_final_messages(self, final_messages: list[str]):
         final_messages.append(
             f"Research results and application status data written to {self.research_results_file}.")
         for fm in final_messages:
@@ -649,5 +649,5 @@ def markdown_init(title: str, deep_search: DeepSearch, args: argparse.Namespace)
     display = MarkdownDisplay(title, deep_search, monitor, args)
     return display
 
-def markdown_run_live(display: MarkdownDisplay, f):
-    f(display)
+async def markdown_run_live(display: MarkdownDisplay, f):
+    await f(display)

@@ -489,14 +489,14 @@ class RichDisplay():
         border_style="green"
         if research_results:
             rr = truncate(research_results, 2000, '...')
-            mcp_app.logger.info(f"Research results: {rr}")
+            self.deep_search.logger.info(f"Research results: {rr}")
             if self.args.output_path:
                 with open(f"{self.args.output_path}/raw-results.markdown", 'w') as file:
                     file.write("'Raw' Research Results:\n")
                     file.write(research_results)
         else:
             rr = "No research results!"
-            mcp_app.logger.error(rr)
+            self.deep_search.logger.error(rr)
             border_style="red"
 
         self.console.print(
@@ -512,10 +512,10 @@ class RichDisplay():
         border_style="blue"
         if excel_results:
             er = truncate(research_results, 2000, '...')
-            mcp_app.logger.info(f"Excel results: {er}")
+            self.deep_search.logger.info(f"Excel results: {er}")
         else:
             er = "No Excel results!"
-            mcp_app.logger.error(er)
+            self.deep_search.logger.error(er)
             border_style="red"
 
         self.console.print(
@@ -526,7 +526,7 @@ class RichDisplay():
             )
         )
 
-    def final_messages(self, final_messages: list[str]):
+    def show_final_messages(self, final_messages: list[str]):
         for fm in final_messages:
             self.console.print(f"\n[bold]{fm}[/bold]")
             self.deep_search.logger.info(fm)
@@ -536,6 +536,6 @@ def rich_init(title: str, deep_search: DeepSearch, args: argparse.Namespace) -> 
     display = RichDisplay(title, deep_search, monitor, args)
     return display
 
-def rich_run_live(display: RichDisplay, f):
+async def rich_run_live(display: RichDisplay, f):
     with Live(display.layout, console=display.console, refresh_per_second=4, screen=True, transient=False) as _live:
-        f(display)
+        await f(display)

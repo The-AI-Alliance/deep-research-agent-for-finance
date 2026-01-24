@@ -23,7 +23,7 @@ COMPANY_NAME             ?= Meta Platforms, Inc.
 REPORTING_CURRENCY       ?= USD
 ORCHESTRATOR_MODEL       ?= gpt-4o
 EXCEL_WRITER_MODEL       ?= o4-mini
-PROVIDER                 ?= openai
+INFERENCE_PROVIDER       ?= openai
 PROMPTS_PATH             ?= ${app_dir}/prompts
 FIN_RESEARCH_PROMPT_FILE ?= financial_research_agent.md
 EXCEL_WRITER_PROMPT_FILE ?= excel_writer_agent.md
@@ -147,7 +147,7 @@ do-app-run::
 		--excel-writer-agent-prompt-path "${EXCEL_WRITER_PROMPT_FILE}" \
 		--orchestrator-model "${ORCHESTRATOR_MODEL}" \
 		--excel-writer-model "${EXCEL_WRITER_MODEL}" \
-		--provider "${PROVIDER}" \
+		--provider "${INFERENCE_PROVIDER}" \
 		--verbose \
 		--ux ${UX} \
 		${APP_ARGS}

@@ -25,6 +25,7 @@ from mcp_agent.workflows.deep_orchestrator.config import (
 )
 
 from finance_deep_search.deep_search import DeepSearch
+from finance_deep_search.string_utils import truncate
 
 async def do_main(deep_search: DeepSearch):
     mcp_app = await deep_search.setup()
@@ -88,15 +89,16 @@ async def do_main(deep_search: DeepSearch):
 
         display.report_results(research_results, excel_results)
 
+        await display.final_data_update()
+
         final_messages = [
             "\n",
             f"Finished: See output files under {args.output_path}.",
             f"For example, the spreadsheet should be: {output_spreadsheet_path}",
         ]
+        display.show_final_messages(final_messages)
 
-        await display.final_data_update(final_messages)
-
-    run_live(display, do_work)
+    await run_live(display, do_work)
 
 if __name__ == "__main__":
 

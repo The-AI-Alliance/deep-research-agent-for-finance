@@ -17,11 +17,6 @@ from mcp_agent.logging.logger import Logger
 from mcp_agent.tracing.token_counter import TokenCounter
 from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
 from mcp_agent.workflows.deep_orchestrator.config import DeepOrchestratorConfig
-# TODO: Import these dynamically based on the provider flag below, so the dependencies
-# aren't required when not used.
-# from mcp_agent.workflows.llm.augmented_llm_anthropic import AnthropicAugmentedLLM
-# from mcp_agent.workflows.llm.augmented_llm_ollama import OllamaAugmentedLLM
-from mcp_agent.workflows.llm.augmented_llm_openai import OpenAIAugmentedLLM
 from mcp_agent.workflows.llm.augmented_llm import RequestParams
 
 from finance_deep_search.prompts import load_prompt_markdown
@@ -69,13 +64,18 @@ class DeepSearch():
         self.excel_writer_agent_prompt_path: Path = self.__resolve_path(
             excel_writer_agent_prompt_path, self.prompts_path)
 
+        # from mcp_agent.workflows.llm.augmented_llm_openai import OpenAIAugmentedLLM
+        # self.llm_factory = OpenAIAugmentedLLM
         self.llm_factory = None
         match self.provider:
             case 'anthropic':
-                pass #self.llm_factory = AnthropicAugmentedLLM
+                from mcp_agent.workflows.llm.augmented_llm_anthropic import AnthropicAugmentedLLM
+                self.llm_factory = AnthropicAugmentedLLM
             case 'openai' | 'ollama':
+                from mcp_agent.workflows.llm.augmented_llm_openai import OpenAIAugmentedLLM
                 self.llm_factory = OpenAIAugmentedLLM
             # case 'ollama':
+            #     from mcp_agent.workflows.llm.augmented_llm_ollama import OllamaAugmentedLLM
             #     self.llm_factory = OllamaAIAugmentedLLM
             case _:
                 raise ValueError(f"Unrecognized provider: {self.provider}")
