@@ -185,7 +185,7 @@ The `--verbose` option (used by default in the `make run-app` command), just pri
 
 By default, a [Rich](https://rich.readthedocs.io/en/stable/introduction.html) console-based UI is used to show progress and final results. 
 
-An alternative provided uses "streaming" Markdown output (`--ux markdown`), where updates are written in Markdown-formatted tables and bullets to the console (of limited use...), then a final report is written to a Markdown file, `$OUTPUT/research-results.markdown`. The repo contains an example from a test run of the above default command: [`./output/META/research-results-example.markdown`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/output/META/research-results-example.markdown).
+An alternative provided uses "streaming" Markdown output (`--ux markdown`), where updates are written in Markdown-formatted tables and bullets to the console (of limited use...), then a final report is written to a Markdown file, `$OUTPUT/research_result.markdown`. The repo contains an example from a test run of the above default command: [`./output/META/research_result_example.markdown`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/output/META/research_result_example.markdown).
 
 ## What the Application Does
 

@@ -363,7 +363,7 @@ class MarkdownDisplay():
         self.monitor = monitor
         self.layout = MarkdownDisplay.__make_layout(title, self.deep_search.properties())
         self.args = args
-        self.research_results_file = f"{self.args.output_path}/research-results.markdown"
+        self.research_results_file = f"{self.args.output_path}/research_result.markdown"
 
     def __make_layout(title: str, properties: dict[str,any]) -> MarkdownSection:
         layout = MarkdownSection(title=title)
