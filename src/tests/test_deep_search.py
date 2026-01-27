@@ -26,6 +26,10 @@ class TestDeepSearch(unittest.TestCase):
     def setUpClass(cls):
         os.makedirs(output_path, exist_ok=True)
 
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(output_path)
+
     def make(self,
             app_name: str = 'DeepSearchTest',
             config: DeepOrchestratorConfig = None,
