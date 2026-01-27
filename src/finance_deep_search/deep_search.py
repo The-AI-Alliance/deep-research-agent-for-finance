@@ -10,6 +10,7 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path, PosixPath
+from typing import Any
 
 from mcp_agent.app import MCPApp
 from mcp_agent.agents.agent import Agent
@@ -87,7 +88,7 @@ class DeepSearch():
         self.token_counter: TokenCounter = None
         self.logger: Logger = None
 
-    def properties(self) -> dict[str,str]:
+    def properties(self) -> dict[str,Any]:
         """Return a dictionary of the properties for this instance. Useful for reports."""
         return {
             "app_name": self.app_name,
