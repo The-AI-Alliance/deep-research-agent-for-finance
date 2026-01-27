@@ -256,6 +256,9 @@ to use the correct settings!
             max_time_minutes=10,
         )
 
+    # Add additional servers to the `available_servers`.
+    # Make corresponding edits to mcp_agent.config.yaml.
+    # See the project README for details.
     config = DeepOrchestratorConfig(
         name="DeepFinancialResearcher",
         available_servers=["fetch", "filesystem", "yfmcp", "financial-datasets"],
