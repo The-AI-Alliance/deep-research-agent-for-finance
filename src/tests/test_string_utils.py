@@ -127,16 +127,16 @@ class TestStringUtils(unittest.TestCase):
         actual_str = '\n'.join(actual)
         self.assertEqual(expected, actual, f"<\n{expected_str}\n> != <\n{actual_str}\n>")
 
-    no_escape_text = st.text().filter(lambda s: s.find(r'\\') < 0)
+    no_escape_text = st.text().filter(lambda s: s.find('\\') < 0)
 
     @given(
         st.lists(no_escape_text, max_size=10),
         st.sampled_from(['', '_', '-']))
     def test_clean_json_string_removes_bad_content(self, strs: list[str], replacement: str):
         # The generated strings can contain the sequence! So clean them:
-        escape = r'\\'
+        escape = '\\\\'
         for s in strs:
-            self.assertTrue(s.find(r'\\') < 0, f"bad generated string = <{s}> (all = <{strs}>)")
+            self.assertTrue(s.find('\\') < 0, f"bad generated string = <{s}> (all = <{strs}>)")
         bad = escape + escape.join(strs) + escape
         expected = replacement + replacement.join(strs) + replacement
         actual = clean_json_string(bad, replacement)

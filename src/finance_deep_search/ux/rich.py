@@ -489,11 +489,6 @@ class RichDisplay():
         border_style="green"
         if research_results:
             rr = truncate(research_results, 2000, '...')
-            self.deep_search.logger.info(f"Research results: {rr}")
-            if self.args.output_path:
-                with open(f"{self.args.output_path}/raw_result.markdown", 'w') as file:
-                    file.write("'Raw' Research Results:\n")
-                    file.write(research_results)
         else:
             rr = "No research results!"
             self.deep_search.logger.error(rr)

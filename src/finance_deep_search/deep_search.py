@@ -42,8 +42,8 @@ class DeepSearch():
             excel_writer_agent_prompt_path: str,
             output_path: str,
             output_spreadsheet_path: str,
-            short_run: str,
-            verbose: bool):
+            short_run: bool = False,
+            verbose: bool = False):
         self.app_name = app_name
         self.config = config
         self.ticker = ticker
@@ -86,10 +86,6 @@ class DeepSearch():
         self.orchestrator: DeepOrchestrator = None
         self.token_counter: TokenCounter = None
         self.logger: Logger = None
-
-        # Hold the results...
-        self.research_result: str = None
-        self.excel_result: str = None
 
     def properties(self) -> dict[str,str]:
         """Return a dictionary of the properties for this instance. Useful for reports."""
@@ -146,21 +142,12 @@ class DeepSearch():
         results = {}
 
         # Load and format the financial research task prompt
-        financial_prompt = load_prompt_markdown(
-            self.financial_research_prompt_path)
-        financial_task_prompt = replace_variables(
-            financial_prompt,
-            ticker=self.ticker,
-            company_name=self.company_name,
-            reporting_currency=self.reporting_currency, 
-            units="$ millions",
-            output_path=self.output_path,
-        )
+        financial_research_task_prompt = self.prepare_financial_research_task_prompt()
 
         max_iterations = 1 if self.short_run else 10
 
         research_result = await self.orchestrator.generate_str(
-            message=financial_task_prompt,
+            message=financial_research_task_prompt,
             request_params=RequestParams(
                 model=self.orchestrator_model_name, 
                 temperature=0.7, 
@@ -169,29 +156,17 @@ class DeepSearch():
         )
         results['research'] = research_result
         rr_file = f"{self.output_path}/research_result.txt"
-        self.logger.info(f"Python type of research_result object: {type(research_result)}")
-        self.logger.info(f"Writing research result to: {rr_file}")
+        self.logger.info(f"Writing 'raw' returned research result to: {rr_file}")
         with open(rr_file, "w") as file:
             for line in research_result.split('\n'):
                 file.write(line)
 
         # The Excel writer task prompt
-        excel_prompt = load_prompt_markdown(
-            self.excel_writer_agent_prompt_path)
-        excel_instruction = replace_variables(
-            excel_prompt,
-            financial_data=self.research_result,
-            ticker=self.ticker,
-            company_name=self.company_name,
-            reporting_currency=self.reporting_currency, 
-            units="$ millions",
-            output_path=self.output_path,
-            output_spreadsheet_path=self.output_spreadsheet_path,
-        )
+        excel_task_prompt = self.prepare_excel_task_prompt(research_result)
 
         excel_agent = Agent(
             name="ExcelWriter",
-            instruction=excel_instruction,
+            instruction=excel_task_prompt,
             context=self.orchestrator.context,
             server_names=["excel"]
         )
@@ -211,9 +186,50 @@ class DeepSearch():
             )
             results['excel'] = excel_result
             er_file = f"{self.output_path}/excel_result.txt"
-            self.logger.info(f"Excel result: {excel_result}")
-            self.logger.info(f"Writing Excel result to: {er_file}")
+            self.logger.info(f"Writing 'raw' returned Excel result to: {er_file}")
             with open(er_file, "w") as file:
                 file.write(excel_result)
 
         return results
+
+    def prepare_financial_research_task_prompt(self) -> str:
+        """Load and format the financial task research task prompt."""
+        financial_research_task_prompt_template = load_prompt_markdown(
+            self.financial_research_prompt_path)
+        financial_research_task_prompt = replace_variables(
+            financial_research_task_prompt_template,
+            ticker=self.ticker,
+            company_name=self.company_name,
+            reporting_currency=self.reporting_currency, 
+            units="$ millions",
+            output_path=self.output_path,
+        )
+        financial_research_task_prompt_file = f"{self.output_path}/financial_research_task_prompt.txt"
+        if self.logger:  # may not be initialized in tests...
+            self.logger.info(f"Writing the financial deep research task prompt to {financial_research_task_prompt_file}")
+        with open(financial_research_task_prompt_file, 'w') as file:
+            file.write("This is the prompt that will be used for the financial deep research:\n")
+            file.write(financial_research_task_prompt)
+        return financial_research_task_prompt
+
+    def prepare_excel_task_prompt(self, research_result: str) -> str:
+        """The Excel writer task prompt."""
+        excel_task_prompt_template = load_prompt_markdown(
+            self.excel_writer_agent_prompt_path)
+        excel_task_prompt = replace_variables(
+            excel_task_prompt_template,
+            financial_data=research_result,
+            ticker=self.ticker,
+            company_name=self.company_name,
+            reporting_currency=self.reporting_currency, 
+            units=f"{self.reporting_currency} millions",
+            output_path=self.output_path,
+            output_spreadsheet_path=self.output_spreadsheet_path,
+        )
+        excel_task_prompt_file = f"{self.output_path}/excel_task_prompt.txt"
+        if self.logger:  # may not be initialized in tests...
+            self.logger.info(f"Writing the excel service task prompt to {excel_task_prompt_file}")
+        with open(excel_task_prompt_file, 'w') as file:
+            file.write("This is the prompt that will be sent to the excel service:\n")
+            file.write(excel_task_prompt)
+        return excel_task_prompt

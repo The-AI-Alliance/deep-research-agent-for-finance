@@ -363,7 +363,7 @@ class MarkdownDisplay():
         self.monitor = monitor
         self.layout = MarkdownDisplay.__make_layout(title, self.deep_search.properties())
         self.args = args
-        self.research_results_file = f"{self.args.output_path}/research_result.markdown"
+        self.research_results_file = f"{self.args.output_path}/{self.deep_search.ticker}_report.markdown"
 
     def __make_layout(title: str, properties: dict[str,any]) -> MarkdownSection:
         layout = MarkdownSection(title=title)
@@ -475,7 +475,7 @@ class MarkdownDisplay():
         ]
         if results:
             if isinstance(results, ChatCompletionMessage):
-                content = re.split(r'\\+n', results.content)
+                content = results.content.split('\n')
                 content.append(make_metadata_table(
                     results.refusal,
                     results.role,
@@ -491,14 +491,14 @@ class MarkdownDisplay():
                     try:
                         s2 = re.sub(r"""ChatCompletion([^=]+)\s*=\s*['"]""", '', results)
                         s3 = re.sub(r"""['"],\s*refusal=.*$""", '', s2)
-                        content = re.split(r'\\+n', s3)
+                        content = s3.split('\n')
                     except:  # bail out...
-                        content = re.split(r'\\+n', results)
+                        content = results.split('\n')
                 else:
                     # Try parsing as JSON. It probably isn't JSON, but try...
                     (err_msg, content) = self.__parse_json(results)
                     if not content:
-                        content = re.split(r'\\+n', results)
+                        content = results.split('\n')
         else:
             content = ["No research results! See the log file for details."]
 
@@ -518,13 +518,13 @@ class MarkdownDisplay():
                 content = content2
             else:
                 all_content.extend([ 
-                    f"We tried to parse the Excel JSON(?) results, but we were unsuccessful.",
-                    f"(The model may have generated invalid JSON: Error message = `{err_msg}`", 
+                    f"We tried to parse the Excel results as JSON, but we were unsuccessful.",
+                    f"(The model may have generated invalid characters in the JSON or non-JSON output deliberately: Error message = `{err_msg}`", 
                     "\n",
                     "Here are the raw results:",
                     "\n",
                 ])
-                content = re.split(r'\\+n', results)
+                content = results.split('\n')
         else:
             content = ["No excel results! See the log file for details."]
 
