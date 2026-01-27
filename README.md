@@ -1,4 +1,4 @@
-# AI in Finance Example App
+# Deep Research Agent for Finance: An Example Application Using AI Agents in Finance
 
 A finance deep research agent designed to collect comprehensive information about publicly-traded companies and generate detailed investment research reports.
 
@@ -8,7 +8,6 @@ A finance deep research agent designed to collect comprehensive information abou
 </p>
 
 https://github.com/user-attachments/assets/60675db5-6e0a-4a8d-9463-6a0f9d0a46d7
-
 
 ## About
 
@@ -27,7 +26,7 @@ See also the project [website](https://the-ai-alliance.github.io/deep-research-a
 
 ## Setup
 
-An inference service provider or local option like Ollama is required. See **Usage** below for details.
+An account with OpenAI or Anthropic is required, or you can use a local option like Ollama. Those are the three supported model inference options, currently. See [Usage](#usage) below for details.
 
 ### Prerequisites
 
@@ -41,31 +40,154 @@ An inference service provider or local option like Ollama is required. See **Usa
 git clone <repository-url>
 ```
 
-2. Install dependencies:
+2. Install dependencies. We recommend using [`uv`](https://docs.astral.sh/uv/), but you can use alternative Python package manages that work with `pyproject.toml` files:
 ```bash
-uv add mcp-agent
+uv sync
 ```
+
+<a id="usage"></a>
 
 ## Usage
 
-In the example, the app uses `gpt4o` from OpenAI by default. If you'd like to use a model from another provider, you can edit the `mcp_agent.secrets.yaml` (see **Configuration** below) to add the API key for one of those services, then add the model you'd like to use in `mcp_agent.config.yaml`, and use the corresponding provider wrapper, i.e., `AnthropicAugmentedLLM`, in `src/finance-deep-research/main.py`, replacing the use of `OpenAIAugmentedLLM`, if you aren't using OpenAI.
+The application provides several command-line options to configure the behavior:
 
-Examples for specifying other providers:
-- [Ollama](https://github.com/lastmile-ai/mcp-agent/tree/main/examples/model_providers/mcp_basic_ollama_agent)
-- [Gemini](https://github.com/lastmile-ai/mcp-agent/tree/main/examples/model_providers/mcp_basic_google_agent)
-- [All supported providers](https://github.com/lastmile-ai/mcp-agent/tree/main/examples/model_providers/)
+```shell
+$ cd src && uv run main.py --help
+usage: main.py [-h] --ticker TICKER --company-name COMPANY_NAME [--reporting-currency REPORTING_CURRENCY]
+               [--output-path OUTPUT_PATH] [--prompts-path PROMPTS_PATH]
+               [--financial-research-prompt-path FINANCIAL_RESEARCH_PROMPT_PATH]
+               [--excel-writer-agent-prompt-path EXCEL_WRITER_AGENT_PROMPT_PATH]
+               [--orchestrator-model ORCHESTRATOR_MODEL] [--excel-writer-model EXCEL_WRITER_MODEL]
+               [--provider {openai,anthropic,ollama}] [-u {rich,markdown}] [--short-run] [-v]
 
-Run the finance research agent as follows. It researches Meta, by default:
+Deep Finance Research using orchestrated AI agents
 
-```bash
-uv run src/finance_deep_search/main.py
+options:
+  -h, --help            show this help message and exit
+  --ticker TICKER       Stock ticker symbol, e.g., META, AAPL, GOOGL, etc.
+  --company-name COMPANY_NAME
+                        Full company name
+  --reporting-currency REPORTING_CURRENCY
+                        The currency used by the company for financial reporting. (Default:USD)
+  --output-path OUTPUT_PATH
+                        Path where Excel and other output files will be saved. (Default: ./output)
+  --prompts-path PROMPTS_PATH
+                        Path where prompt files are located. (Default: ./prompts)
+  --financial-research-prompt-path FINANCIAL_RESEARCH_PROMPT_PATH
+                        Path where the main research agent prompt file is located. (Default:
+                        financial_research_agent.md) If the path doesn't contain a directory specification,
+                        then the file will be searched for in the value of '--prompts-path'.
+  --excel-writer-agent-prompt-path EXCEL_WRITER_AGENT_PROMPT_PATH
+                        Path where the Excel writer agent prompt file is located. (Default:
+                        excel_writer_agent.md) If the path doesn't contain a directory specification, then the
+                        file will be searched for in the value of '--prompts-path'.
+  --orchestrator-model ORCHESTRATOR_MODEL
+                        The model used the orchestrator agent (default: gpt-4o); it should be very capable.
+  --excel-writer-model EXCEL_WRITER_MODEL
+                        The model used for writing results to Excel (default: o4-mini); a less powerful model
+                        is sufficient.
+  --provider {openai,anthropic,ollama}
+                        The inference provider. Where is the model served? See the note at the bottom of this
+                        help. (Default: openai)
+  -u {rich,markdown}, --ux {rich,markdown}
+                        The 'UX' to use. Use 'rich' (the default) for a rich console UX and 'markdown' for
+                        streaming updates in markdown syntax.
+  --short-run           Sets some low maximum thresholds to create a shorter run. This is primarily a
+                        debugging tool, as lower iterations, for example, means lower quality results.
+  -v, --verbose         Print some extra output. Useful for some testing and debugging scenarios.
+
+Due to current limitations, you must use either OpenAI, Anthropic, or local models served by ollama, and you
+have to tell us which one using the `--provider` argument, although it defaults to 'openai'. The same provider
+must be used for BOTH the orchestrator and excel writer models, so specify them accordingly. The default is
+'openai', which works for both OpenAI and Ollama, but you currently have to edit mcp_agent.config.yaml to use
+the correct settings!
 ```
 
-An Excel spreadsheet will be written to the `output` directory.
+The `--ticker` and `--company-name` are required.
+
+A `Makefile` provides convenient ways to run the application, get help, etc. The `run-app` command runs the following command, where `META` is passed as the default ticker (with the corresponding company name) and the other arguments shown are actually equivalent to the default values, with a few exceptions:
+
+```shell
+cd src && uv run main.py \
+    --ticker "META" \
+    --company-name "Meta Platforms, Inc." \
+    --output-path "./output/META" \
+    --reporting-currency "USD" \
+    --prompts-path "finance_deep_search/prompts" \
+    --financial-research-prompt-path "financial_research_agent.md" \
+    --excel-writer-agent-prompt-path "excel_writer_agent.md" \
+    --orchestrator-model "gpt-4o" \
+    --excel-writer-model "o4-mini" \
+    --provider "openai" \
+    --verbose \
+    --ux rich
+```
 
 > [!TIP]
-> Run `uv run src/finance_deep_search/main.py --help` or `make app-help`
-> to see the available command-line options.
+> * Use `make help` to see help on the main targets provided.
+> * Use `make app-help` for specific help on the command.
+
+Let's go through some of the options shown. (We already discussed `--ticker` and `--company-name`.)
+
+### Output Path
+
+```shell
+    ...
+    --output-path "./output/META"
+    ...
+```
+
+Several output files, including an Excel spreadsheet of data, are written to the value passed with `--output-path`. The application's default value is `./output`. (Actually, the full absolute path to `./output` is used.) However, the `make` target uses `./output/$TICKER`, so you can easily run the job for different companies and not clobber results for other companies.
+
+### Prompt File Locations
+
+```shell
+    ...
+    --prompts-path "finance_deep_search/prompts"
+    --financial-research-prompt-path "financial_research_agent.md"
+    --excel-writer-agent-prompt-path "excel_writer_agent.md"
+    ...
+```
+
+Two prompt files are by default located in [`./src/finance_deep_search/prompts`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/finance_deep_search/prompts) (Note that the command changes directory to `src` first...):
+    
+* `--financial-research-prompt-path "financial_research_agent.md"` - for the orchestrator ([repo](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/finance_deep_search/prompts/financial_research_agent.md))
+* `--excel-writer-agent-prompt-path "excel_writer_agent.md"` - for the Excel file writer ([repo](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/finance_deep_search/prompts/excel_writer_agent.md))
+
+If you specify a value for either argument that includes an absolute or relative directory, then the `--prompts-path` is ignored for it.
+
+### Models
+
+```shell
+...
+    --orchestrator-model "gpt-4o"
+    --excel-writer-model "o4-mini"
+    --provider "openai"
+...
+```
+
+By default, `gpt-4o` from OpenAI is used for _orchestration_ and `o4-mini` is used for creating an Excel spreadsheet with some of the research results. If you would like to use a model from another provider, there are several options. Note that inference from OpenAI and Anthropic, and local-serving with ollama are currently supported.
+
+The `--provider` argument is a temporary implementation limitation to ensure the correct `mcp-agent` code path is followed. Our intention is to infer this automatically based on the models chosen. This also means that _you must specify two models served by the same provider._ You can't mix and match Anthropic, OpenAI, and ollama models, at this time.
+
+An alternative approach for specifying models is provided by `mcp-agent`, but we effectively override it using the command-line optinos and internal API calls. This approach is mentioned here for completeness, the approach you may choose to pursue in your own applications based on `mcp-agent`. This approach specifes the correct model and inference provider in [`./mcp_agent.config.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/mcp_agent.config.yaml). See [Configuration](#configuration) below for more details.
+
+### The "User Experience"
+
+```shell
+...
+    --verbose
+    --ux rich
+...
+```
+
+The `--verbose` option (used by default in the `make run-app` command), just prints some extra information at the beginning of execution. It does nothing else at this time.
+
+By default, a [Rich](https://rich.readthedocs.io/en/stable/introduction.html) console-based UI is used to show progress and final results. 
+
+An alternative provided uses "streaming" Markdown output (`--ux markdown`), where updates are written in Markdown-formatted tables and bullets to the console (of limited use...), then a final report is written to a Markdown file, `$OUTPUT/research_result.markdown`. The repo contains an example from a test run of the above default command: [`./output/META/research_result_example.markdown`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/output/META/research_result_example.markdown).
+
+## What the Application Does
 
 The application will:
 1. Connect to the configured MCP servers
@@ -73,27 +195,40 @@ The application will:
 3. Generate a comprehensive stock report
 
 > [!NOTE]
-> While running the app, you may see a browser window pop up asking for permission to authenticate to a financial dataset MCP server. There is no cost to do this. You can authenticate using a `gmail` email address, for example. If you decline, the app will still run, but it may run for a longer time while the deep research agent tries to gather the information it needs without this source.
+> While running the application, you may see a browser window pop up asking for permission to authenticate to a financial dataset MCP server. There is no cost to do this. You can authenticate using a `gmail` email address, for example. If you decline, the application will still run, but it may run for a longer time while the deep research agent tries to gather the information it needs without this source.
 
-You can also use `make` to run the app. The following commands are equivalent, because `all` is the first target and its sole dependency is `app-run`:
+<a id="configuration"></a>
 
-```bash
-make
-make all
-make app-run
-```
+## Configuration
 
-Try `make help` or `make app-help` for additional details. (The `Makefile` also has targets that are used to develop and locally run the project website.)
+There are two `mcp-agent` configuration files used:
 
-### Configuration
-
-The application uses the following configuration files:
 - `mcp_agent.config.yaml` - Main configuration settings
 - `mcp_agent.secrets.yaml` - API keys and secrets (_**not**_ tracked in git!).
 
-The `mcp_agent.secrets.yaml` file is optional, as some of the keys and secrets will be read from your environment, e.g., `OPENAI_API_KEY`, if defined. See the discussion above  If you want to use this file for these definitions, copy `.venv/lib/python3.12/site-packages/mcp_agent/data/examples/basic/mcp_basic_agent/mcp_agent.secrets.yaml.example` to `mcp_agent.secrets.yaml`. (`.gitignore` already ignores `*.secrets.yaml` files.)
+See the [`mcp-agent` configuration docs](https://docs.mcp-agent.com/reference/configuration) for details.
 
-### Architecture
+> [!TIP]
+> Use the tool `uvx mcp-agent config builder` to build the configuration for your `mcp-agent`-based application.
+
+The original version of the application didn't have the command-line arguments discussed above for specifying models and the provider, so `mcp-agent.config.yaml` had to be used. Now, because the command-line arguments are used, they override the corresponding definitions in `mcp-agent.config.yaml`. However, other settings defined there are still used.
+
+The `mcp_agent.secrets.yaml` file is optional, as some of the keys and secrets will be read from your environment, e.g., `OPENAI_API_KEY`, if defined. _You will need this file if you don't define the required API keys, etc. in your environment._
+
+A copy of the secrets file isn't included in the repo, but you can copy it from the `mcp-agent` dependency. Copy `.venv/lib/python3.12/site-packages/mcp_agent/data/examples/basic/mcp_basic_agent/mcp_agent.secrets.yaml.example` to `mcp_agent.secrets.yaml`.
+
+Add the corresponding API keys for your desired service provider to `mcp_agent.secrets.yaml`.
+
+> [!NOTE]
+> This repo's `.gitignore` ignores `*.secrets.yaml` files, so your secrets in `mcp_agent.secrets.yaml` will be **excluded** from version control. _**Do not add API keys** to `./mcp_agent.config.yaml`!_
+
+
+For more details on specific providers:
+- [Ollama](https://github.com/lastmile-ai/mcp-agent/tree/main/examples/model_providers/mcp_basic_ollama_agent)
+- [Gemini](https://github.com/lastmile-ai/mcp-agent/tree/main/examples/model_providers/mcp_basic_google_agent)
+- [All supported providers](https://github.com/lastmile-ai/mcp-agent/tree/main/examples/model_providers/)
+
+## Architecture
 
 <img src="https://images.prismic.io/ai-alliance/aMCNHWGNHVfTO240_Frame162610%5B18%5D.jpg?auto=format%2Ccompress&fit=max&w=1920" alt="Deep Research Agent Architecture" width="400"/>
 
@@ -116,7 +251,7 @@ Key components:
 
 ## Customizing Data Sources for Deep Research
 
-The Deep Research agent for Finance integrates into data sources using MCP, which means you can customize which data sources the agent has access to. In order to add/remove certain data sources to the agent, there are two steps:
+The Deep Research Agent for Finance integrates into data sources using MCP, which means you can customize which data sources the agent has access to. In order to add/remove certain data sources to the agent, there are two steps:
 
 1. In `mcp_agent.config.yaml`, add the details for the MCP server you'd like to use.
 
@@ -164,9 +299,11 @@ config = DeepOrchestratorConfig(
 
 ## Contributing
 
-This project is part of the AI Alliance. We welcome contributions from developers with finance industry expertise, AI expertise, or those looking to grow their skills in either area.
+This project is maintained by [The AI Alliance](https://aialliance.org). We welcome contributions from developers with finance industry expertise, AI expertise, or those looking to grow their skills in either area. We are also making plans to create similar applications for healthcare, legal, and other domains!
 
 For contribution guidelines, see the AI Alliance [CONTRIBUTING](https://github.com/The-AI-Alliance/community/blob/main/CONTRIBUTING.md) instructions. Note that we use the "Developer Certificate of Origin" (DCO). In short, all this really requires is that you add the `-s` flag to your `git commit` commands. See [this section](https://github.com/The-AI-Alliance/community/blob/main/CONTRIBUTING.md#developer-certificate-of-origin) for details.
+
+For all Alliance technical projects, see [our GitHub organization](https://the-ai-alliance.github.io/).
 
 ### Licenses
 
@@ -178,11 +315,17 @@ For contribution guidelines, see the AI Alliance [CONTRIBUTING](https://github.c
 
 The project's [companion website](https://the-ai-alliance.github.io/deep-research-agent-for-finance/) is published using [GitHub Pages](https://pages.github.com/), where the pages are written in Markdown and served using [Jekyll](https://github.com/jekyll/jekyll).
 
-The [`docs`](tree/main/docs) folder contains the website sources. There are `Makefile` targets running the website locally. Try `make help` for details.
+The [`docs`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/tree/main/docs) folder contains the website sources. There are `Makefile` targets running the website locally and opening the published URL:
+
+```shell
+make view-local    # Setup and run Jekyll to view the website locally.
+make view-pages    # Attempt to open the published URL in a browser 
+                   # or at least print the URL...
+```
 
 The repo root directory has several files and subdirectories that are part of the website implementation, include the following:
 
-* [`docs`](tree/main/docs): The sources (Markdown, JavScript, CSS, etc.) for the web site.
-* [`GITHUB_PAGES.md`](tree/main/GITHUB_PAGES.md): Details about the website, how to edit it, and how to run it locally for previewing.
-* [`check-external-links.sh`](tree/main/check-external-links.sh): Our convention is that links to external URLs should have a `target` defined (e.g., `target="_blank"`) to open a new browser tab or window. This script checks for missing targets.
-* [`Gemfile`](tree/main/Gemfile): Ruby library dependencies for the Jekyll website.
+* [`docs`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/tree/main/docs): The sources (Markdown, JavScript, CSS, etc.) for the web site.
+* [`GITHUB_PAGES.md`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/tree/main/docs/GITHUB_PAGES.md): Details about the website, how to edit it, and how to run it locally for previewing.
+* [`check-external-links.sh`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/tree/main/check-external-links.sh): Our convention is that links to external URLs should have a `target` defined (e.g., `target="_blank"`) to open a new browser tab or window. This script checks for missing targets.
+* [`Gemfile`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/tree/main/Gemfile): Ruby library dependencies for the Jekyll website.

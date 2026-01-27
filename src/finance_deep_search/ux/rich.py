@@ -1,14 +1,5 @@
-#!/usr/bin/env python
 """
-Deep Orchestrator Finance Research Example
-
-This example demonstrates the Deep Orchestrator (AdaptiveOrchestrator) for financial research with:
-- Dynamic agent creation and caching
-- Knowledge extraction and accumulation
-- Budget tracking (tokens, cost, time)
-- Task queue management with dependencies
-- Policy-driven execution control
-- Full state visibility throughout execution
+The Rich Console version of Deep Orchestrator Finance Research Example
 """
 
 import argparse
@@ -18,7 +9,6 @@ import re
 import sys
 import time
 from datetime import datetime
-from pathlib import Path
 
 from rich.console import Console
 from rich.table import Table
@@ -29,63 +19,20 @@ from rich.layout import Layout
 from rich.columns import Columns
 from rich import box
 
-from mcp_agent.app import MCPApp
-from mcp_agent.agents.agent import Agent
+from finance_deep_search.deep_search import DeepSearch
+from finance_deep_search.string_utils import truncate
+
 from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
-from mcp_agent.workflows.deep_orchestrator.config import (
-    DeepOrchestratorConfig,
-    ExecutionConfig,
-    BudgetConfig,
-    PolicyConfig,
-    ContextConfig,
-    CacheConfig,
-)
-from mcp_agent.workflows.llm.augmented_llm_openai import OpenAIAugmentedLLM
-from mcp_agent.workflows.llm.augmented_llm import RequestParams
 
-app = MCPApp(name="finance_deep_research")
-
-console = Console(highlight=False, soft_wrap=False, emoji=False)
-
-
-def load_prompt_markdown(prompt_file: str) -> str:
-    """Load a markdown prompt file and return the content after frontmatter."""
-    script_dir = Path(__file__).parent
-    prompt_path = script_dir / "prompts" / prompt_file
-    
-    if not prompt_path.exists():
-        raise FileNotFoundError(f"Prompt file not found: {prompt_path}")
-    
-    with open(prompt_path, 'r', encoding='utf-8') as f:
-        content = f.read()
-    
-    # Split frontmatter and content
-    if content.startswith('---'):
-        parts = content.split('---', 2)
-        if len(parts) >= 3:
-            return parts[2].strip()  # Return content after frontmatter
-    
-    return content.strip()
-
-
-def format_prompt(prompt_content: str, **variables) -> str:
-    """Format a prompt template with the given variables."""
-    # Replace template variables
-    for key, value in variables.items():
-        prompt_content = prompt_content.replace(f"{{{{{key}}}}}", str(value))
-    
-    return prompt_content
-
-
-class DeepOrchestratorMonitor:
-    """Monitor to expose all internal state of the Deep Orchestrator"""
+class RichDeepOrchestratorMonitor():
+    """Rich-based monitor to expose all internal state of the Deep Orchestrator"""
 
     def __init__(self, orchestrator: DeepOrchestrator):
         self.orchestrator = orchestrator
         self.start_time = time.time()
 
     def get_budget_table(self) -> Table:
-        """Get budget status as a table"""
+        """Get budget status as a Rich Table"""
         budget = self.orchestrator.budget
         usage = budget.get_usage_pct()
         budget.get_remaining()
@@ -125,7 +72,7 @@ class DeepOrchestratorMonitor:
         return table
 
     def get_queue_tree(self) -> Tree:
-        """Get task queue as a tree"""
+        """Get task queue as a Rich Tree"""
         queue = self.orchestrator.queue
         tree = Tree("📋 Task Queue")
 
@@ -211,7 +158,7 @@ class DeepOrchestratorMonitor:
         return tree
 
     def get_plan_table(self) -> Table:
-        """Get the current plan as a table"""
+        """Get the current plan as a Rich Table"""
         table = Table(title="📝 Current Plan", box=box.ROUNDED, show_header=True)
         table.add_column("Step", style="cyan", width=3)
         table.add_column("Description", style="yellow")
@@ -248,8 +195,9 @@ class DeepOrchestratorMonitor:
 
         return table
 
+    # TODO: this isn't called!!
     def get_token_stats_panel(self) -> Panel:
-        """Get token usage statistics"""
+        """Get token usage statistics as a Rich Panel"""
         lines = []
 
         # Get token breakdown from context if available
@@ -297,7 +245,7 @@ class DeepOrchestratorMonitor:
         return Panel("\n".join(lines), title="📊 Token Usage", border_style="blue")
 
     def get_memory_panel(self) -> Panel:
-        """Get memory status as a panel"""
+        """Get memory status as a Rich Panel"""
         memory = self.orchestrator.memory
         stats = memory.get_stats()
 
@@ -319,7 +267,7 @@ class DeepOrchestratorMonitor:
         return Panel(content, title="🧠 Memory", border_style="blue")
 
     def get_agents_table(self) -> Table:
-        """Get agent cache status"""
+        """Get agent cache status as a Rich Table"""
         cache = self.orchestrator.agent_cache
 
         table = Table(title="🤖 Agent Cache", box=box.SIMPLE)
@@ -345,7 +293,7 @@ class DeepOrchestratorMonitor:
         return table
 
     def get_policy_panel(self) -> Panel:
-        """Get policy engine status"""
+        """Get policy engine status as a Rich Panel"""
         policy = self.orchestrator.policy
 
         lines = [
@@ -358,7 +306,7 @@ class DeepOrchestratorMonitor:
         return Panel("\n".join(lines), title="⚙️ Policy Engine", border_style="yellow")
 
     def get_status_summary(self) -> Panel:
-        """Get overall status summary"""
+        """Get overall status summary as a Rich Panel"""
         elapsed = time.time() - self.start_time
 
         lines = [
@@ -371,251 +319,126 @@ class DeepOrchestratorMonitor:
         return Panel("\n".join(lines), title="📊 Status", border_style="green")
 
 
-def create_display_layout() -> Layout:
-    """Create the display layout"""
-    layout = Layout()
+class RichDisplay():
+    def __init__(self, title: str,
+        deep_search: DeepSearch,
+        monitor: RichDeepOrchestratorMonitor,
+        args: argparse.Namespace):
+        """Create the Rich display layout."""
+        self.deep_search = deep_search
+        self.orchestrator = self.deep_search.orchestrator
+        self.monitor = monitor
+        self.args = args
+        self.console = Console(highlight=False, soft_wrap=False, emoji=False)
+        self.layout = self.__create_layout()
+        self.start_time = time.time()
+        self.execution_time = 0.0
 
-    # Main structure
-    layout.split_column(
-        Layout(name="header", size=3),
-        Layout(name="top_section", size=12),
-        Layout(name="buffer", size=6),
-        Layout(name="bottom_section", size=10),
-    )
+    def __create_layout(self) -> Layout:
+        """Create the display Rich Layout"""
+        layout = Layout()
 
-    # Top section - queue, plan, and memory
-    layout["top_section"].split_row(
-        Layout(name="queue", ratio=3),  # More space for queue/plan
-        Layout(name="memory", ratio=2),  # Less for memory
-    )
-
-    # Bottom section - budget, status, and agents
-    layout["bottom_section"].split_row(
-        Layout(name="left", ratio=1),
-        Layout(name="center", ratio=1),
-        Layout(name="right", ratio=1),
-    )
-
-    return layout
-
-
-def update_display(layout: Layout, monitor: DeepOrchestratorMonitor):
-    """Update the display with current state"""
-
-    # Header
-    layout["header"].update(
-        Panel("Deep Finance Research", style="bold blue")
-    )
-
-    layout["buffer"].update("")
-
-    # Top section - Queue and Plan side by side
-    queue_plan_content = Columns(
-        [monitor.get_queue_tree(), monitor.get_plan_table()],
-        padding=(1, 2),  # Add padding between columns
-    )
-    layout["queue"].update(queue_plan_content)
-
-    # Memory section
-    layout["memory"].update(monitor.get_memory_panel())
-
-    # Bottom section
-    # Left column - Budget
-    layout["left"].update(monitor.get_budget_table())
-
-    # Center column - Status
-    layout["center"].update(monitor.get_status_summary())
-
-    # Right column - Combined Policy and Agents in a vertical layout
-    right_content = Layout()
-    right_content.split_column(
-        Layout(monitor.get_policy_panel(), size=7),
-        Layout(monitor.get_agents_table(), size=10),
-    )
-    layout["right"].update(right_content)
-
-
-async def main(output_path: str = None, ticker: str = None, company_name: str = None):
-
-    # Initialize MCP App
-    app = MCPApp(name="finance_deep_research")
-
-    async with app.run() as mcp_app:
-        context = mcp_app.context
-        logger = mcp_app.logger
-
-        # Configure filesystem server with current directory
-        context.config.mcp.servers["filesystem"].args.extend([os.getcwd()])
-
-        # Create configuration for the Deep Orchestrator
-        config = DeepOrchestratorConfig(
-            name="DeepFinancialResearcher",
-            available_servers=["fetch", "filesystem", "yfmcp", "financial-datasets"],
-            execution=ExecutionConfig(
-                max_iterations=25,
-                max_replans=2,
-                max_task_retries=5,
-                enable_parallel=True,
-                enable_filesystem=True,
-            ),
-            budget=BudgetConfig(
-                max_tokens=100000,
-                max_cost=1.00,
-                max_time_minutes=10,
-            ),
+        # Main structure
+        layout.split_column(
+            Layout(name="header", size=3),
+            Layout(name="top_section", size=12),
+            Layout(name="buffer", size=6),
+            Layout(name="bottom_section", size=10),
         )
 
-        # Create the Deep Orchestrator with configuration
-        orchestrator = DeepOrchestrator(
-            llm_factory=OpenAIAugmentedLLM,
-            config=config,
-            context=context,
+        # Top section - queue, plan, and memory
+        layout["top_section"].split_row(
+            Layout(name="queue", ratio=3),  # More space for queue/plan
+            Layout(name="memory", ratio=2),  # Less for memory
         )
 
-        # Create monitor for state visibility
-        monitor = DeepOrchestratorMonitor(orchestrator)
-
-        # Create display layout
-        layout = create_display_layout()
-
-        # Load and format the financial research task prompt
-        financial_prompt = load_prompt_markdown("financial_research_agent.md")
-        task = format_prompt(
-            financial_prompt,
-            company_name=company_name or "Meta Platforms, Inc.",
-            ticker=ticker or "META", 
-            units="$ millions"
+        # Bottom section - budget, status, and agents
+        layout["bottom_section"].split_row(
+            Layout(name="left", ratio=1),
+            Layout(name="center", ratio=1),
+            Layout(name="right", ratio=1),
         )
 
-        # Store plan reference for display
-        orchestrator.current_plan = None
+        return layout
 
-        with Live(layout, console=console, refresh_per_second=4, screen=True, transient=False) as _live:
-            # Update display in background
-            async def update_loop():
-                while True:
-                    try:
-                        update_display(layout, monitor)
-                        await asyncio.sleep(0.25)  # Reduced from 0.5s
-                    except Exception as e:
-                        logger.error(f"Display update error: {e}")
-                        break
 
-            # Start update loop
-            update_task = asyncio.create_task(update_loop())
+    def update(self):
+        """Update the display with current state"""
 
-            try:
-                # Run the orchestrator
-                start_time = time.time()
-
-                result = await orchestrator.generate_str(
-                    message=task,
-                    request_params=RequestParams(
-                        model="gpt-4o", temperature=0.7, max_iterations=10
-                    ),
-                )
-
-                result_formatted = (
-                    result[:2000] + "..." if len(result) > 2000 else result
-                )
-
-                # Load and format the Excel agent prompt
-                excel_prompt = load_prompt_markdown("excel_writer_agent.md")
-                excel_instruction = format_prompt(
-                    excel_prompt,
-                    stock_ticker=ticker or "META",
-                    output_path=output_path or "./output",
-                    financial_data=result
-                )
-                
-                excel_agent = Agent(
-                    name="ExcelWriter",
-                    instruction=excel_instruction,
-                    context=context,
-                    server_names=["excel"]
-                )
-
-                async with excel_agent:
-                    excel_llm = await excel_agent.attach_llm(
-                        OpenAIAugmentedLLM
-                    )
-
-                    excel_result = await excel_llm.generate_str(
-                        message="Generate the Excel file with the provided financial data.",
-                        request_params=RequestParams(
-                            model="o4-mini", temperature=0.7, max_iterations=10
-                        ),
-                    )
-
-                execution_time = time.time() - start_time
-
-                # Final update
-                update_display(layout, monitor)
-
-            finally:
-                update_task.cancel()
-                try:
-                    await update_task
-                except asyncio.CancelledError:
-                    pass
-
-        # Show the research results
-        console.print(
-            Panel(
-                result_formatted,
-                title="📊 Financial Research Results (Preview)",
-                border_style="green",
-            )
+        # Header
+        self.layout["header"].update(
+            Panel("Deep Finance Research", style="bold blue")
         )
-        
-        # Show excel creation result
-        if 'excel_result' in locals():
-            console.print(
-                Panel(
-                    excel_result[:1000] + "..." if len(excel_result) > 1000 else excel_result,
-                    title="📈 Excel Creation Result",
-                    border_style="blue",
-                )
-            )
 
+        self.layout["buffer"].update("")
+
+        # Top section - Queue and Plan side by side
+        queue_plan_content = Columns(
+            [self.monitor.get_queue_tree(), self.monitor.get_plan_table()],
+            padding=(1, 2),  # Add padding between columns
+        )
+        self.layout["queue"].update(queue_plan_content)
+
+        # Memory section
+        self.layout["memory"].update(self.monitor.get_memory_panel())
+
+        # Bottom section
+        # Left column - Budget
+        self.layout["left"].update(self.monitor.get_budget_table())
+
+        # Center column - Status
+        self.layout["center"].update(self.monitor.get_status_summary())
+
+        # Right column - Combined Policy and Agents in a vertical layout
+        right_content = Layout()
+        right_content.split_column(
+            Layout(self.monitor.get_policy_panel(), size=7),
+            Layout(self.monitor.get_agents_table(), size=10),
+        )
+        self.layout["right"].update(right_content)
+
+    def final_statistics(self):
         # Display final statistics
-        console.print("\n[bold cyan]📊 Final Statistics[/bold cyan]")
+        self.console.print("\n[bold cyan]📊 Final Statistics[/bold cyan]")
+        self.execution_time = time.time() - self.start_time
 
         # Create summary table
         summary_table = Table(title="Execution Summary", box=box.DOUBLE_EDGE)
         summary_table.add_column("Metric", style="cyan", width=20)
         summary_table.add_column("Value", style="green")
 
-        summary_table.add_row("Total Time", f"{execution_time:.2f}s")
-        summary_table.add_row("Iterations", str(orchestrator.iteration))
-        summary_table.add_row("Replans", str(orchestrator.replan_count))
+        summary_table.add_row("Total Time", f"{self.execution_time:.2f}s")
+        summary_table.add_row("Iterations", str(self.orchestrator.iteration))
+        summary_table.add_row("Replans", str(self.orchestrator.replan_count))
         summary_table.add_row(
-            "Tasks Completed", str(len(orchestrator.queue.completed_task_names))
+            "Tasks Completed", str(len(self.orchestrator.queue.completed_task_names))
         )
         summary_table.add_row(
-            "Tasks Failed", str(len(orchestrator.queue.failed_task_names))
+            "Tasks Failed", str(len(self.orchestrator.queue.failed_task_names))
         )
         summary_table.add_row(
-            "Knowledge Items", str(len(orchestrator.memory.knowledge))
+            "Knowledge Items", str(len(self.orchestrator.memory.knowledge))
         )
         summary_table.add_row(
-            "Artifacts Created", str(len(orchestrator.memory.artifacts))
+            "Artifacts Created", str(len(self.orchestrator.memory.artifacts))
         )
-        summary_table.add_row("Agents Cached", str(len(orchestrator.agent_cache.cache)))
+        summary_table.add_row("Agents Cached", str(len(self.orchestrator.agent_cache.cache)))
         summary_table.add_row(
             "Cache Hit Rate",
-            f"{orchestrator.agent_cache.hits / max(1, orchestrator.agent_cache.hits + orchestrator.agent_cache.misses):.1%}",
+            f"{self.orchestrator.agent_cache.hits / max(1, self.orchestrator.agent_cache.hits + self.orchestrator.agent_cache.misses):.1%}",
         )
 
-        console.print(summary_table)
+        self.console.print(summary_table)
 
+    def budget_summary(self):
         # Display budget summary
-        budget_summary = orchestrator.budget.get_status_summary()
-        console.print(f"\n[yellow]{budget_summary}[/yellow]")
+        budget_summary = self.orchestrator.budget.get_status_summary()
+        self.console.print(f"\n[yellow]{budget_summary}[/yellow]")
 
+    def knowledge_summary(self):
         # Display knowledge learned
-        if orchestrator.memory.knowledge:
-            console.print("\n[bold cyan]🧠 Knowledge Extracted[/bold cyan]")
+        if self.orchestrator.memory.knowledge:
+            self.console.print("\n[bold cyan]🧠 Knowledge Extracted[/bold cyan]")
 
             knowledge_table = Table(box=box.SIMPLE)
             knowledge_table.add_column("Category", style="cyan")
@@ -623,7 +446,7 @@ async def main(output_path: str = None, ticker: str = None, company_name: str = 
             knowledge_table.add_column("Value", style="green", max_width=50)
             knowledge_table.add_column("Confidence", style="magenta")
 
-            for item in orchestrator.memory.knowledge[:10]:  # Show first 10
+            for item in self.orchestrator.memory.knowledge[:10]:  # Show first 10
                 knowledge_table.add_row(
                     item.category,
                     item.key[:30] + "..." if len(item.key) > 30 else item.key,
@@ -633,52 +456,81 @@ async def main(output_path: str = None, ticker: str = None, company_name: str = 
                     f"{item.confidence:.2f}",
                 )
 
-            console.print(knowledge_table)
+            self.console.print(knowledge_table)
 
-        # Display token usage if available
-        if context.token_counter:
-            summary = context.token_counter.get_summary()
+    async def token_usage(self):
+        """Display the token usage, if available."""
+        if self.orchestrator.context.token_counter:
+            summary = await self.orchestrator.context.token_counter.get_summary()
             if summary and hasattr(summary, "usage"):
-                console.print(
+                self.console.print(
                     f"\n[bold]Total Tokens:[/bold] {summary.usage.total_tokens:,}"
                 )
                 if hasattr(summary, "cost"):
-                    console.print(f"[bold]Total Cost:[/bold] ${summary.cost:.4f}")
+                    self.console.print(f"[bold]Total Cost:[/bold] ${summary.cost:.4f}")
 
-        # Show workspace artifacts if any were created
-        if orchestrator.memory.artifacts:
-            console.print("\n[bold cyan]📁 Artifacts Created[/bold cyan]")
-            for name in list(orchestrator.memory.artifacts.keys())[:5]:
-                console.print(f"  • {name}")
+    def workspace_artifacts(self):
+        """Display workspace artifacts if any were created."""
+        if self.orchestrator.memory.artifacts:
+            self.console.print("\n[bold cyan]📁 Artifacts Created[/bold cyan]")
+            for name in list(self.orchestrator.memory.artifacts.keys())[:5]:
+                self.console.print(f"  • {name}")
 
+    async def final_data_update(self):
+        self.final_statistics()
+        self.budget_summary()
+        self.knowledge_summary()
+        await self.token_usage()
+        self.workspace_artifacts()
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Deep Finance Research using orchestrated AI agents"
-    )
-    parser.add_argument(
-        "--ticker",
-        default="META",
-        help="Stock ticker symbol (default: META, e.g., META, AAPL, GOOGL)"
-    )
-    parser.add_argument(
-        "--output-path",
-        required=True,
-        help="Path where Excel output files will be saved"
-    )
-    parser.add_argument(
-        "--company-name",
-        help="Full company name (optional, will be inferred from ticker if not provided)"
-    )
-    
-    args = parser.parse_args()
-    
-    # Ensure output directory exists
-    output_dir = Path(args.output_path)
-    output_dir.mkdir(parents=True, exist_ok=True)
-    
-    # Change to example directory
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    def report_results(self, research_results: str, excel_results: str):
+        # Show research results
+        rr = ''
+        border_style="green"
+        if research_results:
+            rr = truncate(research_results, 2000, '...')
+        else:
+            rr = "No research results!"
+            self.deep_search.logger.error(rr)
+            border_style="red"
 
-    # Run the example
-    asyncio.run(main(args.output_path, args.ticker, args.company_name))
+        self.console.print(
+            Panel(
+                rr,
+                title="📊 Financial Research Results (Preview)",
+                border_style=border_style,
+            )
+        )
+        
+        # Show excel creation results
+        er = ''
+        border_style="blue"
+        if excel_results:
+            er = truncate(research_results, 2000, '...')
+            self.deep_search.logger.info(f"Excel results: {er}")
+        else:
+            er = "No Excel results!"
+            self.deep_search.logger.error(er)
+            border_style="red"
+
+        self.console.print(
+            Panel(
+                er,
+                title="📈 Excel Creation Result",
+                border_style=border_style,
+            )
+        )
+
+    def show_final_messages(self, final_messages: list[str]):
+        for fm in final_messages:
+            self.console.print(f"\n[bold]{fm}[/bold]")
+            self.deep_search.logger.info(fm)
+
+def rich_init(title: str, deep_search: DeepSearch, args: argparse.Namespace) -> RichDisplay:
+    monitor = RichDeepOrchestratorMonitor(deep_search.orchestrator)
+    display = RichDisplay(title, deep_search, monitor, args)
+    return display
+
+async def rich_run_live(display: RichDisplay, f):
+    with Live(display.layout, console=display.console, refresh_per_second=4, screen=True, transient=False) as _live:
+        await f(display)

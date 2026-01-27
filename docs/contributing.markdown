@@ -23,4 +23,4 @@ We also welcome feedback through [email](mailto:contact@thealliance.ai?subject=F
 
 # Joining the Project
 
-If you want to participate more actively in this project, send us [email](mailto:contact@thealliance.ai) or complete the form on the Alliance's [Become a Collaborator](https://thealliance.ai/become-a-collaborator){:target="aia-website"} page. Check the boxes that look most appropriate and describe your interest in this project in the _Message_ box.
+If you want to participate more actively in this project or the AI Alliance as a whole, visit [aialliance.org/join](https://www.aialliance.org/join){:target="aia-join"}.
