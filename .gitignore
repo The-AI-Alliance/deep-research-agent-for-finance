@@ -7,6 +7,7 @@ tmp/
 temp/
 
 # For this app, some inference responses are saved to files like this:
+output/**/*_prompt.txt
 output/**/*_result.txt
 output/**/*_result.markdown
 src/tests/output/
