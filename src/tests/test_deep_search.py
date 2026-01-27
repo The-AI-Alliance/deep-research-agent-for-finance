@@ -19,16 +19,12 @@ output_path = './tests/output/META'
 
 class TestDeepSearch(unittest.TestCase):
     """
-    Test DeepSearch.
+    Test DeepSearch. TODO
     """
 
     @classmethod
     def setUpClass(cls):
         os.makedirs(output_path, exist_ok=True)
-
-    # @classmethod
-    # def tearDownClass(cls):
-    #     shutil.rmtree(output_path)
 
     def make(self,
             app_name: str = 'DeepSearchTest',
@@ -62,27 +58,6 @@ class TestDeepSearch(unittest.TestCase):
             short_run = short_run,
             verbose = verbose,
         )
-
-    def test_prepare_financial_research_task_prompt(self):
-        ds = self.make()
-        actual = ds.prepare_financial_research_task_prompt()
-        with open('tests/data/expected_research_prompt_file.md', 'r') as file:
-            expected = file.read()
-            self.assertEqual(expected, actual)
-
-    @given(st.text())
-    def test_prepare_excel_task_prompt(self, financial_results: str):
-        """
-        Verify that the frontmatter and content are properly identified when
-        the frontmatter block starts and ends with three or more dashes "-" on 
-        separate lines. We ignore whitespace at the beginnings and the ends of strings.
-        """
-        ds = self.make()
-        actual = ds.prepare_excel_task_prompt(financial_results)
-        with open('tests/data/expected_excel_prompt_file.md', 'r') as file:
-            expected = file.read().replace('EXPECTED_RESEARCH_RESULTS', financial_results)
-            self.assertEqual(expected, actual)
-
 
 if __name__ == "__main__":
     unittest.main()

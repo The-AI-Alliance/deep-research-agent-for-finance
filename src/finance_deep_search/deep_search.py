@@ -201,7 +201,7 @@ class DeepSearch():
             ticker=self.ticker,
             company_name=self.company_name,
             reporting_currency=self.reporting_currency, 
-            units="$ millions",
+            units=f"{self.reporting_currency} millions",
             output_path=self.output_path,
         )
         financial_research_task_prompt_file = f"{self.output_path}/financial_research_task_prompt.txt"

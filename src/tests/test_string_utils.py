@@ -32,7 +32,7 @@ class TestStringUtils(unittest.TestCase):
         in the text.
         We ignore whitespace at the beginnings and the ends of strings.
         """
-        key_strs = ['{{{{'+str(key)+'}}}}' for key in kvs.keys()]
+        key_strs = ['{{'+str(key)+'}}' for key in kvs.keys()]
         text = f'{prefix_suffix}{delimiter.join(key_strs)}{prefix_suffix}'
         expected_text = f'{prefix_suffix}{delimiter.join(kvs.values())}{prefix_suffix}'
         actual_text = replace_variables(text, **kvs)

@@ -8,7 +8,7 @@ Generate an Excel workbook containing key financial data for **META** using the 
 ## Requirements
 
 ### 1. Workbook Creation
-- Create new Excel file at: `./output/META/financials_META.xlsx`
+- Create new Excel file at: `./tests/output/META/financials_META.xlsx`
 - Use worksheet named **"Financials"**
 
 ### 2. Data Layout
@@ -70,7 +70,7 @@ Populate the sheet using the provided financial context in this tabular format:
 
 After successful creation, print:
 ```
-Created ./output/META/financials_META.xlsx with updated Financials sheet.
+Created ./tests/output/META/financials_META.xlsx with updated Financials sheet.
 ```
 
 ## Financial Data Context

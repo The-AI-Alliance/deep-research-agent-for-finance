@@ -5,7 +5,7 @@ def replace_variables(string: str, **variables: dict[str,any]) -> str:
     Replace variables in a string with their values.
     """
     for key, value in variables.items():
-        string = string.replace('{{{{'+key+'}}}}', str(value))    
+        string = string.replace('{{'+key+'}}', str(value))    
     return string
 
 def clean_json_string(s: str, replacement: str = '') -> str:
