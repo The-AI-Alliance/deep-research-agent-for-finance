@@ -12,16 +12,17 @@ from datetime import datetime
 from pathlib import Path, PosixPath
 from typing import Any
 
-from mcp_agent.app import MCPApp
 from mcp_agent.agents.agent import Agent
+from mcp_agent.app import MCPApp
 from mcp_agent.logging.logger import Logger
 from mcp_agent.tracing.token_counter import TokenCounter
-from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
 from mcp_agent.workflows.deep_orchestrator.config import DeepOrchestratorConfig
+from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
 from mcp_agent.workflows.llm.augmented_llm import RequestParams
 
 from finance_deep_search.prompts import load_prompt_markdown
 from finance_deep_search.string_utils import replace_variables
+
 
 class DeepSearch():
     """
@@ -70,10 +71,12 @@ class DeepSearch():
         self.llm_factory = None
         match self.provider:
             case 'anthropic':
-                from mcp_agent.workflows.llm.augmented_llm_anthropic import AnthropicAugmentedLLM
+                from mcp_agent.workflows.llm.augmented_llm_anthropic import \
+                    AnthropicAugmentedLLM
                 self.llm_factory = AnthropicAugmentedLLM
             case 'openai' | 'ollama':
-                from mcp_agent.workflows.llm.augmented_llm_openai import OpenAIAugmentedLLM
+                from mcp_agent.workflows.llm.augmented_llm_openai import \
+                    OpenAIAugmentedLLM
                 self.llm_factory = OpenAIAugmentedLLM
             # case 'ollama':
             #     from mcp_agent.workflows.llm.augmented_llm_ollama import OllamaAugmentedLLM
@@ -83,10 +86,10 @@ class DeepSearch():
 
 
         # These are lazily initialized!
-        self.mcp_app: MCPApp = None
-        self.orchestrator: DeepOrchestrator = None
-        self.token_counter: TokenCounter = None
-        self.logger: Logger = None
+        self.mcp_app: MCPApp | None = None
+        self.orchestrator: DeepOrchestrator | None = None
+        self.token_counter: TokenCounter | None = None
+        self.logger: Logger | None = None
 
     def properties(self) -> dict[str,Any]:
         """Return a dictionary of the properties for this instance. Useful for reports."""
