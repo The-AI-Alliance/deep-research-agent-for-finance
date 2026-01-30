@@ -53,12 +53,17 @@ The application provides several command-line options to configure the behavior:
 
 ```shell
 $ cd src && uv run main.py --help
-usage: main.py [-h] --ticker TICKER --company-name COMPANY_NAME [--reporting-currency REPORTING_CURRENCY]
+usage: main.py [-h] --ticker TICKER --company-name COMPANY_NAME 
+               [--reporting-currency REPORTING_CURRENCY]
                [--output-path OUTPUT_PATH] [--prompts-path PROMPTS_PATH]
                [--financial-research-prompt-path FINANCIAL_RESEARCH_PROMPT_PATH]
                [--excel-writer-agent-prompt-path EXCEL_WRITER_AGENT_PROMPT_PATH]
-               [--orchestrator-model ORCHESTRATOR_MODEL] [--excel-writer-model EXCEL_WRITER_MODEL]
-               [--provider {openai,anthropic,ollama}] [-u {rich,markdown}] [--short-run] [-v]
+               [--orchestrator-model ORCHESTRATOR_MODEL] 
+               [--excel-writer-model EXCEL_WRITER_MODEL]
+               [--provider {openai,anthropic,ollama}] 
+               [--ux {rich,markdown}] 
+               [--short-run] 
+               [--verbose]
 
 Deep Finance Research using orchestrated AI agents
 
