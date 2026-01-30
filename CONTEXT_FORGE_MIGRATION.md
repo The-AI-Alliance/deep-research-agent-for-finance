@@ -30,9 +30,23 @@ These local services would continue to run without Context Forge:
 This section summarized details also available in the README.
 
 > [!NOTE]
-> This description assumes the service URL is `<gateway>/mcp/`. Edit the domain name as required for your deployment. (The `/mcp` part of the path would remain the same.)
+> This description assumes the service base URL is `http://localhost:4444/`, which is the default for local test deployments. Edit the URL as required for your deployment.
 
-### 1. Update the Configuration File
+### 1. Set Up Context Forge
+
+Follow the [Context Forge documentation](https://ibm.github.io/mcp-context-forge/) instructions to install and run it. 
+
+For queries to the gateway, you need to obtain and configure your Context Forge _bearer token_. Getting the value for this token is also discussed in the [API Endpoints](https://ibm.github.io/mcp-context-forge/#api-endpoints) documentation. Use the environment variable name `MCPGATEWAY_BEARER_TOKEN` for it, e.g.,
+
+```bash
+export MCPGATEWAY_BEARER_TOKEN="your-actual-context-forge-token-here"
+```
+
+Add this definition to the shell profile (`.bashrc`, `.zshrc`, etc.) for the account that will run the application, in order to make it permanent.
+
+Then see [API Endpoints](https://ibm.github.io/mcp-context-forge/#api-endpoints) for details on adding tools and services with API calls, or use the GUI at the gateway root URL, which is [localhost:4444](https://localhost:4444) when running locally.
+
+### 2. Update the Deep Research Application Configuration File
 
 Edit `mcp_agent.config.yaml` to route external services through Context Forge. Here is how the three external services are currently configured:
 
@@ -72,20 +86,7 @@ mcp:
 
 (_MCP Gateway_ was the original name for the IBM Context Forge project.)
 
-See `mcp_agent.config-context_forge.yaml` for an example.
-
-### 2. Set Up Context Forge Authentication
-
-You need to obtain and configure your Context Forge _bearer token_.
-
-See [API Endpoints](https://ibm.github.io/mcp-context-forge/#api-endpoints) in the [Context Forge documentation](https://ibm.github.io/mcp-context-forge/) for details on determining your `MCPGATEWAY_BEARER_TOKEN` value.
-
-Set the token as an environment variable that will be visible to the deep research application:
-```bash
-export MCPGATEWAY_BEARER_TOKEN="your-actual-context-forge-token-here"
-```
-
-Add this definition to the shell profile (`.bashrc`, `.zshrc`, etc.) for the account that will run the application, in order to make it permanent.
+See `mcp_agent.config-context_forge.yaml` for an example configuration for a local Context Forge test deployment.
 
 ### 3. Verify Your Setup
 
@@ -115,7 +116,7 @@ If you see authentication errors:
 
 If services fail to connect:
 - Verify you have internet connectivity
-- Check that Context Forge is accessible: `curl <gateway>`
+- Check that Context Forge is accessible: `curl http://localhost:4444`
 - Review logs in the `logs` directory for detailed error messages
 
 ### Reverting to Direct Access
