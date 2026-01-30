@@ -16,18 +16,24 @@ logger:
 
 mcp:
   servers:
+    # Examples using Context Forge/MCP Gateway as the proxy for the first
+    # three (external) services. Replace "<gateway>" with the correct URL 
+    # for your Context Forge instance. For example, a local test server will
+    # have base URL "http://localhost:4444", by default.
     fetch:
       command: "npx"
-      args: ["-y", "mcp-remote", "https://localhost:4444/mcp/fetch", 
+      args: ["-y", "mcp-remote", "<gateway>/mcp/fetch", 
              "--header", "Authorization: Bearer ${MCPGATEWAY_BEARER_TOKEN}"]
     yfmcp:
       command: "npx"
-      args: ["-y", "mcp-remote", "https://localhost:4444/mcp/yfmcp",
+      args: ["-y", "mcp-remote", "<gateway>/mcp/yfmcp",
              "--header", "Authorization: Bearer ${MCPGATEWAY_BEARER_TOKEN}"]
     financial-datasets:
       command: "npx"
-      args: ["-y", "mcp-remote", "https://localhost:4444/mcp/financial-datasets",
+      args: ["-y", "mcp-remote", "<gateway>/mcp/financial-datasets",
              "--header", "Authorization: Bearer ${MCPGATEWAY_BEARER_TOKEN}"]
+
+    # Local services that don't use the gateway.
     filesystem:
       command: "npx"
       args: ["-y", "@modelcontextprotocol/server-filesystem", "."]

@@ -30,7 +30,7 @@ These local services would continue to run without Context Forge:
 This section summarized details also available in the README.
 
 > [!NOTE]
-> This description assumes the service URL is https://context-forge.ibm.com/mcp/. Edit the domain name as required for your deployment. (The `/mcp` part of the path would remain the same.)
+> This description assumes the service URL is `<gateway>/mcp/`. Edit the domain name as required for your deployment. (The `/mcp` part of the path would remain the same.)
 
 ### 1. Update the Configuration File
 
@@ -50,7 +50,7 @@ mcp:
       args: ["-y", "mcp-remote", "https://mcp.financialdatasets.ai/mcp"]
 ```
 
-If instead you deploy and/or manage access to any of these servers using Context Forge, then change the corresponding `servers:` definitions as follows:
+If instead you deploy and/or manage access to any of these servers using Context Forge, then change the corresponding `servers:` definitions as follows, where `<gateway>` is a placeholder for the Context Forge server. For example, if you run a local test instance of Context Forge, `<gateway>` will be `http://localhost:4444` by default.
 
 ```yaml
 mcp:
@@ -58,19 +58,21 @@ mcp:
     # External services routed through IBM Context Forge
     fetch:
       command: "npx"
-      args: ["-y", "mcp-remote", "https://context-forge.ibm.com/mcp/fetch", 
+      args: ["-y", "mcp-remote", "<gateway>/mcp/fetch", 
              "--header", "Authorization: Bearer ${MCPGATEWAY_BEARER_TOKEN}"]
     yfmcp:
       command: "npx"
-      args: ["-y", "mcp-remote", "https://context-forge.ibm.com/mcp/yfmcp",
+      args: ["-y", "mcp-remote", "<gateway>/mcp/yfmcp",
              "--header", "Authorization: Bearer ${MCPGATEWAY_BEARER_TOKEN}"]
     financial-datasets:
       command: "npx"
-      args: ["-y", "mcp-remote", "https://context-forge.ibm.com/mcp/financial-datasets",
+      args: ["-y", "mcp-remote", "<gateway>/mcp/financial-datasets",
              "--header", "Authorization: Bearer ${MCPGATEWAY_BEARER_TOKEN}"]
 ```
 
 (_MCP Gateway_ was the original name for the IBM Context Forge project.)
+
+See `mcp_agent.config-context_forge.yaml` for an example.
 
 ### 2. Set Up Context Forge Authentication
 
@@ -87,7 +89,7 @@ Add this definition to the shell profile (`.bashrc`, `.zshrc`, etc.) for the acc
 
 ### 3. Verify Your Setup
 
-Test that the configuration works using a test run of the application. Using `make`:
+Test that the configuration works using a test run of the deep research application. Using `make`:
 
 ```bash
 make APP_ARGS='--short-run' app-run
@@ -113,7 +115,7 @@ If you see authentication errors:
 
 If services fail to connect:
 - Verify you have internet connectivity
-- Check that Context Forge is accessible: `curl https://context-forge.ibm.com`
+- Check that Context Forge is accessible: `curl <gateway>`
 - Review logs in the `logs` directory for detailed error messages
 
 ### Reverting to Direct Access
