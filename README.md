@@ -171,16 +171,13 @@ If you specify a value for either argument that includes an absolute or relative
 ...
 ```
 
-By default, `gpt-4o` from OpenAI is used for _orchestration_ and `o4-mini` is used for creating an Excel spreadsheet with some of the research results. If you would like to use a model from another provider, there are several options. Note that inference from OpenAI and Anthropic, and local-serving with ollama are currently supported.
+By default, `gpt-4o` from OpenAI is used for _orchestration_ and `o4-mini` is used for creating an Excel spreadsheet with some of the research results. If you would like to use a model from another provider, there are several options. Note that inference from OpenAI and Anthropic, and local-serving with ollama are currently supported. (However, at this time, Anthropic support hasn't been tested - help wanted!)
 
 The `--provider` argument is a temporary implementation limitation to ensure the correct `mcp-agent` code path is followed. Our intention is to infer this automatically based on the models chosen. This also means that _you must specify two models served by the same provider._ You can't mix and match Anthropic, OpenAI, and ollama models, at this time.
 
-> [!NOTE]
-> If you use ollama to serve models, pick the largest one that runs on your machine. For example, `gpt-oss:20b` works well, but requires at least 20GB of RAM. Use the same model for both orchestration and excel sspreadsheet generation.
->
-> If you use the ollama app installed on your local machine, open the settings and enable network access from the model, which is needed to invoke other services to gather financial information! Also select the largest cache size your chosen model(s) support.
+In addition, at this time you have to edit [`./mcp_agent.config.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/mcp_agent.config.yaml) to uncomment the correct definition of `openai` settings. 
 
-An alternative approach for specifying models is provided by `mcp-agent`, but we effectively override it using the command-line options and internal API calls. This approach is mentioned here for completeness, the approach you may choose to pursue in your own applications based on `mcp-agent`. This approach specifes the correct model and inference provider in [`./mcp_agent.config.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/mcp_agent.config.yaml). See [Configuration](#configuration) below for more details.
+See [Configuration](#configuration) below for more details.
 
 ### The "User Experience"
 
@@ -242,11 +239,53 @@ See the [`mcp-agent` configuration docs](https://docs.mcp-agent.com/reference/co
 > [!TIP]
 > Use the tool `uvx mcp-agent config builder` to build the configuration for your `mcp-agent`-based application.
 
-Let's begin with secrects management.
+Let's begin with inference service configuration.
+
+### Configuring the Models and Inference Service.
+
+As discussed above, we currently require several command-line options to specify the models to use and the inference provider. You also have to edit [`./mcp_agent.config.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/mcp_agent.config.yaml) to uncomment the correct definition of `openai` settings. 
+
+Currently, those definitions look like this, where the OpenAI inference service is chosen:
+
+```yaml
+# Since Ollama and OpenAI use the same internal code path, i.e.,
+# mcp-agent's `OpenAIAugmentedLLM`, you MUST uncomment the correct "openai"
+# definition here and comment out the other one!
+# Eliminating this manual step is TBD.
+
+# Use this for OpenAI inference:
+openai:
+  default_model: "gpt-4o-mini"
+  reasoning_effort: "medium"
+  base_url: "https://api.openai.com/v1"
+  
+# Use this for ollama inference. Change the model, too!
+# openai:
+#   default_model: "gpt-oss:20b"
+#   reasoning_effort: "medium"
+#   base_url: "http://localhost:11434/v1"
+#   api_key: "ignored"
+
+anthropic:
+  default_model: "claude-3-5-sonnet-20241022"
+```
+
+To use `ollama` instead, you comment out the `openai:` configuration shown and uncomment the other one.
+
+> [!NOTE]
+> If you use ollama to serve models, pick the largest one that runs on your machine. For example, `gpt-oss:20b` works well, but requires more than 20GB of RAM. Use the same model for both orchestration and excel spreadsheet generation. For inference through a provider like OpenAI, it makes sense to use a less costly model for the Excel spreadsheet generation step, but for local inference, this is not an issue and it is better to load and use a single model!
+>
+> If you use the ollama server app installed on your local machine, open the settings and enable internet access from the model, which is needed to invoke other services to gather financial information! Also select the largest cache size your chosen model(s) support.
+
+For more details on configuring different providers that `mcp-agent` supports:
+
+- [Ollama](https://github.com/lastmile-ai/mcp-agent/tree/main/examples/model_providers/mcp_basic_ollama_agent)
+- [Gemini](https://github.com/lastmile-ai/mcp-agent/tree/main/examples/model_providers/mcp_basic_google_agent)
+- [All supported providers](https://github.com/lastmile-ai/mcp-agent/tree/main/examples/model_providers/)
 
 ### Setting Up Secrets
 
-The `mcp_agent.secrets.yaml` file is optional, as some of the keys and secrets will be read from your environment, e.g., `OPENAI_API_KEY`, if defined. _You will need this file if you don't define the required API keys and other secrets in your environment._
+Some settings, like API keys (e.g., `OPENAI_API_KEY`) can be read from your environment or defined in `mcp_agent.secrets.yaml` in the project root directory. _You will need this file if you don't define the required API keys and other secrets in your environment. Do not put these definitions in `mcp_agent.config.yaml`, which is managed with git._
 
 To set up your secrets:
 
@@ -284,15 +323,6 @@ Production deployments of this application and other MCP-based applications shou
 - **Consistent Access**: Standardized interface to multiple data sources
 
 See [CONTEXT_FORGE_MIGRATION.md](CONTEXT_FORGE_MIGRATION.md) for details on using Context Forge. The instructions for configuring `mcp_agent_config.yaml` should generalize for other gateways.
-
-### Model Configuration
-
-The original version of the application didn't have the command-line arguments discussed above for specifying models and the provider, so `mcp-agent.config.yaml` had to be used. Now, because the command-line arguments are used, they override the corresponding definitions in `mcp-agent.config.yaml`. However, other settings defined there are still used.
-
-For more details on specific providers:
-- [Ollama](https://github.com/lastmile-ai/mcp-agent/tree/main/examples/model_providers/mcp_basic_ollama_agent)
-- [Gemini](https://github.com/lastmile-ai/mcp-agent/tree/main/examples/model_providers/mcp_basic_google_agent)
-- [All supported providers](https://github.com/lastmile-ai/mcp-agent/tree/main/examples/model_providers/)
 
 ## Customizing Data Sources for Deep Research
 

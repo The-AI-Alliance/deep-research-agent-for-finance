@@ -41,23 +41,23 @@ mcp:
       command: "uvx"
       args: ["excel-mcp-server", "stdio"]
       
-# For OpenAI. Since Ollama and OpenAI use the same config settings, because
-# the same `OpenAIAugmentedLLM` is used, you'll have to uncomment this section
-# and comment out the next "openai" section when you do inference with OpenAI.
-# Automated solution TBD...
-# Alternatively, use the command-line options to specify different models; see
-# the README.
+# Since Ollama and OpenAI use the same internal code path, i.e.,
+# mcp-agent's `OpenAIAugmentedLLM`, you MUST uncomment the correct "openai"
+# definition here and comment out the other one!
+# Eliminating this manual step is TBD.
+
+# Use this for OpenAI inference:
 openai:
   default_model: "gpt-4o-mini"
   reasoning_effort: "medium"
   base_url: "https://api.openai.com/v1"
   
-# For ollama
-ollama:
-  default_model: "llama3.2:3B" # "gpt-oss:20b"
-  reasoning_effort: "medium"
-  base_url: "http://localhost:11434/v1"
-  api_key: "ignored"
+# Use this for ollama inference. Change the model, too!
+# openai:
+#   default_model: "gpt-oss:20b"
+#   reasoning_effort: "medium"
+#   base_url: "http://localhost:11434/v1"
+#   api_key: "ignored"
 
-# anthropic:
-#   default_model: "claude-3-5-sonnet-20241022"
+anthropic:
+  default_model: "claude-3-5-sonnet-20241022"
