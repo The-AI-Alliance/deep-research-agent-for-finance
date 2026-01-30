@@ -6,10 +6,9 @@
 tmp/
 temp/
 
-# For this app, some inference responses are saved to files like this:
-output/**/*_prompt.txt
-output/**/*_result.txt
-output/**/*_result.markdown
+# For this app, ignore all outputs from runs. See "examples" for examples of some
+# of the output.
+output/
 src/tests/output/
 
 # Releases

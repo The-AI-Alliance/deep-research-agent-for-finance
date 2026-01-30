@@ -19,15 +19,15 @@ mcp:
     fetch:
       command: "uvx"
       args: ["mcp-server-fetch"]
-    filesystem:
-      command: "npx"
-      args: ["-y", "@modelcontextprotocol/server-filesystem", "."]
     yfmcp:
       command: "uvx"
       args: ["yfmcp@latest"]
     financial-datasets:
       command: "npx"
       args: ["-y", "mcp-remote", "https://mcp.financialdatasets.ai/mcp"]
+    filesystem:
+      command: "npx"
+      args: ["-y", "@modelcontextprotocol/server-filesystem", "."]
     excel:
       command: "uvx"
       args: ["excel-mcp-server", "stdio"]
@@ -35,20 +35,19 @@ mcp:
 # For OpenAI. Since Ollama and OpenAI use the same config settings, because
 # the same `OpenAIAugmentedLLM` is used, you'll have to uncomment this section
 # and comment out the next "openai" section when you do inference with OpenAI.
-# Automated solution TBD...
-# Alternatively, use the command-line options to specify different models; see
-# the README.
-openai:
-  default_model: "gpt-4o-mini"
-  reasoning_effort: "medium"
-  base_url: "https://api.openai.com/v1"
-  
-# For ollama
-ollama:
-  default_model: "llama3.2:3B" # "gpt-oss:20b"
-  reasoning_effort: "medium"
-  base_url: "http://localhost:11434/v1"
-  api_key: "ignored"
 
-# anthropic:
-#   default_model: "claude-3-5-sonnet-20241022"
+# openai:
+#   default_model: "gpt-4o-mini"
+#   reasoning_effort: "medium"
+#   base_url: "https://api.openai.com/v1"
+  
+# For ollama, you have to use "openai"!
+openai:
+  default_model: "gpt-oss:20b"
+  reasoning_effort: "medium"
+  base_url: "http://localhost:12000/v1"  # port tunneling to another machine!
+  api_key: "ignored"
+#  base_url: "http://localhost:11434/v1"
+
+anthropic:
+  default_model: "claude-3-5-sonnet-20241022"

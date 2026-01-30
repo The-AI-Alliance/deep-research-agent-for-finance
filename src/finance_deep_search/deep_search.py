@@ -12,16 +12,17 @@ from datetime import datetime
 from pathlib import Path, PosixPath
 from typing import Any
 
-from mcp_agent.app import MCPApp
 from mcp_agent.agents.agent import Agent
+from mcp_agent.app import MCPApp
 from mcp_agent.logging.logger import Logger
 from mcp_agent.tracing.token_counter import TokenCounter
-from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
 from mcp_agent.workflows.deep_orchestrator.config import DeepOrchestratorConfig
+from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
 from mcp_agent.workflows.llm.augmented_llm import RequestParams
 
 from finance_deep_search.prompts import load_prompt_markdown
 from finance_deep_search.string_utils import replace_variables
+
 
 class DeepSearch():
     """
@@ -44,7 +45,8 @@ class DeepSearch():
             output_path: str,
             output_spreadsheet_path: str,
             short_run: bool = False,
-            verbose: bool = False):
+            verbose: bool = False,
+            ux: str = 'rich'):
         self.app_name = app_name
         self.config = config
         self.ticker = ticker
@@ -57,6 +59,7 @@ class DeepSearch():
         self.output_spreadsheet_path = output_spreadsheet_path
         self.short_run = short_run
         self.verbose = verbose
+        self.ux = ux
         self.start_time = datetime.now().strftime('%Y-%m-%d %H:%M%:%S')
 
         self.prompts_path: Path = Path(prompts_path)
@@ -70,10 +73,12 @@ class DeepSearch():
         self.llm_factory = None
         match self.provider:
             case 'anthropic':
-                from mcp_agent.workflows.llm.augmented_llm_anthropic import AnthropicAugmentedLLM
+                from mcp_agent.workflows.llm.augmented_llm_anthropic import \
+                    AnthropicAugmentedLLM
                 self.llm_factory = AnthropicAugmentedLLM
             case 'openai' | 'ollama':
-                from mcp_agent.workflows.llm.augmented_llm_openai import OpenAIAugmentedLLM
+                from mcp_agent.workflows.llm.augmented_llm_openai import \
+                    OpenAIAugmentedLLM
                 self.llm_factory = OpenAIAugmentedLLM
             # case 'ollama':
             #     from mcp_agent.workflows.llm.augmented_llm_ollama import OllamaAugmentedLLM
@@ -83,10 +88,10 @@ class DeepSearch():
 
 
         # These are lazily initialized!
-        self.mcp_app: MCPApp = None
-        self.orchestrator: DeepOrchestrator = None
-        self.token_counter: TokenCounter = None
-        self.logger: Logger = None
+        self.mcp_app: MCPApp | None = None
+        self.orchestrator: DeepOrchestrator | None = None
+        self.token_counter: TokenCounter | None = None
+        self.logger: Logger | None = None
 
     def properties(self) -> dict[str,Any]:
         """Return a dictionary of the properties for this instance. Useful for reports."""
@@ -106,6 +111,8 @@ class DeepSearch():
             "excel_writer_agent_prompt_path": self.excel_writer_agent_prompt_path,
             "start_time": self.start_time,
             "short_run": self.short_run,
+            "verbose": self.verbose,
+            "ux": self.ux,
         }
 
     def __resolve_path(self, path_str: str, possible_parent: Path) -> Path:
@@ -147,7 +154,7 @@ class DeepSearch():
 
         max_iterations = 1 if self.short_run else 10
 
-        research_result = await self.orchestrator.generate_str(
+        research_result = await self.orchestrator.generate(
             message=financial_research_task_prompt,
             request_params=RequestParams(
                 model=self.orchestrator_model_name, 
@@ -159,11 +166,10 @@ class DeepSearch():
         rr_file = f"{self.output_path}/research_result.txt"
         self.logger.info(f"Writing 'raw' returned research result to: {rr_file}")
         with open(rr_file, "w") as file:
-            for line in research_result.split('\n'):
-                file.write(line)
+            file.write(str(research_result))
 
         # The Excel writer task prompt
-        excel_task_prompt = self.prepare_excel_task_prompt(research_result)
+        excel_task_prompt = self.prepare_excel_task_prompt(str(research_result))
 
         excel_agent = Agent(
             name="ExcelWriter",
@@ -177,7 +183,7 @@ class DeepSearch():
                 self.llm_factory
             )
 
-            excel_result = await excel_llm.generate_str(
+            excel_result = await excel_llm.generate(
                 message="Generate the Excel file with the provided financial data.",
                 request_params=RequestParams(
                     model=self.excel_writer_model_name, 
@@ -189,7 +195,7 @@ class DeepSearch():
             er_file = f"{self.output_path}/excel_result.txt"
             self.logger.info(f"Writing 'raw' returned Excel result to: {er_file}")
             with open(er_file, "w") as file:
-                file.write(excel_result)
+                file.write(str(excel_result))
 
         return results
 

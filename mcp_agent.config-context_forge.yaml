@@ -1,0 +1,63 @@
+# see https://docs.mcp-agent.com/reference/configuration
+$schema: ../../../schema/mcp-agent.config.schema.json
+
+name: deep_research_agent
+execution_engine: asyncio
+
+logger:
+  transports: [file]
+  level: debug
+  progress_display: true
+  path_settings:
+    # Logs rel
+    path_pattern: "../logs/deep-research-agent-{unique_id}.jsonl"
+    unique_id: "timestamp" # Options: "timestamp" or "session_id"
+    timestamp_format: "%Y%m%d_%H%M%S"
+
+mcp:
+  servers:
+    # Examples using Context Forge/MCP Gateway as the proxy for the first
+    # three (external) services. Replace "<gateway>" with the correct URL 
+    # for your Context Forge instance. For example, a local test server will
+    # have base URL "http://localhost:4444", by default.
+    fetch:
+      command: "npx"
+      args: ["-y", "mcp-remote", "<gateway>/mcp/fetch", 
+             "--header", "Authorization: Bearer ${MCPGATEWAY_BEARER_TOKEN}"]
+    yfmcp:
+      command: "npx"
+      args: ["-y", "mcp-remote", "<gateway>/mcp/yfmcp",
+             "--header", "Authorization: Bearer ${MCPGATEWAY_BEARER_TOKEN}"]
+    financial-datasets:
+      command: "npx"
+      args: ["-y", "mcp-remote", "<gateway>/mcp/financial-datasets",
+             "--header", "Authorization: Bearer ${MCPGATEWAY_BEARER_TOKEN}"]
+
+    # Local services that don't use the gateway.
+    filesystem:
+      command: "npx"
+      args: ["-y", "@modelcontextprotocol/server-filesystem", "."]
+    excel:
+      command: "uvx"
+      args: ["excel-mcp-server", "stdio"]
+      
+# For OpenAI. Since Ollama and OpenAI use the same config settings, because
+# the same `OpenAIAugmentedLLM` is used, you'll have to uncomment this section
+# and comment out the next "openai" section when you do inference with OpenAI.
+# Automated solution TBD...
+# Alternatively, use the command-line options to specify different models; see
+# the README.
+openai:
+  default_model: "gpt-4o-mini"
+  reasoning_effort: "medium"
+  base_url: "https://api.openai.com/v1"
+  
+# For ollama
+ollama:
+  default_model: "llama3.2:3B" # "gpt-oss:20b"
+  reasoning_effort: "medium"
+  base_url: "http://localhost:11434/v1"
+  api_key: "ignored"
+
+# anthropic:
+#   default_model: "claude-3-5-sonnet-20241022"

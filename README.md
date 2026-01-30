@@ -26,7 +26,7 @@ See also the project [website](https://the-ai-alliance.github.io/deep-research-a
 
 ## Setup
 
-An account with OpenAI or Anthropic is required, or you can use a local option like Ollama. Those are the three supported model inference options, currently. See [Usage](#usage) below for details.
+An account with OpenAI or Anthropic is required, or you can use a local option like Ollama. Those are the three supported model inference options, currently. See [Usage](#usage) below for details. (Other inference options are planned; see also [Configuration](#configuration) below.)
 
 ### Prerequisites
 
@@ -53,12 +53,17 @@ The application provides several command-line options to configure the behavior:
 
 ```shell
 $ cd src && uv run main.py --help
-usage: main.py [-h] --ticker TICKER --company-name COMPANY_NAME [--reporting-currency REPORTING_CURRENCY]
+usage: main.py [-h] --ticker TICKER --company-name COMPANY_NAME 
+               [--reporting-currency REPORTING_CURRENCY]
                [--output-path OUTPUT_PATH] [--prompts-path PROMPTS_PATH]
                [--financial-research-prompt-path FINANCIAL_RESEARCH_PROMPT_PATH]
                [--excel-writer-agent-prompt-path EXCEL_WRITER_AGENT_PROMPT_PATH]
-               [--orchestrator-model ORCHESTRATOR_MODEL] [--excel-writer-model EXCEL_WRITER_MODEL]
-               [--provider {openai,anthropic,ollama}] [-u {rich,markdown}] [--short-run] [-v]
+               [--orchestrator-model ORCHESTRATOR_MODEL] 
+               [--excel-writer-model EXCEL_WRITER_MODEL]
+               [--provider {openai,anthropic,ollama}] 
+               [--ux {rich,markdown}] 
+               [--short-run] 
+               [--verbose]
 
 Deep Finance Research using orchestrated AI agents
 
@@ -124,8 +129,8 @@ cd src && uv run main.py \
 ```
 
 > [!TIP]
-> * Use `make help` to see help on the main targets provided.
-> * Use `make app-help` for specific help on the command.
+> * Use `make help` to see help on the most important `make` targets.
+> * Use `make app-help` for specific help on running the app.
 
 Let's go through some of the options shown. (We already discussed `--ticker` and `--company-name`.)
 
@@ -170,7 +175,12 @@ By default, `gpt-4o` from OpenAI is used for _orchestration_ and `o4-mini` is us
 
 The `--provider` argument is a temporary implementation limitation to ensure the correct `mcp-agent` code path is followed. Our intention is to infer this automatically based on the models chosen. This also means that _you must specify two models served by the same provider._ You can't mix and match Anthropic, OpenAI, and ollama models, at this time.
 
-An alternative approach for specifying models is provided by `mcp-agent`, but we effectively override it using the command-line optinos and internal API calls. This approach is mentioned here for completeness, the approach you may choose to pursue in your own applications based on `mcp-agent`. This approach specifes the correct model and inference provider in [`./mcp_agent.config.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/mcp_agent.config.yaml). See [Configuration](#configuration) below for more details.
+> [!NOTE]
+> If you use ollama to serve models, pick the largest one that runs on your machine. For example, `gpt-oss:20b` works well, but requires at least 20GB of RAM. Use the same model for both orchestration and excel sspreadsheet generation.
+>
+> If you use the ollama app installed on your local machine, open the settings and enable network access from the model, which is needed to invoke other services to gather financial information! Also select the largest cache size your chosen model(s) support.
+
+An alternative approach for specifying models is provided by `mcp-agent`, but we effectively override it using the command-line options and internal API calls. This approach is mentioned here for completeness, the approach you may choose to pursue in your own applications based on `mcp-agent`. This approach specifes the correct model and inference provider in [`./mcp_agent.config.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/mcp_agent.config.yaml). See [Configuration](#configuration) below for more details.
 
 ### The "User Experience"
 
@@ -197,37 +207,6 @@ The application will:
 > [!NOTE]
 > While running the application, you may see a browser window pop up asking for permission to authenticate to a financial dataset MCP server. There is no cost to do this. You can authenticate using a `gmail` email address, for example. If you decline, the application will still run, but it may run for a longer time while the deep research agent tries to gather the information it needs without this source.
 
-<a id="configuration"></a>
-
-## Configuration
-
-There are two `mcp-agent` configuration files used:
-
-- `mcp_agent.config.yaml` - Main configuration settings
-- `mcp_agent.secrets.yaml` - API keys and secrets (_**not**_ tracked in git!).
-
-See the [`mcp-agent` configuration docs](https://docs.mcp-agent.com/reference/configuration) for details.
-
-> [!TIP]
-> Use the tool `uvx mcp-agent config builder` to build the configuration for your `mcp-agent`-based application.
-
-The original version of the application didn't have the command-line arguments discussed above for specifying models and the provider, so `mcp-agent.config.yaml` had to be used. Now, because the command-line arguments are used, they override the corresponding definitions in `mcp-agent.config.yaml`. However, other settings defined there are still used.
-
-The `mcp_agent.secrets.yaml` file is optional, as some of the keys and secrets will be read from your environment, e.g., `OPENAI_API_KEY`, if defined. _You will need this file if you don't define the required API keys, etc. in your environment._
-
-A copy of the secrets file isn't included in the repo, but you can copy it from the `mcp-agent` dependency. Copy `.venv/lib/python3.12/site-packages/mcp_agent/data/examples/basic/mcp_basic_agent/mcp_agent.secrets.yaml.example` to `mcp_agent.secrets.yaml`.
-
-Add the corresponding API keys for your desired service provider to `mcp_agent.secrets.yaml`.
-
-> [!NOTE]
-> This repo's `.gitignore` ignores `*.secrets.yaml` files, so your secrets in `mcp_agent.secrets.yaml` will be **excluded** from version control. _**Do not add API keys** to `./mcp_agent.config.yaml`!_
-
-
-For more details on specific providers:
-- [Ollama](https://github.com/lastmile-ai/mcp-agent/tree/main/examples/model_providers/mcp_basic_ollama_agent)
-- [Gemini](https://github.com/lastmile-ai/mcp-agent/tree/main/examples/model_providers/mcp_basic_google_agent)
-- [All supported providers](https://github.com/lastmile-ai/mcp-agent/tree/main/examples/model_providers/)
-
 ## Architecture
 
 <img src="https://images.prismic.io/ai-alliance/aMCNHWGNHVfTO240_Frame162610%5B18%5D.jpg?auto=format%2Ccompress&fit=max&w=1920" alt="Deep Research Agent Architecture" width="400"/>
@@ -249,13 +228,82 @@ Key components:
 - **Emergency stop** - stopping execution due to repeated failures
 - **Force completion** - respecting the budget and forcing completion due to budget overrun
 
+<a id="configuration"></a>
+
+## Configuration
+
+There are two `mcp-agent` configuration files used:
+
+- `mcp_agent.config.yaml` - Main configuration settings
+- `mcp_agent.secrets.yaml` - API keys and secrets (_**not**_ tracked in git!).
+
+See the [`mcp-agent` configuration docs](https://docs.mcp-agent.com/reference/configuration) for details.
+
+> [!TIP]
+> Use the tool `uvx mcp-agent config builder` to build the configuration for your `mcp-agent`-based application.
+
+Let's begin with secrects management.
+
+### Setting Up Secrets
+
+The `mcp_agent.secrets.yaml` file is optional, as some of the keys and secrets will be read from your environment, e.g., `OPENAI_API_KEY`, if defined. _You will need this file if you don't define the required API keys and other secrets in your environment._
+
+To set up your secrets:
+
+1. Copy the example file:
+   ```bash
+   cp mcp_agent.secrets.yaml.example mcp_agent.secrets.yaml
+   ```
+
+2. Edit `mcp_agent.secrets.yaml` and add your tokens:
+   ```yaml
+   openai:
+     api_key: "your-openai-api-key"  # if using OpenAI
+   
+   anthropic:
+     api_key: "your-anthropic-api-key"  # if using Anthropic
+   ```
+
+3. Alternatively, set environment variables:
+   ```bash
+   export OPENAI_API_KEY="your-key"
+   export ANTHROPIC_API_KEY="your-key"
+   ```
+
+> [!NOTE]
+> This repo's `.gitignore` ignores `mcp_agent.secrets.yaml`, so your secrets will be **excluded** from version control. _**Do not add API keys** to `./mcp_agent.config.yaml`!_
+
+
+### IBM Context Forge Integration
+
+Production deployments of this application and other MCP-based applications should consider routing external MCP service invocations through a gateway, such as [**IBM Context Forge**](https://ibm.github.io/mcp-context-forge/), a centralized gateway that provides:
+
+- **Unified Authentication**: Single token for all external MCP services
+- **Centralized Management**: Monitor and control MCP service usage
+- **Enhanced Security**: Secure proxy for external service calls
+- **Consistent Access**: Standardized interface to multiple data sources
+
+See [CONTEXT_FORGE_MIGRATION.md](CONTEXT_FORGE_MIGRATION.md) for details on using Context Forge. The instructions for configuring `mcp_agent_config.yaml` should generalize for other gateways.
+
+### Model Configuration
+
+The original version of the application didn't have the command-line arguments discussed above for specifying models and the provider, so `mcp-agent.config.yaml` had to be used. Now, because the command-line arguments are used, they override the corresponding definitions in `mcp-agent.config.yaml`. However, other settings defined there are still used.
+
+For more details on specific providers:
+- [Ollama](https://github.com/lastmile-ai/mcp-agent/tree/main/examples/model_providers/mcp_basic_ollama_agent)
+- [Gemini](https://github.com/lastmile-ai/mcp-agent/tree/main/examples/model_providers/mcp_basic_google_agent)
+- [All supported providers](https://github.com/lastmile-ai/mcp-agent/tree/main/examples/model_providers/)
+
 ## Customizing Data Sources for Deep Research
 
-The Deep Research Agent for Finance integrates into data sources using MCP, which means you can customize which data sources the agent has access to. In order to add/remove certain data sources to the agent, there are two steps:
+The Deep Research Agent for Finance integrates into data sources using MCP, which means you can customize which data sources the agent has access to.
 
-1. In `mcp_agent.config.yaml`, add the details for the MCP server you'd like to use.
+### Adding External MCP Services with "Direct" Access
 
-Example:
+Use this approach if you don't need to go through a gateway, like IBM Context Forge (mentioned above). There are two steps to adding a service:
+
+1. In `mcp_agent.config.yaml`, add the details for the MCP server you'd like to use. For example:
+
 ```yaml
 mcp:
   servers:
@@ -272,32 +320,40 @@ mcp:
       ]
 ```
 
-2. In `src/finance_deep_search/main.py`, go to the config of the Deep Orchestrator and add your server as a new available server:
+2. In `src/main.py`, around line 261, change the configuration of the Deep Orchestrator and add your server as a new available server:
 
 ```python
-config = DeepOrchestratorConfig(
-    name="DeepFinancialResearcher",
-
-    #add your server to the available_servers
-    available_servers=["fetch", "filesystem", "yfmcp", "financial-datasets", "your-server-here"],
-    execution=ExecutionConfig(
-        max_iterations=25,
-        max_replans=2,
-        max_task_retries=5,
-        enable_parallel=True,
-        enable_filesystem=True,
-    ),
-    budget=BudgetConfig(
-        max_tokens=100000,
-        max_cost=1.00,
-        max_time_minutes=10,
-    ),
-)
+    # Add your server to the `available_servers`:
+    config = DeepOrchestratorConfig(
+        name="DeepFinancialResearcher",
+        available_servers=["fetch", "filesystem", "yfmcp", "financial-datasets"],
+        ...
 ```
 
-*[Optional] If you'd like to optimize the performance, add specific instructions to the prompt on how the model can better use your MCP data source. You will find the main prompt at `src/finance_deep_search/prompts/financial_research_agent.md`.*
+Remember to add any corresponding secrets, like API keys, to `mcp_agent.secrets.yaml`.
 
-## Contributing
+> [!TIP]
+> If you'd like to optimize the performance, add specific instructions to the prompt on how the model can better use your MCP data source. You will find the main deep-research prompt in `src/finance_deep_search/prompts/financial_research_agent.md`.
+
+### Adding Local MCP Services
+
+To add local MCP services:
+
+1. In `mcp_agent.config.yaml`, add the server with direct command execution:
+
+```yaml
+mcp:
+  servers:
+    your-local-service:
+      command: "uvx"  # or "npx" depending on the service
+      args: ["your-mcp-server-package"]
+```
+
+2. Add it to `available_servers` in `src/main.py` as shown above.
+
+See examples in `mcp_agent.config.yaml` and `src/main.py`, such as the `excel` service definition.
+
+## Contributing to This Project
 
 This project is maintained by [The AI Alliance](https://aialliance.org). We welcome contributions from developers with finance industry expertise, AI expertise, or those looking to grow their skills in either area. We are also making plans to create similar applications for healthcare, legal, and other domains!
 
