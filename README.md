@@ -283,7 +283,7 @@ Production deployments of this application and other MCP-based applications shou
 - **Enhanced Security**: Secure proxy for external service calls
 - **Consistent Access**: Standardized interface to multiple data sources
 
-See [CONTEXT_FORGE_MIGRATION.md](CONTEXT_FORGE_MIGRATION.md) for details on using Context Forge.
+See [CONTEXT_FORGE_MIGRATION.md](CONTEXT_FORGE_MIGRATION.md) for details on using Context Forge. The instructions for configuring `mcp_agent_config.yaml` should generalize for other gateways.
 
 ### Model Configuration
 
