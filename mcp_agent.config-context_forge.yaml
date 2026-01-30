@@ -17,14 +17,17 @@ logger:
 mcp:
   servers:
     fetch:
-      command: "uvx"
-      args: ["mcp-server-fetch"]
+      command: "npx"
+      args: ["-y", "mcp-remote", "https://localhost:4444/mcp/fetch", 
+             "--header", "Authorization: Bearer ${MCPGATEWAY_BEARER_TOKEN}"]
     yfmcp:
-      command: "uvx"
-      args: ["yfmcp@latest"]
+      command: "npx"
+      args: ["-y", "mcp-remote", "https://localhost:4444/mcp/yfmcp",
+             "--header", "Authorization: Bearer ${MCPGATEWAY_BEARER_TOKEN}"]
     financial-datasets:
       command: "npx"
-      args: ["-y", "mcp-remote", "https://mcp.financialdatasets.ai/mcp"]
+      args: ["-y", "mcp-remote", "https://localhost:4444/mcp/financial-datasets",
+             "--header", "Authorization: Bearer ${MCPGATEWAY_BEARER_TOKEN}"]
     filesystem:
       command: "npx"
       args: ["-y", "@modelcontextprotocol/server-filesystem", "."]
