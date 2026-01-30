@@ -53,12 +53,17 @@ The application provides several command-line options to configure the behavior:
 
 ```shell
 $ cd src && uv run main.py --help
-usage: main.py [-h] --ticker TICKER --company-name COMPANY_NAME [--reporting-currency REPORTING_CURRENCY]
+usage: main.py [-h] --ticker TICKER --company-name COMPANY_NAME 
+               [--reporting-currency REPORTING_CURRENCY]
                [--output-path OUTPUT_PATH] [--prompts-path PROMPTS_PATH]
                [--financial-research-prompt-path FINANCIAL_RESEARCH_PROMPT_PATH]
                [--excel-writer-agent-prompt-path EXCEL_WRITER_AGENT_PROMPT_PATH]
-               [--orchestrator-model ORCHESTRATOR_MODEL] [--excel-writer-model EXCEL_WRITER_MODEL]
-               [--provider {openai,anthropic,ollama}] [-u {rich,markdown}] [--short-run] [-v]
+               [--orchestrator-model ORCHESTRATOR_MODEL] 
+               [--excel-writer-model EXCEL_WRITER_MODEL]
+               [--provider {openai,anthropic,ollama}] 
+               [--ux {rich,markdown}] 
+               [--short-run] 
+               [--verbose]
 
 Deep Finance Research using orchestrated AI agents
 
@@ -170,7 +175,12 @@ By default, `gpt-4o` from OpenAI is used for _orchestration_ and `o4-mini` is us
 
 The `--provider` argument is a temporary implementation limitation to ensure the correct `mcp-agent` code path is followed. Our intention is to infer this automatically based on the models chosen. This also means that _you must specify two models served by the same provider._ You can't mix and match Anthropic, OpenAI, and ollama models, at this time.
 
-An alternative approach for specifying models is provided by `mcp-agent`, but we effectively override it using the command-line optinos and internal API calls. This approach is mentioned here for completeness, the approach you may choose to pursue in your own applications based on `mcp-agent`. This approach specifes the correct model and inference provider in [`./mcp_agent.config.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/mcp_agent.config.yaml). See [Configuration](#configuration) below for more details.
+> [!NOTE]
+> If you use ollama to serve models, pick the largest one that runs on your machine. For example, `gpt-oss:20b` works well, but requires at least 20GB of RAM. Use the same model for both orchestration and excel sspreadsheet generation.
+>
+> If you use the ollama app installed on your local machine, open the settings and enable network access from the model, which is needed to invoke other services to gather financial information! Also select the largest cache size your chosen model(s) support.
+
+An alternative approach for specifying models is provided by `mcp-agent`, but we effectively override it using the command-line options and internal API calls. This approach is mentioned here for completeness, the approach you may choose to pursue in your own applications based on `mcp-agent`. This approach specifes the correct model and inference provider in [`./mcp_agent.config.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/mcp_agent.config.yaml). See [Configuration](#configuration) below for more details.
 
 ### The "User Experience"
 

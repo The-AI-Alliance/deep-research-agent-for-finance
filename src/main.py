@@ -30,6 +30,39 @@ from finance_deep_search.string_utils import truncate
 async def do_main(deep_search: DeepSearch):
     mcp_app = await deep_search.setup()
 
+    if args.verbose:
+        pwd = os.path.dirname(os.path.realpath(__file__))
+        message = f"""
+{deep_search.app_name}:
+  Company:
+    Ticker:              {deep_search.ticker}
+    Company:             {deep_search.company_name}
+    Reporting Currency:  {deep_search.reporting_currency}
+  Models:
+    Orchestrator:        {deep_search.orchestrator_model_name}
+    Excel Writer:        {deep_search.excel_writer_model_name}
+    Provider:            {deep_search.provider}
+  Prompts:
+    Path:                {deep_search.prompts_path}
+    Financial Research prompt file: 
+                         {deep_search.financial_research_prompt_path}
+    Excel writer prompt file:
+                         {deep_search.excel_writer_agent_prompt_path}
+  UX:                    {deep_search.ux}
+  Output path:           {deep_search.output_path}
+    For spreadsheet:     {output_spreadsheet_path}
+  Current working dir:   {pwd}
+  Short run?             {deep_search.short_run}
+  Verbose?               {deep_search.verbose}
+  MCP Agent Config:      {deep_search.config}
+"""
+
+        print(message)
+        mcp_app.logger.info(message)
+
+        # Just to give the user time to see the above before the UX starts.
+        time.sleep(2.0)  
+
     # Run the example
     display  = None
     run_live = None
@@ -77,13 +110,13 @@ async def do_main(deep_search: DeepSearch):
         # Show the results
         research_results = results.get('research')
         if research_results:
-            mcp_app.logger.info(truncate(research_results, 2000, '...'))
+            mcp_app.logger.info(truncate(str(research_results), 2000, '...'))
         else:
             mcp_app.logger.error("No research results!!")
 
         excel_results = results.get('excel')
         if excel_results:
-            mcp_app.logger.info(truncate(excel_results, 2000, '...'))
+            mcp_app.logger.info(truncate(str(excel_results), 2000, '...'))
         else:
             mcp_app.logger.error("No Excel results!!")
 
@@ -200,34 +233,6 @@ to use the correct settings!
 
     output_spreadsheet_path=f"{args.output_path}/financials_{args.ticker}.xlsx",
 
-    if args.verbose:
-        pwd = os.path.dirname(os.path.realpath(__file__))
-        print(f"""
-{def_app_name}: (this script: {sys.argv[0]})
-  Company:
-    Ticker:              {args.ticker}
-    Company:             {args.company_name}
-    Reporting Currency:  {args.reporting_currency}
-  Models:
-    Orchestrator:        {args.orchestrator_model}
-    Excel Writer:        {args.excel_writer_model}
-    Provider:            {args.provider}
-  Prompts:
-    Path:                {args.prompts_path}
-    Financial Research prompt file: 
-                         {args.financial_research_prompt_path}
-    Excel writer prompt file:
-                         {args.excel_writer_agent_prompt_path}
-  UX:                    {args.ux}
-  Output path:           {args.output_path}
-    For spreadsheet:     {output_spreadsheet_path}
-  Current working dir:   {pwd}
-  Short run?             {args.short_run}
-  Verbose?               {args.verbose}
-""")
-        # Just to give the user time to see the above before the UX starts.
-        time.sleep(2.0)  
-
     # Create configuration for the Deep Orchestrator
     if args.short_run:
         execution_config=ExecutionConfig(
@@ -282,7 +287,7 @@ to use the correct settings!
         output_spreadsheet_path = output_spreadsheet_path,
         short_run = args.short_run,
         verbose = args.verbose,
+        ux = args.ux,
     )
 
     asyncio.run(do_main(deep_search))
-

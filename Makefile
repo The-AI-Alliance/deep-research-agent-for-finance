@@ -2,7 +2,7 @@
 pages_url       := https://the-ai-alliance.github.io/deep-research-agent-for-finance/
 docs_dir        := docs
 site_dir        := ${docs_dir}/_site
-clean_code_dirs := logs ${src_dir}/.hypothesis
+clean_code_dirs := logs output src/output ${src_dir}/.hypothesis
 clean_doc_dirs  := ${site_dir} ${docs_dir}/.sass-cache
 clean_dirs      := ${clean_code_dirs} ${clean_doc_dirs}
 src_dir         := src

@@ -4,35 +4,23 @@ The Markdown-formatted streaming output version of Deep Orchestrator Finance Res
 """
 
 import argparse
-import asyncio
-import os
+import json
 import re
-import sys
 import time
 from datetime import datetime, timedelta
-from pathlib import Path
-
-import json
 from json.decoder import JSONDecodeError
+from typing import Any, cast
 
 from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
-from mcp_agent.workflows.deep_orchestrator.config import DeepOrchestratorConfig
-
 from openai.types.chat import ChatCompletionMessage
 
 from finance_deep_search.deep_search import DeepSearch
-from finance_deep_search.string_utils import (
-    replace_variables,
-    clean_json_string,
-    MarkdownUtil
-)
+from finance_deep_search.string_utils import MarkdownUtil, clean_json_string
+from finance_deep_search.ux.markdown_elements import (MarkdownElement,
+                                                      MarkdownSection,
+                                                      MarkdownTable,
+                                                      MarkdownTree)
 
-from finance_deep_search.ux.markdown_elements import (
-    MarkdownElement,
-    MarkdownSection,
-    MarkdownTable,
-    MarkdownTree
-)
 
 class MarkdownDeepOrchestratorMonitor():
     """Markdown-based monitor to expose all internal state of the Deep Orchestrator"""
@@ -449,7 +437,8 @@ class MarkdownDisplay():
                 self.deep_search.logger.warning(f"{err_msg}: input = {s}")
             return (err_msg, None)
 
-    def add_financial_results(self, results: str) -> MarkdownSection:
+    def __parse_openai_message(self, message_index: int, obj: Any) -> list[Any]:
+        # For inference with OpenAI, the results will be a ChatCompletionMessage:
         def make_metadata_table(
             refusal: str,
             role: str,
@@ -457,8 +446,8 @@ class MarkdownDisplay():
             audio: str,
             function_call: str,
             tool_calls: str) -> MarkdownTable:
-            table = MarkdownTable(title="Chat Metadata",
-                columns = [("Item", 'left'), ("Value", 'right')])
+            table = MarkdownTable(title=f"OpenAI/Ollama Reply Message #{message_index}: Metadata",
+                columns = [('Item', 'left'), ('Value', 'right')])
             table.add_row(['refusal', str(refusal)])
             table.add_row(['role', str(role)])
             table.add_row(['annotations', str(annotations)])
@@ -467,72 +456,152 @@ class MarkdownDisplay():
             table.add_row(['tool_calls', str(tool_calls)])
             return table
 
-        all_content = [
-            f"See also the directory `{self.deep_search.output_path}` for results files.", 
-            "\n",
-            "The parsed content returned:", 
-            '\n'
-        ]
-        if results:
-            if isinstance(results, ChatCompletionMessage):
-                content = results.content.split('\n')
-                content.append(make_metadata_table(
-                    results.refusal,
-                    results.role,
-                    results.annotations,
-                    results.audio,
-                    results.function_call,
-                    results.tool_calls))
-            else:
-                # It might be a `str(ChatCompletionMessage)` if the OpenAI API was used!
-                if results.startswith("ChatCompletion"):
-                    # Try parsing it with the following _ugly_ hack to extract just the
-                    # `content` from the string:
-                    try:
-                        s2 = re.sub(r"""ChatCompletion([^=]+)\s*=\s*['"]""", '', results)
-                        s3 = re.sub(r"""['"],\s*refusal=.*$""", '', s2)
-                        content = s3.split('\n')
-                    except:  # bail out...
-                        content = results.split('\n')
-                else:
-                    # Try parsing as JSON. It probably isn't JSON, but try...
-                    (err_msg, content) = self.__parse_json(results)
-                    if not content:
-                        content = results.split('\n')
-        else:
-            content = ["No research results! See the log file for details."]
+        sobj = str(obj)
+        content: list[Any] = []
+        metadata_table: MarkdownTable = None
 
-        all_content.extend([f"> {line}" for line in content])
-        all_content.extend(['\n', "(End of parsed content.)"])
-            
-        return self.add_section("📊 Financial Research Results (Preview)", all_content)
+        if isinstance(obj, ChatCompletionMessage):
+            ccm: ChatCompletionMessage = cast(ChatCompletionMessage, obj)
+            content = ccm.content.split('\n')
+            content = ccm.content.split('\n')
+            metadata_table = make_metadata_table(
+                ccm.refusal,
+                ccm.role,
+                ccm.annotations,
+                ccm.audio,
+                ccm.function_call,
+                ccm.tool_calls)
+        elif sobj.startswith("ChatCompletion"):
+            # Is it a "str(ChatCompletion...)"? Try parsing it with the following
+            #  _ugly_ hack to extract just the `content` from the string:
+            try:
+                s2 = re.sub(r"""ChatCompletion[^=]+\s*=\s*['"]?""", '', sobj)
+                s3 = re.sub(r"""['"]?,\s*refusal\s*=.*$""", '', s2)
+                content = s3.split('\n')
+            except:  # bail out...
+                content = sobj.split('\n')
+          
+        all_content: list[Any] = []
+        if content:
+            all_content = [f"Reply Message #{message_index} Content:"]
+            all_content.extend([f"> {line}" for line in content])
+            all_content.extend(['\n', "(end content)"])
+        if metadata_table:
+            all_content.append('\n')
+            all_content.append(metadata_table)
 
-    def add_excel_results(self, results: str) -> MarkdownSection:
-        all_content = [
-            f"See also the directory `{self.deep_search.output_path}` for results files.", 
-            "\n"
-        ]
-        if results:
-            (err_msg, content2) = self.__parse_json(results, 'Excel', True)
-            if content2:
-                content = content2
-            else:
-                all_content.extend([ 
-                    f"We tried to parse the Excel results as JSON, but we were unsuccessful.",
-                    f"(The model may have generated invalid characters in the JSON or non-JSON output deliberately: Error message = `{err_msg}`", 
-                    "\n",
-                    "Here are the raw results:",
-                    "\n",
-                ])
+        return all_content
+
+    def __parse_anthropic_message(self, message_index: int, obj: Any) -> list[Any]:
+        def make_metadata_table(
+            subtype: str,
+            duration_ms: int,
+            duration_api_ms: int,
+            is_error: bool,
+            num_turns: int,
+            session_id: str,
+            total_cost_usd: float | None = None,
+            usage: dict[str, Any] | None = None, 
+            structured_output: Any = None) -> MarkdownTable:
+            table = MarkdownTable(title=f"Anthropic Reply Message #{message_index}: Metadata",
+                columns = [('Item', 'left'), ('Value', 'right')])
+            table.add_row(['subtype', subtype])
+            table.add_row(['duration_ms', str(duration_ms)])
+            table.add_row(['duration_api_ms', str(duration_api_ms)])
+            table.add_row(['is_error', str(is_error)])
+            table.add_row(['num_turns', str(num_turns)])
+            table.add_row(['session_id', session_id])
+            table.add_row(['total_cost_usd', str(total_cost_usd)])
+            table.add_row(['usage', str(usage)])
+            table.add_row(['total_cost_usd', str(total_cost_usd)])
+            table.add_row(['structured_output', str(structured_output)])
+            return table
+
+        sobj = str(obj)
+        content: list[Any] = []
+        metadata_table: MarkdownTable = None
+
+        if isinstance(obj, ResultMessage):
+            rm: ResultMessage = cast(ResultMessage, obj)
+            content = rm.result.split('\n')
+            metadata_table = make_metadata_table(
+                subtype = rm.subtype,
+                duration_ms = rm.duration_ms,
+                duration_api_ms = rm.duration_api_ms,
+                is_error = rm.is_error,
+                num_turns = rm.num_turns,
+                session_id = rm.session_id,
+                total_cost_usd = rm.total_cost_usd,
+                usage = rm.usage,
+                result = rm.result,
+                structured_output = rm.structured_output)
+        elif sobj.startswith("Message") or results.startswith("ResultMessage"):
+            # Try parsing it with the following _ugly_ hack to extract just the
+            # `content` from the string:
+            try:
+                s2 = re.sub(r"""(Result)?Message\([^=]+)\s*=\s*['"]""", '', sobj)
+                s3 = re.sub(r"""^.*\s*result=(.*)""", 'result:\n', s2)
+                s4 = re.sub('structured_output=', '\nstructured_output:\n', s3)
+                content = s4.split('\n')
+            except:  # bail out...
                 content = results.split('\n')
-        else:
-            content = ["No excel results! See the log file for details."]
 
-        all_content.extend([f"> {line}" for line in content]) 
-        all_content.extend(['\n', "(End of parsed content.)"])
-        return self.add_section("📈 Excel Creation Result", all_content)    
+        all_content: list[Any] = []
+        if content:
+            all_content = [f"**Message #{message_index} content:**"]
+            all_content.extend([f"> {line}" for line in content])
+            all_content.extend(['\n', "(end content)"])
+        if metadata_table:
+            all_content.append('\n')
+            all_content.append(metadata_table)
 
-    def report_results(self, research_results: str, excel_results: str):
+        return all_content
+
+    def __add_results(self, which_one: str, title: str, results: list[Any]) -> MarkdownSection:
+        leading_content = f"See also the directory `{self.deep_search.output_path}` for results files."
+        
+        if not results:
+            return self.add_section(title, 
+                [leading_content + f"> No {which_one} results! See the log file for details."],
+                subsections)
+
+        subsections: list[MarkdownSection] = []
+        for i in range(len(results)):
+            content: list[Any] = []
+            result = results[i]
+            result_content = self.__parse_openai_message(i+1, result)
+            if result_content:
+                content.extend(result_content)
+            else:
+                result_content = self.__parse_anthropic_message(i+1, result)
+                if result_content:
+                    content.extend(result_content)
+                else:
+                    # Try parsing as JSON, although it probably isn't JSON...
+                    (err_msg, result_content) = self.__parse_json(str(result))
+                    if not result_content: # not JSON, so just split the text.
+                        result_content = str(result).split('\n')
+                    content.extend([f"> {line}" for line in result_content])
+
+            ss = MarkdownSection(title=f"Reply Message #{i+1}", content=content)
+            subsections.append(ss)
+
+        return self.add_section(title, [leading_content], subsections)
+
+
+    def add_financial_results(self, results: list[Any]) -> MarkdownSection:
+        which_one = "financial"
+        section_title = "📊 Financial Research Result"
+
+        return self.__add_results(which_one, section_title, results)
+
+    def add_excel_results(self, results: list[Any]) -> MarkdownSection:
+        which_one = "Excel"
+        section_title = "📈 Excel Creation Result"
+
+        return self.__add_results(which_one, section_title, results)
+
+    def report_results(self, research_results: list[Any], excel_results: list[Any]):
         self.add_financial_results(research_results)
         self.add_excel_results(excel_results)
 
