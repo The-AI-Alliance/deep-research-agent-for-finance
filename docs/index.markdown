@@ -37,7 +37,3 @@ We also want to demonstrate techniques for testing AI-enabled applications, wher
 ## Try It!
 
 The project [README](https://github.com/The-AI-Alliance/deep-research-agent-for-finance){:target="repo"} describes how to install the dependencies and run this application.
-
-| **Authors**     | [Applications and Tools](https://thealliance.ai/focus-areas/applications-and-tools){:target="ai-alliance-wg"} work group. (See the [Contributors]({{site.baseurl}}/contributing/#contributors)) |
-| **Last Update** | {{site.last_version}}, {{site.last_modified_timestamp}} |
-
