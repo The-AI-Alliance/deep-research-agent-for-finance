@@ -12,7 +12,7 @@ from tests.utils import (
     no_brace_non_empty_text,
 )
 
-from finance_deep_search.prompts import (
+from common.prompt_utils import (
     split_frontmatter_and_content,
     load_prompt_markdown,
 )

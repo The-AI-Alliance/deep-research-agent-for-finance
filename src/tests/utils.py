@@ -2,7 +2,7 @@
 # https://hypothesis.readthedocs.io/en/latest/
 
 from hypothesis import given, strategies as st
-import re
+import os, re
 from random import sample
 
 nonempty_text = st.text().filter(lambda s: len(s) > 0)
@@ -10,6 +10,9 @@ no_brace_text = st.text().map(lambda s: re.sub(r'[{}]+', '_', s))
 no_brace_non_empty_text = no_brace_text.filter(lambda s: len(s) > 0)
 no_linefeeds_text = st.text().map(lambda s: re.sub('[\n\r]', '_', s))
 nonempty_no_linefeeds_text = nonempty_text.map(lambda s: re.sub('[\n\r]', '_', s))
+nonempty_no_slash_text = nonempty_text.map(lambda s: re.sub('/', '_', s))
+parent_path_text = st.lists(nonempty_no_slash_text).map(
+    lambda parents: os.path.join(**parents))
 
 def make_n_samples(samples: list[any], n: int) -> list[str]:
     """

@@ -20,7 +20,7 @@ from rich.columns import Columns
 from rich import box
 
 from finance_deep_search.deep_search import DeepSearch
-from finance_deep_search.string_utils import truncate
+from common.string_utils import truncate
 
 from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
 

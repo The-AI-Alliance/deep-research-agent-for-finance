@@ -1,8 +1,4 @@
 #!/usr/bin/env python
-"""
-The Markdown-formatted streaming output version of Deep Orchestrator Finance Research Example
-"""
-
 import asyncio
 import os
 import re
@@ -20,11 +16,11 @@ from mcp_agent.workflows.deep_orchestrator.config import DeepOrchestratorConfig
 from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
 from mcp_agent.workflows.llm.augmented_llm import RequestParams
 
-from finance_deep_search.prompts import load_prompt_markdown
-from finance_deep_search.string_utils import replace_variables
+from common.deep_search import DeepSearch
+from common.prompt_utils import load_prompt_markdown
+from common.string_utils import replace_variables
 
-
-class DeepSearch():
+class FinanceDeepSearch(DeepSearch):
     """
     Wrapper around mcp_agent for the deep research app.
     See the help in main.py for details and requirements for
@@ -39,7 +35,7 @@ class DeepSearch():
             orchestrator_model_name: str,
             excel_writer_model_name: str,
             provider: str,
-            prompts_path: str,
+            prompts_dir: str,
             financial_research_prompt_path: str,
             excel_writer_agent_prompt_path: str,
             output_path: str,
@@ -47,6 +43,17 @@ class DeepSearch():
             short_run: bool = False,
             verbose: bool = False,
             ux: str = 'rich'):
+        tasks = [
+            Generate(
+            name: str, 
+            model_name: str, 
+            prompt_path: Path,
+            temperature: float = 0.7, 
+            max_iterations: int = 10,
+                )
+        ]
+        self.super().__init__(app_name, config, provider, [], output_path, 
+            )
         self.app_name = app_name
         self.config = config
         self.ticker = ticker
@@ -62,11 +69,11 @@ class DeepSearch():
         self.ux = ux
         self.start_time = datetime.now().strftime('%Y-%m-%d %H:%M%:%S')
 
-        self.prompts_path: Path = Path(prompts_path)
+        self.prompts_dir: Path = Path(prompts_dir)
         self.financial_research_prompt_path: Path = self.__resolve_path(
-            financial_research_prompt_path, self.prompts_path)
+            financial_research_prompt_path, self.prompts_dir)
         self.excel_writer_agent_prompt_path: Path = self.__resolve_path(
-            excel_writer_agent_prompt_path, self.prompts_path)
+            excel_writer_agent_prompt_path, self.prompts_dir)
 
         # from mcp_agent.workflows.llm.augmented_llm_openai import OpenAIAugmentedLLM
         # self.llm_factory = OpenAIAugmentedLLM
@@ -106,7 +113,7 @@ class DeepSearch():
             "provider": self.provider,
             "output_path": self.output_path,
             "output_spreadsheet_path": self.output_spreadsheet_path,
-            "prompts_path": self.prompts_path,
+            "prompts_dir": self.prompts_dir,
             "financial_research_prompt_path": self.financial_research_prompt_path,
             "excel_writer_agent_prompt_path": self.excel_writer_agent_prompt_path,
             "start_time": self.start_time,

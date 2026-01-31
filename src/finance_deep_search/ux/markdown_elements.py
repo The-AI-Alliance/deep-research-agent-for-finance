@@ -16,8 +16,6 @@ from typing import Callable
 from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
 from mcp_agent.workflows.deep_orchestrator.config import DeepOrchestratorConfig
 
-from finance_deep_search.deep_search import DeepSearch
-
 class MarkdownElement():
     """Super type of the other markdown-related types.
     Note: There are places in subtype method signatures where `MarkdownElement`

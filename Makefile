@@ -24,7 +24,7 @@ REPORTING_CURRENCY       ?= USD
 ORCHESTRATOR_MODEL       ?= gpt-4o
 EXCEL_WRITER_MODEL       ?= o4-mini
 INFERENCE_PROVIDER       ?= openai
-PROMPTS_PATH             ?= ${app_dir}/prompts
+PROMPTS_DIR              ?= ${app_dir}/prompts
 FIN_RESEARCH_PROMPT_FILE ?= financial_research_agent.md
 EXCEL_WRITER_PROMPT_FILE ?= excel_writer_agent.md
 OUTPUT_PATH              ?= ${PWD}/output/${TICKER}
@@ -142,7 +142,7 @@ do-app-run::
 		--company-name "${COMPANY_NAME}" \
 		--output-path "${OUTPUT_PATH}" \
 		--reporting-currency "${REPORTING_CURRENCY}" \
-		--prompts-path "${PROMPTS_PATH}" \
+		--prompts-dir "${PROMPTS_DIR}" \
 		--financial-research-prompt-path "${FIN_RESEARCH_PROMPT_FILE}" \
 		--excel-writer-agent-prompt-path "${EXCEL_WRITER_PROMPT_FILE}" \
 		--orchestrator-model "${ORCHESTRATOR_MODEL}" \
@@ -202,7 +202,7 @@ print-app-info:
 	@echo "  ORCHESTRATOR_MODEL       ${ORCHESTRATOR_MODEL}"
 	@echo "  EXCEL_WRITER_MODEL       ${EXCEL_WRITER_MODEL}"
 	@echo "Prompts:"
-	@echo "  PROMPTS_PATH             ${PROMPTS_PATH}"
+	@echo "  PROMPTS_DIR              ${PROMPTS_DIR}"
 	@echo "  FIN_RESEARCH_PROMPT_FILE ${FIN_RESEARCH_PROMPT_FILE}"
 	@echo "  EXCEL_WRITER_PROMPT_FILE ${EXCEL_WRITER_PROMPT_FILE}"
 	@echo "OUTPUT_PATH                ${OUTPUT_PATH}"

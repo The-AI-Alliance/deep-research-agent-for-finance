@@ -24,10 +24,12 @@ from mcp_agent.workflows.deep_orchestrator.config import (
     BudgetConfig,
 )
 
-from finance_deep_search.deep_search import DeepSearch
-from finance_deep_search.string_utils import truncate
+#from finance_deep_search.deep_search import FinanceDeepSearch
+from deep_search.deep_search import DeepSearch, Task, GenerateTask, AgentTask
+from common.path_utils import resolve_path
+from common.string_utils import truncate
 
-async def do_main(deep_search: DeepSearch):
+async def do_main(deep_search: FinanceDeepSearch):
     mcp_app = await deep_search.setup()
 
     if args.verbose:
@@ -43,7 +45,7 @@ async def do_main(deep_search: DeepSearch):
     Excel Writer:        {deep_search.excel_writer_model_name}
     Provider:            {deep_search.provider}
   Prompts:
-    Path:                {deep_search.prompts_path}
+    Directory:           {deep_search.prompts_dir}
     Financial Research prompt file: 
                          {deep_search.financial_research_prompt_path}
     Excel writer prompt file:
@@ -138,7 +140,7 @@ if __name__ == "__main__":
     def_app_name = "finance_deep_research"
     def_reporting_currency = "USD"
     def_output_path = "./output"
-    def_prompts_path = "./prompts"
+    def_prompts_dir = "./prompts"
     def_financial_research_agent_prompt_file = "financial_research_agent.md"
     def_excel_writer_agent_prompt_file = "excel_writer_agent.md"
 
@@ -174,11 +176,11 @@ to use the correct settings!
         help=f"Path where Excel and other output files will be saved. (Default: {def_output_path})"
     )
     parser.add_argument(
-        "--prompts-path",
-        default=def_prompts_path,
-        help=f"Path where prompt files are located. (Default: {def_prompts_path})"
+        "--prompts-dir",
+        default=def_prompts_dir,
+        help=f"Path to the directory where prompt files are located. (Default: {def_prompts_dir})"
     )
-    relative = "If the path doesn't contain a directory specification, then the file will be searched for in the value of '--prompts-path'."
+    relative = "If the path doesn't contain a directory specification, then the file will be searched for in the value of '--prompts-dir'."
     parser.add_argument(
         "--financial-research-prompt-path",
         default=def_financial_research_agent_prompt_file,
@@ -231,8 +233,6 @@ to use the correct settings!
     # Change to app directory
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-    output_spreadsheet_path=f"{args.output_path}/financials_{args.ticker}.xlsx",
-
     # Create configuration for the Deep Orchestrator
     if args.short_run:
         execution_config=ExecutionConfig(
@@ -271,7 +271,32 @@ to use the correct settings!
         budget=budget_config,
     )
 
-    deep_search = DeepSearch(
+    variables = {
+        "temperature": 0.7, 
+        "max_iterations": max_iterations,
+        "short_run": args.short_run,
+        "verbose": args.verbose,
+        "ux": args.ux,
+        "output_spreadsheet_path": f"{args.output_path}/financials_{args.ticker}.xlsx",
+    }
+
+    prompts_dir_path = Path(args.prompts_dir)
+
+    financial_research_prompt_path = resolve_path(args.financial_research_prompt_path, prompts_dir_path)
+    excel_writer_agent_prompt_path = resolve_path(args.excel_writer_agent_prompt_path, prompts_dir_path)
+
+    tasks = [
+        GenerateTask(
+            "financial_research",
+            orchestrator_model_name,
+            financial_research_prompt_path),
+        AgentTask(
+            "excel_writer",
+            excel_writer_model_name,
+            excel_writer_agent_prompt_path),
+    ]
+
+    deep_search = FinanceDeepSearch(
         app_name = def_app_name,
         config = config,
         ticker = args.ticker,
@@ -280,7 +305,7 @@ to use the correct settings!
         orchestrator_model_name = args.orchestrator_model,
         excel_writer_model_name = args.excel_writer_model,
         provider = args.provider,
-        prompts_path = args.prompts_path,
+        prompts_dir = args.prompts_dir,
         financial_research_prompt_path = args.financial_research_prompt_path,
         excel_writer_agent_prompt_path = args.excel_writer_agent_prompt_path,
         output_path = args.output_path,

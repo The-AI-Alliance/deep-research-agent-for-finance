@@ -12,7 +12,7 @@ from tests.utils import (
     no_brace_non_empty_text,
 )
 
-from finance_deep_search.string_utils import (
+from common.string_utils import (
     replace_variables, 
     clean_json_string, 
     truncate,

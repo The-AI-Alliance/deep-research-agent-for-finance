@@ -81,7 +81,7 @@ Created {{output_spreadsheet_path}} with updated Financials sheet.
 
 ## Financial Data Context
 ```
-{{financial_data}}
+{{previous_tasks_results}}
 ```
 
 ## Implementation Notes
