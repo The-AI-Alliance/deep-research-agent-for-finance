@@ -24,12 +24,11 @@ from mcp_agent.workflows.deep_orchestrator.config import (
     BudgetConfig,
 )
 
-#from finance_deep_search.deep_search import FinanceDeepSearch
 from deep_search.deep_search import DeepSearch, Task, GenerateTask, AgentTask
 from common.path_utils import resolve_path
 from common.string_utils import truncate
 
-async def do_main(deep_search: FinanceDeepSearch):
+async def do_main(deep_search: DeepSearch, args: argparse.Namespace, variables: dict[str, any]):
     mcp_app = await deep_search.setup()
 
     if args.verbose:
@@ -37,25 +36,20 @@ async def do_main(deep_search: FinanceDeepSearch):
         message = f"""
 {deep_search.app_name}:
   Company:
-    Ticker:              {deep_search.ticker}
-    Company:             {deep_search.company_name}
-    Reporting Currency:  {deep_search.reporting_currency}
-  Models:
-    Orchestrator:        {deep_search.orchestrator_model_name}
-    Excel Writer:        {deep_search.excel_writer_model_name}
+    Ticker:              {variables['ticker']}
+    Company:             {variables['company_name']}
+    Reporting Currency:  {variables['reporting_currency']}
+  Tasks:
     Provider:            {deep_search.provider}
+{[f"    {n+1}:                    {tasks[n]}\n" for n in range(len(tasks))]}  
   Prompts:
-    Directory:           {deep_search.prompts_dir}
-    Financial Research prompt file: 
-                         {deep_search.financial_research_prompt_path}
-    Excel writer prompt file:
-                         {deep_search.excel_writer_agent_prompt_path}
+  Prompts Directory:     {deep_search.prompts_dir}
   UX:                    {deep_search.ux}
   Output path:           {deep_search.output_path}
-    For spreadsheet:     {output_spreadsheet_path}
+    For spreadsheet:     {variables['output_spreadsheet_path']}
   Current working dir:   {pwd}
-  Short run?             {deep_search.short_run}
-  Verbose?               {deep_search.verbose}
+  Short run?             {variables['short_run']}
+  Verbose?               {variables['verbose']}
   MCP Agent Config:      {deep_search.config}
 """
 
@@ -110,13 +104,13 @@ async def do_main(deep_search: FinanceDeepSearch):
                 pass
 
         # Show the results
-        research_results = results.get('research')
+        research_results = results.get('financial_research')
         if research_results:
             mcp_app.logger.info(truncate(str(research_results), 2000, '...'))
         else:
             mcp_app.logger.error("No research results!!")
 
-        excel_results = results.get('excel')
+        excel_results = results.get('excel_writer')
         if excel_results:
             mcp_app.logger.info(truncate(str(excel_results), 2000, '...'))
         else:
@@ -129,7 +123,7 @@ async def do_main(deep_search: FinanceDeepSearch):
         final_messages = [
             "\n",
             f"Finished: See output files under {args.output_path}.",
-            f"For example, the spreadsheet should be: {output_spreadsheet_path}",
+            f"For example, the spreadsheet should be: {variables['output_spreadsheet_path']}",
         ]
         display.show_final_messages(final_messages)
 
@@ -272,6 +266,9 @@ to use the correct settings!
     )
 
     variables = {
+        "ticker": args.ticker,
+        "company_name": args.company_name,
+        "reporting_currency": args.reporting_currency,
         "temperature": 0.7, 
         "max_iterations": max_iterations,
         "short_run": args.short_run,
@@ -296,23 +293,12 @@ to use the correct settings!
             excel_writer_agent_prompt_path),
     ]
 
-    deep_search = FinanceDeepSearch(
+    deep_search = DeepSearch(
         app_name = def_app_name,
         config = config,
-        ticker = args.ticker,
-        company_name = args.company_name,
-        reporting_currency = args.reporting_currency,
-        orchestrator_model_name = args.orchestrator_model,
-        excel_writer_model_name = args.excel_writer_model,
         provider = args.provider,
-        prompts_dir = args.prompts_dir,
-        financial_research_prompt_path = args.financial_research_prompt_path,
-        excel_writer_agent_prompt_path = args.excel_writer_agent_prompt_path,
+        tasks = tasks,
         output_path = args.output_path,
-        output_spreadsheet_path = output_spreadsheet_path,
-        short_run = args.short_run,
-        verbose = args.verbose,
-        ux = args.ux,
-    )
+        variables = variables)
 
-    asyncio.run(do_main(deep_search))
+    asyncio.run(do_main(deep_search, args, variables))
