@@ -24,7 +24,7 @@ from mcp_agent.workflows.deep_orchestrator.config import (
     BudgetConfig,
 )
 
-from deep_search.deep_search import DeepSearch, Task, GenerateTask, AgentTask
+from common.deep_search import DeepSearch, BaseTask, GenerateTask, AgentTask
 from common.path_utils import resolve_path
 from common.string_utils import truncate
 
@@ -33,6 +33,8 @@ async def do_main(deep_search: DeepSearch, args: argparse.Namespace, variables: 
 
     if args.verbose:
         pwd = os.path.dirname(os.path.realpath(__file__))
+        tasks_str = "\n".join([f"    {n+1}:                   {tasks[n]}\n" \
+            for n in range(len(tasks))])
         message = f"""
 {deep_search.app_name}:
   Company:
@@ -41,15 +43,13 @@ async def do_main(deep_search: DeepSearch, args: argparse.Namespace, variables: 
     Reporting Currency:  {variables['reporting_currency']}
   Tasks:
     Provider:            {deep_search.provider}
-{[f"    {n+1}:                    {tasks[n]}\n" for n in range(len(tasks))]}  
-  Prompts:
-  Prompts Directory:     {deep_search.prompts_dir}
-  UX:                    {deep_search.ux}
+{tasks_str}  
   Output path:           {deep_search.output_path}
     For spreadsheet:     {variables['output_spreadsheet_path']}
-  Current working dir:   {pwd}
+  UX:                    {variables['ux']}
   Short run?             {variables['short_run']}
   Verbose?               {variables['verbose']}
+  Current working dir:   {pwd}
   MCP Agent Config:      {deep_search.config}
 """
 
@@ -229,6 +229,7 @@ to use the correct settings!
 
     # Create configuration for the Deep Orchestrator
     if args.short_run:
+        max_iterations = 2
         execution_config=ExecutionConfig(
             max_iterations=2,
             max_replans=2,
@@ -242,6 +243,7 @@ to use the correct settings!
             max_time_minutes=2,
         )
     else:
+        max_iterations = 10
         execution_config=ExecutionConfig(
             max_iterations=25,
             max_replans=2,
@@ -284,13 +286,14 @@ to use the correct settings!
 
     tasks = [
         GenerateTask(
-            "financial_research",
-            orchestrator_model_name,
-            financial_research_prompt_path),
+            name="financial_research",
+            model_name=args.orchestrator_model,
+            prompt_path=financial_research_prompt_path),
         AgentTask(
-            "excel_writer",
-            excel_writer_model_name,
-            excel_writer_agent_prompt_path),
+            name="excel_writer",
+            model_name=args.excel_writer_model,
+            prompt_path=excel_writer_agent_prompt_path,
+            generate_prompt="Generate the Excel file with the provided financial data.")
     ]
 
     deep_search = DeepSearch(

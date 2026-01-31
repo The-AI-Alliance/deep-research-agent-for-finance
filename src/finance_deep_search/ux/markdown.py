@@ -15,7 +15,7 @@ from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
 from openai.types.chat import ChatCompletionMessage
 
 from common.string_utils import MarkdownUtil, clean_json_string
-from finance_deep_search.deep_search import DeepSearch
+from common.deep_search import DeepSearch
 from finance_deep_search.ux.markdown_elements import (MarkdownElement,
                                                       MarkdownSection,
                                                       MarkdownTable,
@@ -351,7 +351,8 @@ class MarkdownDisplay():
         self.monitor = monitor
         self.layout = MarkdownDisplay.__make_layout(title, self.deep_search.properties())
         self.args = args
-        self.research_results_file = f"{self.args.output_path}/{self.deep_search.ticker}_report.markdown"
+        ticker = self.deep_search.variables['ticker']
+        self.research_results_file = f"{self.args.output_path}/{ticker}_report.markdown"
 
     def __make_layout(title: str, properties: dict[str,any]) -> MarkdownSection:
         layout = MarkdownSection(title=title)

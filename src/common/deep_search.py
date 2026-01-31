@@ -6,6 +6,7 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
+from abc import abstractmethod
 
 from mcp_agent.agents.agent import Agent
 from mcp_agent.app import MCPApp
@@ -33,7 +34,7 @@ class BaseTask():
     async def run(self, 
         orchestrator: DeepOrchestrator,
         **variables: dict[str,any]) -> any:
-        self.task_prompt = self.prepare_task_prompt(key, prompt_path, **variables)
+        self.task_prompt = self.prepare_task_prompt(key, prompt_path, variables)
         temperature=variables.get('temperature', 0.7),
         max_iterations=variables.get('max_iterations', 10)
         self.result = __run(self, task_prompt, orchestrator, temperature, max_iterations, **variables)
@@ -46,13 +47,17 @@ class BaseTask():
         temperature: float,
         max_iterations: int,
         **variables: dict[str,any]) -> any:
+        pass
+
+    def __str__(self) -> str: 
+        return f"""name: {self.name}, model name: {self.model_name}, prompt path: {self.prompt_path}"""
 
 class GenerateTask(BaseTask):
     def __init__(self, 
         name: str, 
         model_name: str, 
         prompt_path: Path):
-        self.super().__init__(name, model_name, prompt_path)
+        super().__init__(name, model_name, prompt_path)
 
     async def __run(self, 
         task_prompt: str, 
@@ -70,13 +75,16 @@ class GenerateTask(BaseTask):
         )
         return result
 
+    def __str__(self) -> str: 
+        return f"""GenerateTask({super().__str__()})"""
+        
 class AgentTask(BaseTask):
     def __init__(self, 
             name: str, 
             model_name: str, 
             prompt_path: Path,
             generate_prompt: str):
-        self.super().__init__(name, model_name, prompt_path)
+        super().__init__(name, model_name, prompt_path)
         self.generate_prompt = generate_prompt
 
     async def __run(self, 
@@ -104,6 +112,9 @@ class AgentTask(BaseTask):
                 ),
             )
             return result
+
+    def __str__(self) -> str: 
+        return f"""AgentTask({super().__str__()}, generate prompt: {self.generate_prompt})"""
 
 class DeepSearch():
     """
@@ -191,17 +202,14 @@ class DeepSearch():
         tasks are passed as part of the next task's prompt.
         """
         results: dict[str, any] = {}
-        variables['previous_tasks_results'] = ''
+        self.variables['previous_tasks_results'] = ''
 
         for task in self.tasks:
-            # Load and format the next task's prompt
-            task_prompt = self.prepare_task_prompt(task.name, task.prompt_path, **variables)
-            result = task.run(self.orchestrator, **variables)
-            
+            result = task.run(self.orchestrator, **self.variables)            
             results[task.name] = result
-            previous_results = variables['previous_tasks_results']
+            previous_results = self.variables['previous_tasks_results']
             all_results = f"{previous_results}\n\ntask {task.name} result:\n{result}"
-            variables.update({'previous_tasks_results': all_results})
+            self.variables.update({'previous_tasks_results': all_results})
 
             self.save_raw_result(task.name, result)
 
@@ -213,7 +221,7 @@ class DeepSearch():
         with open(result_file, "w") as file:
             file.write(str(result))
 
-    def prepare_task_prompt(self, name: str, prompt_file_path: Path, variables: dist[str,any]) -> str:
+    def prepare_task_prompt(self, name: str, prompt_file_path: Path, variables: dict[str,any]) -> str:
         """Load and format a task prompt."""
         prompt_template = load_prompt_markdown(prompt_file_path)
         task_prompt = replace_variables(prompt_template, **variables)

@@ -137,7 +137,7 @@ app-run-md app-run-markdown::
 app-run-rich:: app-run
 app-run:: app-check do-app-run show-output-files
 do-app-run::
-	cd ${src_dir} && uv run main.py \
+	cd ${src_dir} && uv run main-finance.py \
 		--ticker "${TICKER}" \
 		--company-name "${COMPANY_NAME}" \
 		--output-path "${OUTPUT_PATH}" \

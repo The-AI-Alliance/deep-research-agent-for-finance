@@ -19,7 +19,7 @@ from rich.layout import Layout
 from rich.columns import Columns
 from rich import box
 
-from finance_deep_search.deep_search import DeepSearch
+from common.deep_search import DeepSearch
 from common.string_utils import truncate
 
 from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
@@ -483,12 +483,12 @@ class RichDisplay():
         await self.token_usage()
         self.workspace_artifacts()
 
-    def report_results(self, research_results: str, excel_results: str):
+    def report_results(self, research_results: any, excel_results: str):
         # Show research results
         rr = ''
         border_style="green"
         if research_results:
-            rr = truncate(research_results, 2000, '...')
+            rr = truncate(str(research_results), 2000, '...')
         else:
             rr = "No research results!"
             self.deep_search.logger.error(rr)
@@ -506,7 +506,7 @@ class RichDisplay():
         er = ''
         border_style="blue"
         if excel_results:
-            er = truncate(research_results, 2000, '...')
+            er = truncate(str(excel_results), 2000, '...')
             self.deep_search.logger.info(f"Excel results: {er}")
         else:
             er = "No Excel results!"
