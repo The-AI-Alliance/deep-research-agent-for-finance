@@ -37,7 +37,7 @@ mcp:
     filesystem:
       command: "npx"
       args: ["-y", "@modelcontextprotocol/server-filesystem", "."]
-    excel:
+    excel_writer:
       command: "uvx"
       args: ["excel-mcp-server", "stdio"]
       

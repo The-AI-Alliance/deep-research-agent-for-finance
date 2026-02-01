@@ -36,7 +36,7 @@ def load_prompt_markdown(prompt_path: Path) -> str:
     if not prompt_path.exists():
         raise FileNotFoundError(f"Prompt file not found: {prompt_path}")
     
-    with open(prompt_path, 'r', encoding='utf-8') as f:
+    with prompt_path.open('r', encoding='utf-8') as f:
         content = f.read()
         frontmatter, content = split_frontmatter_and_content(content)
         return content

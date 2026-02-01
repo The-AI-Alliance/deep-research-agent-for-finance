@@ -279,7 +279,7 @@ class TestMarkdownSection(unittest.TestCase):
         nonempty_no_linefeeds_text, 
         st.lists(no_linefeeds_text),
         st.lists(nonempty_no_linefeeds_text, max_size=5, unique_by = str))
-    def test_section___str__(self, 
+    def test_section___repr__(self, 
         level: int, title: str, content: list[str], subsection_titles: list[str]):
         """
         Verify that a section string representation is correct.

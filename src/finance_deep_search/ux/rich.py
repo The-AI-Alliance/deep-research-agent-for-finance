@@ -19,7 +19,7 @@ from rich.layout import Layout
 from rich.columns import Columns
 from rich import box
 
-from common.deep_search import DeepSearch
+from common.deep_search import DeepSearch, BaseTask, GenerateTask, AgentTask, TaskStatus
 from common.string_utils import truncate
 
 from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
@@ -483,43 +483,24 @@ class RichDisplay():
         await self.token_usage()
         self.workspace_artifacts()
 
-    def report_results(self, research_results: any, excel_results: str):
-        # Show research results
-        rr = ''
-        border_style="green"
-        if research_results:
-            rr = truncate(str(research_results), 2000, '...')
-        else:
-            rr = "No research results!"
-            self.deep_search.logger.error(rr)
-            border_style="red"
-
-        self.console.print(
-            Panel(
-                rr,
-                title="📊 Financial Research Results (Preview)",
-                border_style=border_style,
-            )
-        )
-        
-        # Show excel creation results
-        er = ''
-        border_style="blue"
-        if excel_results:
-            er = truncate(str(excel_results), 2000, '...')
-            self.deep_search.logger.info(f"Excel results: {er}")
-        else:
-            er = "No Excel results!"
-            self.deep_search.logger.error(er)
-            border_style="red"
-
-        self.console.print(
-            Panel(
-                er,
-                title="📈 Excel Creation Result",
-                border_style=border_style,
-            )
-        )
+    # def report_results(self, research_results: any, excel_results: str):
+    def report_results(self, tasks: list[BaseTask], error_msg: str):
+        strs = []
+        for task in tasks:
+            title = ''
+            border_style = "green"
+            if task.name.find('financial') >= 0:
+                border_style = "green" if task.status == TaskStatus.FINISHED_OK else "red"
+                title = "📊 Financial Research Result"
+            elif task.name.find('excel') >= 0:
+                border_style = "blue" if task.status == TaskStatus.FINISHED_OK else "red"
+                title = "📈 Excel Creation Result"
+            else:
+                raise ValueError(f"Unexpected task name: {task.name}\n(tasks = {tasks})")
+            
+            str = truncate(str(task.result), 2000, '...')
+            self.console.print(
+                Panel(str, title=title, border_style=border_style))
 
     def show_final_messages(self, final_messages: list[str]):
         for fm in final_messages:

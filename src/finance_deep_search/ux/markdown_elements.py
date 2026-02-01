@@ -25,7 +25,7 @@ class MarkdownElement():
     def __init__(self, title: str = ''):
         self.title = title
 
-    def __str__(self) -> str:
+    def __repr__(self) -> str:
         return self.title
 
     def __eq__(self, other: any) -> bool:
@@ -154,7 +154,7 @@ class MarkdownSection(MarkdownElement):
         """
         return self.subsections[key]
  
-    def __str__(self) -> str:
+    def __repr__(self) -> str:
         content_str = '\n'.join([str(c) for c in self.content])
         subsections_str = '\n'.join([str(s) for s in self.subsections.values()])
         return f"{self.level*'#'} {self.title}\n\n{content_str}\n{subsections_str}"
@@ -246,7 +246,7 @@ class MarkdownTable(MarkdownElement):
                 case 'center' | 'full':
                     return f':{dashes}:'
 
-    def __str__(self) -> str:
+    def __repr__(self) -> str:
         title_str = ''
         if len(self.title) > 0:
             title_str = f"\n**Table: {self.title}**\n"
@@ -363,7 +363,7 @@ class MarkdownTree(MarkdownElement):
         return lines
         #return [f"{indent_str}{line}" for line in lines]
 
-    def __str__(self) -> str:
+    def __repr__(self) -> str:
         return "\n".join(self.as_strs(0, self.bullet, self.indentation))
 
     number_re = re.compile(r'^\d+$')

@@ -26,7 +26,6 @@ from mcp_agent.workflows.deep_orchestrator.config import (
 
 from common.deep_search import DeepSearch, BaseTask, GenerateTask, AgentTask
 from common.path_utils import resolve_path
-from common.string_utils import truncate
 
 async def do_main(deep_search: DeepSearch, args: argparse.Namespace, variables: dict[str, any]):
     mcp_app = await deep_search.setup()
@@ -59,7 +58,8 @@ async def do_main(deep_search: DeepSearch, args: argparse.Namespace, variables: 
         # Just to give the user time to see the above before the UX starts.
         time.sleep(2.0)  
 
-    # Run the example
+    # Run the example. Note that we have found it is necessary to start the MCPApp
+    # managed by deep_search, then construct the UX.
     display  = None
     run_live = None
     update_iteration_time = 1.0
@@ -91,9 +91,9 @@ async def do_main(deep_search: DeepSearch, args: argparse.Namespace, variables: 
         # Start update loop
         update_task = asyncio.create_task(update_loop())
 
-        results = {}
+        error_msg = ''
         try:
-            results = await deep_search.run()
+            error_msg = await deep_search.run()
         finally:
             # Final update
             display.update()
@@ -103,20 +103,7 @@ async def do_main(deep_search: DeepSearch, args: argparse.Namespace, variables: 
             except asyncio.CancelledError:
                 pass
 
-        # Show the results
-        research_results = results.get('financial_research')
-        if research_results:
-            mcp_app.logger.info(truncate(str(research_results), 2000, '...'))
-        else:
-            mcp_app.logger.error("No research results!!")
-
-        excel_results = results.get('excel_writer')
-        if excel_results:
-            mcp_app.logger.info(truncate(str(excel_results), 2000, '...'))
-        else:
-            mcp_app.logger.error("No Excel results!!")
-
-        display.report_results(research_results, excel_results)
+        display.report_results(deep_search, error_msg)
 
         await display.final_data_update()
 
@@ -228,44 +215,15 @@ to use the correct settings!
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
     # Create configuration for the Deep Orchestrator
-    if args.short_run:
-        max_iterations = 2
-        execution_config=ExecutionConfig(
-            max_iterations=2,
-            max_replans=2,
-            max_task_retries=2,
-            enable_parallel=True,
-            enable_filesystem=True,
-        )
-        budget_config=BudgetConfig(
-            max_tokens=10000,
-            max_cost=0.20,
-            max_time_minutes=2,
-        )
-    else:
-        max_iterations = 10
-        execution_config=ExecutionConfig(
-            max_iterations=25,
-            max_replans=2,
-            max_task_retries=5,
-            enable_parallel=True,
-            enable_filesystem=True,
-        )
-        budget_config=BudgetConfig(
-            max_tokens=100000,
-            max_cost=1.00,
-            max_time_minutes=10,
-        )
-
-    # Add additional servers to the `available_servers`.
-    # Make corresponding edits to mcp_agent.config.yaml.
+    # To add additional servers, define them in mcp_agent.config.yaml,
+    # then add them by name the list passed for `available_servers`.
     # See the project README for details.
-    config = DeepOrchestratorConfig(
+    config: DeepOrchestratorConfig = DeepSearch.make_default_config(
+        short_run=args.short_run,
         name="DeepFinancialResearcher",
-        available_servers=["fetch", "filesystem", "yfmcp", "financial-datasets"],
-        execution=execution_config,
-        budget=budget_config,
-    )
+        available_servers=["excel_writer", "fetch", "filesystem", "financial-datasets", "yfmcp"])
+    
+    max_iterations = 2 if args.short_run else 10
 
     variables = {
         "ticker": args.ticker,
@@ -280,7 +238,6 @@ to use the correct settings!
     }
 
     prompts_dir_path = Path(args.prompts_dir)
-
     financial_research_prompt_path = resolve_path(args.financial_research_prompt_path, prompts_dir_path)
     excel_writer_agent_prompt_path = resolve_path(args.excel_writer_agent_prompt_path, prompts_dir_path)
 
@@ -288,20 +245,22 @@ to use the correct settings!
         GenerateTask(
             name="financial_research",
             model_name=args.orchestrator_model,
-            prompt_path=financial_research_prompt_path),
+            prompt_path=financial_research_prompt_path,
+            output_path=Path(args.output_path)),
         AgentTask(
             name="excel_writer",
             model_name=args.excel_writer_model,
             prompt_path=excel_writer_agent_prompt_path,
-            generate_prompt="Generate the Excel file with the provided financial data.")
+            generate_prompt="Generate the Excel file with the provided financial data.",
+            output_path=Path(args.output_path)),
     ]
 
     deep_search = DeepSearch(
-        app_name = def_app_name,
-        config = config,
-        provider = args.provider,
-        tasks = tasks,
-        output_path = args.output_path,
-        variables = variables)
+        app_name=def_app_name,
+        config=config,
+        provider=args.provider,
+        tasks=tasks,
+        output_path=args.output_path,
+        variables=variables)
 
     asyncio.run(do_main(deep_search, args, variables))

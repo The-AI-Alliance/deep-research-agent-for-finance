@@ -28,7 +28,7 @@ mcp:
     filesystem:
       command: "npx"
       args: ["-y", "@modelcontextprotocol/server-filesystem", "."]
-    excel:
+    excel_writer:
       command: "uvx"
       args: ["excel-mcp-server", "stdio"]
       
@@ -38,17 +38,18 @@ mcp:
 # Eliminating this manual step is TBD.
 
 # Use this for OpenAI inference:
-openai:
-  default_model: "gpt-4o-mini"
-  reasoning_effort: "medium"
-  base_url: "https://api.openai.com/v1"
+# openai:
+#   default_model: "gpt-4o-mini"
+#   reasoning_effort: "medium"
+#   base_url: "https://api.openai.com/v1"
   
 # Use this for ollama inference. Change the model, too!
-# openai:
-#   default_model: "gpt-oss:20b"
-#   reasoning_effort: "medium"
-#   base_url: "http://localhost:11434/v1"
-#   api_key: "ignored"
+openai:
+  default_model: "gpt-oss:20b"
+  reasoning_effort: "medium"
+  base_url: "http://localhost:12000/v1"
+  api_key: "ignored"
+#  base_url: "http://localhost:11434/v1"
 
 anthropic:
   default_model: "claude-3-5-sonnet-20241022"

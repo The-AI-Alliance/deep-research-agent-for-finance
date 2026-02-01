@@ -5,94 +5,160 @@ import re
 import sys
 import time
 from datetime import datetime
+from enum import Enum
 from pathlib import Path
-from abc import abstractmethod
+from abc import abstractmethod, classmethod
 
 from mcp_agent.agents.agent import Agent
 from mcp_agent.app import MCPApp
 from mcp_agent.logging.logger import Logger
 from mcp_agent.tracing.token_counter import TokenCounter
-from mcp_agent.workflows.deep_orchestrator.config import DeepOrchestratorConfig
+from mcp_agent.workflows.deep_orchestrator.config import (
+    DeepOrchestratorConfig,
+    ExecutionConfig,
+    BudgetConfig,
+)
 from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
 from mcp_agent.workflows.llm.augmented_llm import RequestParams
 
+
 from common.prompt_utils import load_prompt_markdown
 from common.path_utils import resolve_path
-from common.string_utils import replace_variables
+from common.string_utils import replace_variables, truncate
 
+class TaskStatus(Enum):
+    NOT_STARTED = 0
+    RUNNING = 1
+    """Returned normally (as best we can tell...)"""
+    FINISHED_OK = 2
+    """An error occurred, including an empty result from running the task."""
+    FINISHED_ERROR = 3
+    """An error occurred due to a thrown exception."""
+    FINISHED_EXCEPTION = 4
 
 class BaseTask():
     def __init__(self, 
         name: str, 
         model_name: str, 
-        prompt_path: Path):
+        prompt_path: Path,
+        output_path: Path):
         self.name = name
         self.model_name = model_name
         self.prompt_path = prompt_path
-        self.result: str = ''
+        self.output_path = output_path
+        self.status: TaskStatus = TaskStatus.NOT_STARTED 
+        self.result: list[any] = []
 
     async def run(self, 
         orchestrator: DeepOrchestrator,
-        **variables: dict[str,any]) -> any:
-        self.task_prompt = self.prepare_task_prompt(key, prompt_path, variables)
-        temperature=variables.get('temperature', 0.7),
-        max_iterations=variables.get('max_iterations', 10)
-        self.result = __run(self, task_prompt, orchestrator, temperature, max_iterations, **variables)
-        return self.result
+        logger: Logger,
+        **variables: dict[str,any]) -> (TaskStatus, list[any]):
+        """
+        Return the final status and the result, which are also attributes of the task object.
+        """
+        self.status = TaskStatus.RUNNING 
+        try:
+            self.task_prompt = self.prepare_task_prompt(logger, variables)
+            if not variables.get('temperature'):
+                variables['temperature'] = 0.7
+            if not variables.get('max_iterations'):
+                variables['max_iterations'] = 10
+            self.result = await self._run(self.task_prompt, orchestrator, logger, **variables)
+            if self.result:  # TBD: Probably doesn't catch all error scenarios!
+                self.status = TaskStatus.FINISHED_OK
+            else:
+                self.status = TaskStatus.FINISHED_ERROR
+                self.result = [f"No result for task {self.name}!"]
+            self.__log_result(logger)
+        except Exception as ex:
+            self.status = TaskStatus.FINISHED_EXCEPTION
+            self.result = [f"Exception {ex} thrown in task {self.name}!"]
+            logger.error(str(self.result))
+            raise ex
+        return (self.status, self.result)
 
     @abstractmethod
-    async def __run(self, 
+    async def _run(self, 
         task_prompt: str, 
         orchestrator: DeepOrchestrator, 
-        temperature: float,
-        max_iterations: int,
-        **variables: dict[str,any]) -> any:
-        pass
+        logger: Logger,
+        **variables: dict[str,any]) -> list[any]:
+        raise Exception("Abstract method BaseTask._run() called!")
 
-    def __str__(self) -> str: 
-        return f"""name: {self.name}, model name: {self.model_name}, prompt path: {self.prompt_path}"""
+    def __repr__(self) -> str: 
+        return f"""name: {self.name}, model name: {self.model_name}, prompt path: {self.prompt_path}, status: {self.status}, result: {self.result}"""
+
+    def prepare_task_prompt(self, logger: Logger, variables: dict[str,any]) -> str:
+        """Load and format a task prompt."""
+        prompt_template = load_prompt_markdown(self.prompt_path)
+        task_prompt = replace_variables(prompt_template, **variables)
+        if variables.get('verbose', False):
+            task_prompt_save_file = self.output_path / f"{self.name}_task_prompt.txt"
+            if logger:  # may not be initialized in tests...
+                logger.info(f"Writing the {self.name} task prompt to {task_prompt_save_file}")
+            with task_prompt_save_file.open('w') as file:
+                file.write(f"This is the prompt that will be used for the {self.name} task:\n")
+                file.write(task_prompt)
+            
+        return task_prompt
+
+    def __log_result(self, logger: Logger):
+        """
+        Exceptions are handled in the except clause above, per
+        the requirements for `Logger.exception(...)` invocation!
+        This method is normally not called for other status values, but
+        we handle them for "resilience".
+        """
+        match self.status:
+            case TaskStatus.FINISHED_OK:
+                logger.info(truncate(str(self.result), 2000, '...'))
+            case TaskStatus.FINISHED_ERROR:
+                logger.error(truncate(str(self.result), 2000, '...'))
+            case _:
+                msg = str(self.result) if self.result else 'No result yet...'
+                logger.debug(f"{self.status}: {msg}")
 
 class GenerateTask(BaseTask):
     def __init__(self, 
         name: str, 
         model_name: str, 
-        prompt_path: Path):
-        super().__init__(name, model_name, prompt_path)
+        prompt_path: Path,
+        output_path: Path):
+        super().__init__(name, model_name, prompt_path, output_path)
 
-    async def __run(self, 
+    async def _run(self, 
         task_prompt: str, 
         orchestrator: DeepOrchestrator, 
-        temperature: float,
-        max_iterations: int,
-        **variables: dict[str,any]) -> any:
-        result = await orchestrator.generate(
+        logger: Logger,
+        **variables: dict[str,any]) -> list[any]:
+        logger.debug("GenerateTask: calling inference")
+        return await orchestrator.generate(
             message=task_prompt,
             request_params=RequestParams(
                 model=self.model_name, 
-                temperature=temperature,
-                max_iterations=max_iterations,
+                temperature=variables['temperature'],
+                max_iterations=variables['max_iterations'],
             ),
         )
-        return result
 
-    def __str__(self) -> str: 
-        return f"""GenerateTask({super().__str__()})"""
+    def __repr__(self) -> str: 
+        return f"""GenerateTask({super().__repr__()})"""
         
 class AgentTask(BaseTask):
     def __init__(self, 
-            name: str, 
-            model_name: str, 
-            prompt_path: Path,
-            generate_prompt: str):
-        super().__init__(name, model_name, prompt_path)
+        name: str, 
+        model_name: str, 
+        prompt_path: Path,
+        output_path: Path,
+        generate_prompt: str):
+        super().__init__(name, model_name, prompt_path, output_path)
         self.generate_prompt = generate_prompt
 
-    async def __run(self, 
+    async def _run(self, 
         task_prompt: str, 
         orchestrator: DeepOrchestrator, 
-        temperature: float,
-        max_iterations: int,
-        **variables: dict[str,any]) -> any:
+        logger: Logger,
+        **variables: dict[str,any]) -> list[any]:
         agent = Agent(
             name=self.name,
             instruction=task_prompt,
@@ -101,20 +167,19 @@ class AgentTask(BaseTask):
         )
 
         async with agent:
+            logger.debug("AgentTask: calling inference")
             llm = await agent.attach_llm(orchestrator.llm_factory)
-
-            result = await llm.generate(
+            return await llm.generate(
                 message=self.generate_prompt,
                 request_params=RequestParams(
                     model=self.model_name, 
-                    temperature=temperature,
-                    max_iterations=max_iterations
+                    temperature=variables['temperature'],
+                    max_iterations=variables['max_iterations'],
                 ),
             )
-            return result
 
-    def __str__(self) -> str: 
-        return f"""AgentTask({super().__str__()}, generate prompt: {self.generate_prompt})"""
+    def __repr__(self) -> str: 
+        return f"""AgentTask({super().__repr__()}, generate prompt: {self.generate_prompt})"""
 
 class DeepSearch():
     """
@@ -173,7 +238,10 @@ class DeepSearch():
         }
 
     async def setup(self) -> MCPApp:
-        # Initialize MCP App.
+        """
+        Initialize the MCApp. This isn't done during __init__, so we can do this
+        step asynchronously...
+        """ 
         self.mcp_app = MCPApp(name=self.app_name)
         self.logger = self.mcp_app.logger
 
@@ -196,41 +264,70 @@ class DeepSearch():
             self.logger = app.logger
             return app
 
-    async def run(self) -> dict[str, any]:
+    async def run(self) -> str:
         """
         Iterate through `tasks`, where the results of previous
         tasks are passed as part of the next task's prompt.
         """
-        results: dict[str, any] = {}
         self.variables['previous_tasks_results'] = ''
 
         for task in self.tasks:
-            result = task.run(self.orchestrator, **self.variables)            
-            results[task.name] = result
+            status, result = await task.run(self.orchestrator, self.logger, **self.variables)            
             previous_results = self.variables['previous_tasks_results']
-            all_results = f"{previous_results}\n\ntask {task.name} result:\n{result}"
+            all_results = f"{previous_results}\ntask {task.name} result:\n{result}\n"
             self.variables.update({'previous_tasks_results': all_results})
-
             self.save_raw_result(task.name, result)
+            if not status == TaskStatus.FINISHED_OK:
+                error_msg = f"Task sequence aborted due to failure of task {task.name}."
+                self.logger.error(error_msg)
+                return error_msg
 
-        return results
+        return ''
         
-    def save_raw_result(self, name: str, result: str):
+    def save_raw_result(self, name: str, result: list[any]):
         result_file = f"{self.output_path}/{name}_result.txt"
         self.logger.info(f"Writing 'raw' returned result for task {name} to: {result_file}")
         with open(result_file, "w") as file:
-            file.write(str(result))
+            for res in result:
+                file.write(str(res))
+                file.write('\n\n')
 
-    def prepare_task_prompt(self, name: str, prompt_file_path: Path, variables: dict[str,any]) -> str:
-        """Load and format a task prompt."""
-        prompt_template = load_prompt_markdown(prompt_file_path)
-        task_prompt = replace_variables(prompt_template, **variables)
-        if variables.get('verbose', False):
-            task_prompt_save_file = f"{self.output_path}/{name}_task_prompt.txt"
-            if self.logger:  # may not be initialized in tests...
-                self.logger.info(f"Writing the {name} task prompt to {task_prompt_save_file}")
-            with open(task_prompt_save_file, 'w') as file:
-                file.write(f"This is the prompt that will be used for the {name} task:\n")
-                file.write(task_prompt)
-            
-        return task_prompt
+    @classmethod
+    def make_default_config(
+        short_run: bool,
+        name: str,
+        available_servers: list[str]) -> DeepOrchestratorConfig:
+        """Create configuration for the Deep Orchestrator"""
+        if args.short_run:
+            execution_config=ExecutionConfig(
+                max_iterations=2,
+                max_replans=2,
+                max_task_retries=2,
+                enable_parallel=True,
+                enable_filesystem=True,
+            )
+            budget_config=BudgetConfig(
+                max_tokens=10000,
+                max_cost=0.20,
+                max_time_minutes=2,
+            )
+        else:
+            execution_config=ExecutionConfig(
+                max_iterations=25,
+                max_replans=2,
+                max_task_retries=5,
+                enable_parallel=True,
+                enable_filesystem=True,
+            )
+            budget_config=BudgetConfig(
+                max_tokens=100000,
+                max_cost=1.00,
+                max_time_minutes=10,
+            )
+        config = DeepOrchestratorConfig(
+            name=name,
+            available_servers=available_servers,
+            execution=execution_config,
+            budget=budget_config,
+        )
+        return config

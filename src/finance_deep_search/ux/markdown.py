@@ -9,13 +9,14 @@ import re
 import time
 from datetime import datetime, timedelta
 from json.decoder import JSONDecodeError
-from typing import Any, cast
+from typing import cast
 
 from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
 from openai.types.chat import ChatCompletionMessage
+from anthropic.types import Message
 
 from common.string_utils import MarkdownUtil, clean_json_string
-from common.deep_search import DeepSearch
+from common.deep_search import DeepSearch, BaseTask, GenerateTask, AgentTask, TaskStatus
 from finance_deep_search.ux.markdown_elements import (MarkdownElement,
                                                       MarkdownSection,
                                                       MarkdownTable,
@@ -412,7 +413,7 @@ class MarkdownDisplay():
             print(self.layout)
         return self.layout
 
-    def __str__(self) -> str:
+    def __repr__(self) -> str:
         return str(self.layout)
 
     def add_section(self, title: str, 
@@ -438,7 +439,7 @@ class MarkdownDisplay():
                 self.deep_search.logger.warning(f"{err_msg}: input = {s}")
             return (err_msg, None)
 
-    def __parse_openai_message(self, message_index: int, obj: Any) -> list[Any]:
+    def __parse_openai_message(self, message_index: int, obj: any) -> list[any]:
         # For inference with OpenAI, the results will be a ChatCompletionMessage:
         def make_metadata_table(
             refusal: str,
@@ -458,13 +459,12 @@ class MarkdownDisplay():
             return table
 
         sobj = str(obj)
-        content: list[Any] = []
+        content: list[any] = []
         metadata_table: MarkdownTable = None
 
         if isinstance(obj, ChatCompletionMessage):
             ccm: ChatCompletionMessage = cast(ChatCompletionMessage, obj)
-            content = ccm.content.split('\n')
-            content = ccm.content.split('\n')
+            content = ccm.content.split('\n') if ccm.content else []
             metadata_table = make_metadata_table(
                 ccm.refusal,
                 ccm.role,
@@ -482,7 +482,7 @@ class MarkdownDisplay():
             except:  # bail out...
                 content = sobj.split('\n')
           
-        all_content: list[Any] = []
+        all_content: list[any] = []
         if content:
             all_content = [f"Reply Message #{message_index} Content:"]
             all_content.extend([f"> {line}" for line in content])
@@ -493,7 +493,7 @@ class MarkdownDisplay():
 
         return all_content
 
-    def __parse_anthropic_message(self, message_index: int, obj: Any) -> list[Any]:
+    def __parse_anthropic_message(self, message_index: int, obj: any) -> list[any]:
         def make_metadata_table(
             subtype: str,
             duration_ms: int,
@@ -502,8 +502,8 @@ class MarkdownDisplay():
             num_turns: int,
             session_id: str,
             total_cost_usd: float | None = None,
-            usage: dict[str, Any] | None = None, 
-            structured_output: Any = None) -> MarkdownTable:
+            usage: dict[str, any] | None = None, 
+            structured_output: any = None) -> MarkdownTable:
             table = MarkdownTable(title=f"Anthropic Reply Message #{message_index}: Metadata",
                 columns = [('Item', 'left'), ('Value', 'right')])
             table.add_row(['subtype', subtype])
@@ -519,11 +519,11 @@ class MarkdownDisplay():
             return table
 
         sobj = str(obj)
-        content: list[Any] = []
+        content: list[any] = []
         metadata_table: MarkdownTable = None
 
-        if isinstance(obj, ResultMessage):
-            rm: ResultMessage = cast(ResultMessage, obj)
+        if isinstance(obj, Message):
+            rm: Message = cast(Message, obj)
             content = rm.result.split('\n')
             metadata_table = make_metadata_table(
                 subtype = rm.subtype,
@@ -536,7 +536,7 @@ class MarkdownDisplay():
                 usage = rm.usage,
                 result = rm.result,
                 structured_output = rm.structured_output)
-        elif sobj.startswith("Message") or results.startswith("ResultMessage"):
+        elif sobj.startswith("Message") or sobj.startswith("ResultMessage"):
             # Try parsing it with the following _ugly_ hack to extract just the
             # `content` from the string:
             try:
@@ -547,7 +547,7 @@ class MarkdownDisplay():
             except:  # bail out...
                 content = results.split('\n')
 
-        all_content: list[Any] = []
+        all_content: list[any] = []
         if content:
             all_content = [f"**Message #{message_index} content:**"]
             all_content.extend([f"> {line}" for line in content])
@@ -558,18 +558,25 @@ class MarkdownDisplay():
 
         return all_content
 
-    def __add_results(self, which_one: str, title: str, results: list[Any]) -> MarkdownSection:
-        leading_content = f"See also the directory `{self.deep_search.output_path}` for results files."
+    def __make_results_section(self, title: str, task: BaseTask) -> MarkdownSection:
+        task_table = MarkdownTable(
+            title=f'Task `{task.name}` Properties',
+            columns=['Property', 'Value'])
+        for key, value in vars(task).items():
+            if key != 'result':
+                task_table.add_row([key, str(value)])
+
+        result_section = MarkdownSection(title=title, 
+            content=[f"Information for task: {task.name}", task_table])
         
-        if not results:
-            return self.add_section(title, 
-                [leading_content + f"> No {which_one} results! See the log file for details."],
-                subsections)
+        if not task.result:
+            result_section.add_intro_content([f"> **ERROR:** No {task.name} results! See the log file for details."])
+            return result_section
 
         subsections: list[MarkdownSection] = []
-        for i in range(len(results)):
-            content: list[Any] = []
-            result = results[i]
+        for i in range(len(task.result)):
+            content: list[any] = []
+            result = task.result[i]
             result_content = self.__parse_openai_message(i+1, result)
             if result_content:
                 content.extend(result_content)
@@ -587,24 +594,33 @@ class MarkdownDisplay():
             ss = MarkdownSection(title=f"Reply Message #{i+1}", content=content)
             subsections.append(ss)
 
-        return self.add_section(title, [leading_content], subsections)
+        result_section.add_subsections(subsections)
+        return result_section
 
 
-    def add_financial_results(self, results: list[Any]) -> MarkdownSection:
-        which_one = "financial"
-        section_title = "📊 Financial Research Result"
+    def report_results(self, deep_search: DeepSearch, error_msg: str):
+        """
+        TODO: The matching of tasks to method calls for formatting is too fragile!
+        """
+        content = [f"See also the directory `{deep_search.output_path}` for results files."]
+        if error_msg:
+            content.append(f"> **ERROR:** {error_msg}")
+        results_section = self.add_section("Results", content=content)
+        
+        results_subsections = []
+        for task in deep_search.tasks:
+            title = ''
+            if task.name.find('financial') >= 0:
+                title = "📊 Financial Research Result"
+            elif task.name.find('excel') >= 0:
+                title = "📈 Excel Creation Result"
+            else:
+                raise ValueError(f"Unexpected task name: {task.name}\n(tasks = {tasks})")
 
-        return self.__add_results(which_one, section_title, results)
+            s = self.__make_results_section(title, task)
+            results_subsections.append(s)
 
-    def add_excel_results(self, results: list[Any]) -> MarkdownSection:
-        which_one = "Excel"
-        section_title = "📈 Excel Creation Result"
-
-        return self.__add_results(which_one, section_title, results)
-
-    def report_results(self, research_results: list[Any], excel_results: list[Any]):
-        self.add_financial_results(research_results)
-        self.add_excel_results(excel_results)
+        results_section.add_subsections(results_subsections)
 
     def get_final_statistics(self) -> MarkdownSection:
         """Get final statistics for display"""
