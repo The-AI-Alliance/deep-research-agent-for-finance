@@ -7,7 +7,7 @@ import time
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from abc import abstractmethod, classmethod
+from abc import abstractmethod
 
 from mcp_agent.agents.agent import Agent
 from mcp_agent.app import MCPApp
