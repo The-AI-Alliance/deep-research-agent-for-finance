@@ -199,55 +199,6 @@ class RichDeepOrchestratorMonitor():
 
         return table
 
-    # TODO: this isn't called!!
-    def get_token_stats_panel(self) -> Panel:
-        """Get token usage statistics as a Rich Panel"""
-        lines = []
-
-        # Get token breakdown from context if available
-        if self.orchestrator.context and hasattr(
-            self.orchestrator.context, "token_counter"
-        ):
-            counter = self.orchestrator.context.token_counter
-            if counter:
-                # Get summary
-                summary = counter.get_summary()
-                if summary and hasattr(summary, "usage"):
-                    usage = summary.usage
-                    lines.append(f"[cyan]Total Tokens:[/cyan] {usage.total_tokens:,}")
-                    lines.append(f"[cyan]Input Tokens:[/cyan] {usage.input_tokens:,}")
-                    lines.append(f"[cyan]Output Tokens:[/cyan] {usage.output_tokens:,}")
-
-                    # Cost if available
-                    if hasattr(summary, "cost"):
-                        lines.append(
-                            f"[cyan]Estimated Cost:[/cyan] ${summary.cost:.4f}"
-                        )
-
-                    # Get top consumers
-                    node = counter.find_node(self.orchestrator.name)
-                    if node and node.children:
-                        lines.append("\n[yellow]Top Consumers:[/yellow]")
-                        sorted_children = sorted(
-                            node.children,
-                            key=lambda n: n.usage.total_tokens,
-                            reverse=True,
-                        )
-                        for child in sorted_children[:3]:
-                            pct = (
-                                (child.usage.total_tokens / usage.total_tokens * 100)
-                                if usage.total_tokens > 0
-                                else 0
-                            )
-                            lines.append(
-                                f"  • {child.name[:30]}: {child.usage.total_tokens:,} ({pct:.1f}%)"
-                            )
-
-        if not lines:
-            lines.append("[dim]No token usage data available yet[/dim]")
-
-        return Panel("\n".join(lines), title="📊 Token Usage", border_style="blue")
-
     def get_memory_panel(self) -> Panel:
         """Get memory status as a Rich Panel"""
         memory = self.orchestrator.memory
@@ -513,10 +464,8 @@ class RichDisplay(Display[DeepSearch]):
             self.console.print(
                 Panel(str, title=title, border_style=border_style))
 
-    # TODO: more attributes?
-    def __str__(self) -> str:
-        s = super().__str__()
-        return f"""RichDisplay({s})"""
+    def __repr__(self) -> str:
+        return str(self.layout)
 
     @staticmethod
     def make(

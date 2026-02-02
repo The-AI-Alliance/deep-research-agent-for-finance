@@ -72,6 +72,16 @@ to use the correct settings!
         help=f"Path where Excel and other output files will be saved. (Default: {def_output_path})"
     )
     parser.add_argument(
+        "--output-report",
+        default='',
+        help=f"Path under --output-path where a Markdown report is written. Ignored unless --ux markdown is used. (Default: TICKER_report.md)"
+    )
+    parser.add_argument(
+        "--output-spreadsheet",
+        default='',
+        help=f"Path under --output-path where an Excel spreadsheet is written. Ignored unless --ux markdown is used. (Default: TICKER_financials.xlsx)"
+    )
+    parser.add_argument(
         "--prompts-dir",
         default=def_prompts_dir,
         help=f"Path to the directory where prompt files are located. (Default: {def_prompts_dir})"
@@ -140,6 +150,8 @@ to use the correct settings!
     
     max_iterations = 2 if args.short_run else 10
 
+    output_report = args.output_report if args.output_report else f"{args.ticker}_report.md"
+    output_spreadsheet = args.output_spreadsheet if args.output_spreadsheet else f"{args.ticker}_financials.xlsx"
     variables = {
         "ticker": args.ticker,
         "company_name": args.company_name,
@@ -152,7 +164,9 @@ to use the correct settings!
         "ux": args.ux,
         "provider": args.provider,
         "output_path": output_dir,
-        "output_spreadsheet_path": f"{args.output_path}/financials_{args.ticker}.xlsx",
+        # Only used by the Markdown UX:
+        "research_report_path": output_dir / output_report,
+        "output_spreadsheet_path": output_dir / output_spreadsheet,
     }
 
     prompts_dir_path = Path(args.prompts_dir)
@@ -162,11 +176,13 @@ to use the correct settings!
     tasks = [
         GenerateTask(
             name="financial_research",
+            title="📊 Financial Research Result",
             model_name=args.orchestrator_model,
             prompt_path=financial_research_prompt_path,
             output_path=Path(args.output_path)),
         AgentTask(
             name="excel_writer",
+            title="📈 Excel Creation Result",
             model_name=args.excel_writer_model,
             prompt_path=excel_writer_agent_prompt_path,
             generate_prompt="Generate the Excel file with the provided financial data.",

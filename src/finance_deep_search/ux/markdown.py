@@ -198,55 +198,6 @@ class MarkdownDeepOrchestratorMonitor():
 
         return table
 
-    # TODO: this isn't called!!
-    def get_token_stats_section(self) -> MarkdownSection:
-        """Get token usage statistics as a Markdown section"""
-        lines = []
-
-        # Get token breakdown from context if available
-        if self.orchestrator.context and hasattr(
-            self.orchestrator.context, "token_counter"
-        ):
-            counter = self.orchestrator.context.token_counter
-            if counter:
-                # Get summary
-                summary = counter.get_summary()
-                if summary and hasattr(summary, "usage"):
-                    usage = summary.usage
-                    lines.append(f"Total Tokens: {usage.total_tokens:,}")
-                    lines.append(f"Input Tokens: {usage.input_tokens:,}")
-                    lines.append(f"Output Tokens: {usage.output_tokens:,}")
-
-                    # Cost if available
-                    if hasattr(summary, "cost"):
-                        lines.append(
-                            f"Estimated Cost: ${summary.cost:.4f}"
-                        )
-
-                    # Get top consumers
-                    node = counter.find_node(self.orchestrator.name)
-                    if node and node.children:
-                        lines.append("\nTop Consumers:")
-                        sorted_children = sorted(
-                            node.children,
-                            key=lambda n: n.usage.total_tokens,
-                            reverse=True,
-                        )
-                        for child in sorted_children[:3]:
-                            pct = (
-                                (child.usage.total_tokens / usage.total_tokens * 100)
-                                if usage.total_tokens > 0
-                                else 0
-                            )
-                            lines.append(
-                                f"  • {child.name[:30]}: {child.usage.total_tokens:,} ({pct:.1f}%)"
-                            )
-
-        if not lines:
-            lines.append("]No token usage data available yet")
-
-        return MarkdownSection(title="📊 Token Usage", content=lines)
-
     def get_memory_table(self) -> MarkdownTable:
         """Get memory status as a Markdown table"""
         memory = self.orchestrator.memory
@@ -760,10 +711,8 @@ class MarkdownDisplay(Display[DeepSearch]):
 
         return sections
 
-    # TODO: more attributes?
-    def __str__(self) -> str:
-        s = super().__str__()
-        return f"""MarkdownDisplay({s})"""
+    def __repr__(self) -> str:
+        return str(self.layout)
 
     @staticmethod
     def make(

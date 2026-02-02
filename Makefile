@@ -28,6 +28,8 @@ PROMPTS_DIR              ?= ${app_dir}/prompts
 FIN_RESEARCH_PROMPT_FILE ?= financial_research_agent.md
 EXCEL_WRITER_PROMPT_FILE ?= excel_writer_agent.md
 OUTPUT_PATH              ?= ${PWD}/output/${TICKER}
+OUTPUT_REPORT            ?= ${TICKER}_report.md
+OUTPUT_SPREADSHEET       ?= ${TICKER}_financials.xlsx
 UX                       ?= rich
 APP_ARGS                 ?=
 
@@ -141,6 +143,8 @@ do-app-run::
 		--ticker "${TICKER}" \
 		--company-name "${COMPANY_NAME}" \
 		--output-path "${OUTPUT_PATH}" \
+		--output-report "${OUTPUT_REPORT}" \
+		--output-spreadsheet "${OUTPUT_SPREADSHEET}" \
 		--reporting-currency "${REPORTING_CURRENCY}" \
 		--prompts-dir "${PROMPTS_DIR}" \
 		--financial-research-prompt-path "${FIN_RESEARCH_PROMPT_FILE}" \

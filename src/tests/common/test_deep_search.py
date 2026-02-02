@@ -42,7 +42,7 @@ class TestDeepSearch(unittest.TestCase):
             prompts_dir: str = 'finance_deep_search/prompts',
             financial_research_prompt_path: str = 'financial_research_agent.md',
             excel_writer_agent_prompt_path: str = 'excel_writer_agent.md',
-            output_spreadsheet_path: str = f'{output_path}/financials_META.xlsx',
+            output_spreadsheet_path: str = f'{output_path}/META_financials.xlsx',
             short_run: bool = False,
             verbose: bool = False):
         return DeepSearch(

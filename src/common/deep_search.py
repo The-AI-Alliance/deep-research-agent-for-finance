@@ -43,10 +43,12 @@ class TaskStatus(Enum):
 class BaseTask():
     def __init__(self, 
         name: str, 
+        title: str, 
         model_name: str, 
         prompt_path: Path,
         output_path: Path):
         self.name = name
+        self.title = title
         self.model_name = model_name
         self.prompt_path = prompt_path
         self.output_path = output_path
@@ -125,10 +127,11 @@ class BaseTask():
 class GenerateTask(BaseTask):
     def __init__(self, 
         name: str, 
+        title: str, 
         model_name: str, 
         prompt_path: Path,
         output_path: Path):
-        super().__init__(name, model_name, prompt_path, output_path)
+        super().__init__(name, title, model_name, prompt_path, output_path)
 
     async def _run(self, 
         task_prompt: str, 
@@ -151,11 +154,12 @@ class GenerateTask(BaseTask):
 class AgentTask(BaseTask):
     def __init__(self, 
         name: str, 
+        title: str, 
         model_name: str, 
         prompt_path: Path,
         output_path: Path,
         generate_prompt: str):
-        super().__init__(name, model_name, prompt_path, output_path)
+        super().__init__(name, title, model_name, prompt_path, output_path)
         self.generate_prompt = generate_prompt
 
     async def _run(self, 
