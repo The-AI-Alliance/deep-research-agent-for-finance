@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-The Markdown-formatted streaming output version of Deep Orchestrator Finance Research Example
+The Markdown-formatted streaming output version of Deep Orchestrator Research Example
 """
 # Allow types to self-reference during their definitions.
 from __future__ import annotations
