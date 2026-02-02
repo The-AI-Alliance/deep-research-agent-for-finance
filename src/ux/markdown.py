@@ -689,7 +689,7 @@ class MarkdownDisplay(Display[DeepSearch]):
         for section in sections:
             print(section)
 
-        all_sections = str(self)
+        all_sections = str(self.layout)
         with self.research_report_path.open('w') as file:
             file.write(all_sections)
 

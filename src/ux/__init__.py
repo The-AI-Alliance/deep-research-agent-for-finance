@@ -34,6 +34,6 @@ class Display(Generic[SYSTEM]):
     async def final_update(self, final_messages: list[str]) -> list[any]:
         pass
 
-    def __str__(self) -> str:
+    def __repl__(self) -> str:
         return f"""title: "{self.title}", update iteration frequency: {self.update_iteration_frequency_secs}"""
     
