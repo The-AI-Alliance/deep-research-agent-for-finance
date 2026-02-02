@@ -1,6 +1,8 @@
 """
 The Rich Console version of Deep Orchestrator Finance Research Example
 """
+# Allow types to self-reference during their definitions.
+from __future__ import annotations
 
 import argparse
 import asyncio
@@ -9,6 +11,7 @@ import re
 import sys
 import time
 from datetime import datetime
+from typing import Callable, Generic
 
 from rich.console import Console
 from rich.table import Table
@@ -21,6 +24,7 @@ from rich import box
 
 from common.deep_search import DeepSearch, BaseTask, GenerateTask, AgentTask, TaskStatus
 from common.string_utils import truncate
+from ux import Display
 
 from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
 
@@ -319,20 +323,21 @@ class RichDeepOrchestratorMonitor():
         return Panel("\n".join(lines), title="📊 Status", border_style="green")
 
 
-class RichDisplay():
-    def __init__(self, title: str,
-        deep_search: DeepSearch,
-        monitor: RichDeepOrchestratorMonitor,
-        args: argparse.Namespace):
-        """Create the Rich display layout."""
-        self.deep_search = deep_search
-        self.orchestrator = self.deep_search.orchestrator
-        self.monitor = monitor
-        self.args = args
-        self.console = Console(highlight=False, soft_wrap=False, emoji=False)
-        self.layout = self.__create_layout()
+class RichDisplay(Display[DeepSearch]):
+    def __init__(self, 
+        title: str,
+        system: DeepSearch,
+        update_iteration_frequency_secs: float = 1.0,
+        variables: dict[str, any] = {}):
+        super().__init__(title, system, update_iteration_frequency_secs, variables)
+
         self.start_time = time.time()
         self.execution_time = 0.0
+
+        self.orchestrator = self.system.orchestrator
+        self.monitor = RichDeepOrchestratorMonitor(self.orchestrator)
+        self.console = Console(highlight=False, soft_wrap=False, emoji=False)
+        self.layout  = self.__create_layout()
 
     def __create_layout(self) -> Layout:
         """Create the display Rich Layout"""
@@ -361,6 +366,9 @@ class RichDisplay():
 
         return layout
 
+    async def run_live(self, function: Callable[[], None]):
+        with Live(self.layout, console=self.console, refresh_per_second=4, screen=True, transient=False) as _live:
+            await function()
 
     def update(self):
         """Update the display with current state"""
@@ -397,7 +405,7 @@ class RichDisplay():
         )
         self.layout["right"].update(right_content)
 
-    def final_statistics(self):
+    def _final_statistics(self):
         # Display final statistics
         self.console.print("\n[bold cyan]📊 Final Statistics[/bold cyan]")
         self.execution_time = time.time() - self.start_time
@@ -430,12 +438,12 @@ class RichDisplay():
 
         self.console.print(summary_table)
 
-    def budget_summary(self):
+    def _budget_summary(self):
         # Display budget summary
-        budget_summary = self.orchestrator.budget.get_status_summary()
-        self.console.print(f"\n[yellow]{budget_summary}[/yellow]")
+        summary = self.orchestrator.budget.get_status_summary()
+        self.console.print(f"\n[yellow]{summary}[/yellow]")
 
-    def knowledge_summary(self):
+    def _knowledge_summary(self):
         # Display knowledge learned
         if self.orchestrator.memory.knowledge:
             self.console.print("\n[bold cyan]🧠 Knowledge Extracted[/bold cyan]")
@@ -458,7 +466,7 @@ class RichDisplay():
 
             self.console.print(knowledge_table)
 
-    async def token_usage(self):
+    async def _token_usage(self):
         """Display the token usage, if available."""
         if self.orchestrator.context.token_counter:
             summary = await self.orchestrator.context.token_counter.get_summary()
@@ -469,24 +477,27 @@ class RichDisplay():
                 if hasattr(summary, "cost"):
                     self.console.print(f"[bold]Total Cost:[/bold] ${summary.cost:.4f}")
 
-    def workspace_artifacts(self):
+    def _workspace_artifacts(self):
         """Display workspace artifacts if any were created."""
         if self.orchestrator.memory.artifacts:
             self.console.print("\n[bold cyan]📁 Artifacts Created[/bold cyan]")
             for name in list(self.orchestrator.memory.artifacts.keys())[:5]:
                 self.console.print(f"  • {name}")
 
-    async def final_data_update(self):
-        self.final_statistics()
-        self.budget_summary()
-        self.knowledge_summary()
-        await self.token_usage()
-        self.workspace_artifacts()
+    async def final_update(self, final_messages: list[str]):
+        self._final_statistics()
+        self._budget_summary()
+        self._knowledge_summary()
+        await self._token_usage()
+        self._workspace_artifacts()
+        for fm in final_messages:
+            self.console.print(f"\n[bold]{fm}[/bold]")
+            self.system.logger.info(fm)
 
-    # def report_results(self, research_results: any, excel_results: str):
-    def report_results(self, tasks: list[BaseTask], error_msg: str):
+
+    def report_results(self, error_msg: str):
         strs = []
-        for task in tasks:
+        for task in self.system.tasks:
             title = ''
             border_style = "green"
             if task.name.find('financial') >= 0:
@@ -502,16 +513,16 @@ class RichDisplay():
             self.console.print(
                 Panel(str, title=title, border_style=border_style))
 
-    def show_final_messages(self, final_messages: list[str]):
-        for fm in final_messages:
-            self.console.print(f"\n[bold]{fm}[/bold]")
-            self.deep_search.logger.info(fm)
+    # TODO: more attributes?
+    def __str__(self) -> str:
+        s = super().__str__()
+        return f"""RichDisplay({s})"""
 
-def rich_init(title: str, deep_search: DeepSearch, args: argparse.Namespace) -> RichDisplay:
-    monitor = RichDeepOrchestratorMonitor(deep_search.orchestrator)
-    display = RichDisplay(title, deep_search, monitor, args)
-    return display
-
-async def rich_run_live(display: RichDisplay, f):
-    with Live(display.layout, console=display.console, refresh_per_second=4, screen=True, transient=False) as _live:
-        await f(display)
+    @staticmethod
+    def make(
+        title: str,
+        system: DeepSearch,
+        update_iteration_frequency_secs: float = 1.0,
+        variables: dict[str,any] = {}) -> RichDisplay:
+        """A factory method for creating instances."""
+        return RichDisplay(title, system, update_iteration_frequency_secs, variables)

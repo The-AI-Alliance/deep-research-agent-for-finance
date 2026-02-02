@@ -26,95 +26,10 @@ from mcp_agent.workflows.deep_orchestrator.config import (
 
 from common.deep_search import DeepSearch, BaseTask, GenerateTask, AgentTask
 from common.path_utils import resolve_path
+from ux import Display
 
-async def do_main(deep_search: DeepSearch, args: argparse.Namespace, variables: dict[str, any]):
-    mcp_app = await deep_search.setup()
-
-    if args.verbose:
-        pwd = os.path.dirname(os.path.realpath(__file__))
-        tasks_str = "\n".join([f"    {n+1}:                   {tasks[n]}\n" \
-            for n in range(len(tasks))])
-        message = f"""
-{deep_search.app_name}:
-  Company:
-    Ticker:              {variables['ticker']}
-    Company:             {variables['company_name']}
-    Reporting Currency:  {variables['reporting_currency']}
-  Tasks:
-    Provider:            {deep_search.provider}
-{tasks_str}  
-  Output path:           {deep_search.output_path}
-    For spreadsheet:     {variables['output_spreadsheet_path']}
-  UX:                    {variables['ux']}
-  Short run?             {variables['short_run']}
-  Verbose?               {variables['verbose']}
-  Current working dir:   {pwd}
-  MCP Agent Config:      {deep_search.config}
-"""
-
-        print(message)
-        mcp_app.logger.info(message)
-
-        # Just to give the user time to see the above before the UX starts.
-        time.sleep(2.0)  
-
-    # Run the example. Note that we have found it is necessary to start the MCPApp
-    # managed by deep_search, then construct the UX.
-    display  = None
-    run_live = None
-    update_iteration_time = 1.0
-    if args.ux == "rich":
-        from finance_deep_search.ux.rich import rich_init, rich_run_live
-        display = rich_init("Deep Research Agent for Finance", deep_search, args)
-        run_live = rich_run_live
-        update_iteration_time = 0.5
-    elif args.ux == "markdown":
-        from finance_deep_search.ux.markdown import markdown_init, markdown_run_live
-        display = markdown_init("Deep Research Agent for Finance", deep_search, args)
-        run_live = markdown_run_live
-        update_iteration_time = 10.0  # Update the Markdown "display" far less frequently.
-    else:
-        # The "ux" argument definition should prevent unexpected values, 
-        # but just in case...
-        raise ValueError(f"Unknown value for 'ux': {args.ux}")
-
-    async def update_loop():
-        while True:
-            try:
-                display.update()
-                await asyncio.sleep(update_iteration_time)
-            except Exception as e:
-                mcp_app.logger.error(f"Display update error: {e}")
-                break
-
-    async def do_work(display):
-        # Start update loop
-        update_task = asyncio.create_task(update_loop())
-
-        error_msg = ''
-        try:
-            error_msg = await deep_search.run()
-        finally:
-            # Final update
-            display.update()
-            update_task.cancel()
-            try:
-                await update_task
-            except asyncio.CancelledError:
-                pass
-
-        display.report_results(deep_search, error_msg)
-
-        await display.final_data_update()
-
-        final_messages = [
-            "\n",
-            f"Finished: See output files under {args.output_path}.",
-            f"For example, the spreadsheet should be: {variables['output_spreadsheet_path']}",
-        ]
-        display.show_final_messages(final_messages)
-
-    await run_live(display, do_work)
+from finance_deep_search.ux.rich import RichDisplay
+from finance_deep_search.ux.markdown import MarkdownDisplay
 
 if __name__ == "__main__":
 
@@ -219,9 +134,9 @@ to use the correct settings!
     # then add them by name the list passed for `available_servers`.
     # See the project README for details.
     config: DeepOrchestratorConfig = DeepSearch.make_default_config(
-        short_run=args.short_run,
-        name="DeepFinancialResearcher",
-        available_servers=["excel_writer", "fetch", "filesystem", "financial-datasets", "yfmcp"])
+        args.short_run,
+        "DeepFinancialResearcher",
+        ["excel_writer", "fetch", "filesystem", "financial-datasets", "yfmcp"])
     
     max_iterations = 2 if args.short_run else 10
 
@@ -234,6 +149,8 @@ to use the correct settings!
         "short_run": args.short_run,
         "verbose": args.verbose,
         "ux": args.ux,
+        "provider": args.provider,
+        "output_path": output_dir,
         "output_spreadsheet_path": f"{args.output_path}/financials_{args.ticker}.xlsx",
     }
 
@@ -255,12 +172,27 @@ to use the correct settings!
             output_path=Path(args.output_path)),
     ]
 
+    ux_title = "Deep Research Agent for Finance"
+    if args.ux == "rich":
+        ux_update_iteration_frequency_secs = 0.5
+        make_display = lambda ds, vars: RichDisplay.make(
+            ux_title, ds, ux_update_iteration_frequency_secs, vars)
+    elif args.ux == "markdown":
+        variables['print_on_update'] = True  # TODO: make this user configurable.
+        ux_update_iteration_frequency_secs = 10
+        make_display = lambda ds, vars: MarkdownDisplay.make(
+            ux_title, ds, ux_update_iteration_frequency_secs, vars)
+    else:
+        # The "ux" argument definition should prevent unexpected values, 
+        # but just in case...
+        raise ValueError(f"Unexpected value for 'ux': {args.ux}")
+
     deep_search = DeepSearch(
         app_name=def_app_name,
+        make_display=make_display,
         config=config,
         provider=args.provider,
         tasks=tasks,
         output_path=args.output_path,
         variables=variables)
-
-    asyncio.run(do_main(deep_search, args, variables))
+    asyncio.run(deep_search.run())

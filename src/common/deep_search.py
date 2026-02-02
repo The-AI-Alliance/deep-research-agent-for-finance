@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# Allow types to self-reference during their definitions.
+from __future__ import annotations
 import asyncio
 import os
 import re
@@ -8,6 +10,7 @@ from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from abc import abstractmethod
+from typing import Callable
 
 from mcp_agent.agents.agent import Agent
 from mcp_agent.app import MCPApp
@@ -25,6 +28,7 @@ from mcp_agent.workflows.llm.augmented_llm import RequestParams
 from common.prompt_utils import load_prompt_markdown
 from common.path_utils import resolve_path
 from common.string_utils import replace_variables, truncate
+from ux import Display
 
 class TaskStatus(Enum):
     NOT_STARTED = 0
@@ -187,17 +191,20 @@ class DeepSearch():
     """
     def __init__(self,
             app_name: str,
+            make_display: Callable[[DeepSearch], Display],
             config: DeepOrchestratorConfig,
             provider: str,
             tasks: list[BaseTask],
             output_path: str,
             variables: dict[str, any]):
         self.app_name = app_name
+        self.make_display=make_display
         self.config = config
         self.provider = provider
         self.tasks = tasks
-        self.variables = variables
         self.output_path = output_path
+        self.variables = variables
+
         self.start_time = datetime.now().strftime('%Y-%m-%d %H:%M%:%S')
 
         # from mcp_agent.workflows.llm.augmented_llm_openai import OpenAIAugmentedLLM
@@ -218,8 +225,8 @@ class DeepSearch():
             case _:
                 raise ValueError(f"Unrecognized provider: {self.provider}")
 
-
-        # These are lazily initialized!
+        # These are lazily initialized in __finish_init!
+        self.display: Display | None = None
         self.mcp_app: MCPApp | None = None
         self.orchestrator: DeepOrchestrator | None = None
         self.token_counter: TokenCounter | None = None
@@ -237,11 +244,55 @@ class DeepSearch():
             "start_time": self.start_time,
         }
 
-    async def setup(self) -> MCPApp:
+    async def run(self):
+        await self.__finish_init()
+
+        if self.variables.get('verbose', False):
+            self.__print_details()
+
+        # Setup the display loop...
+        async def update_loop():
+            while True:
+                try:
+                    self.display.update()
+                    await asyncio.sleep(self.display.update_iteration_frequency)
+                except Exception as e:
+                    mcp_app.logger.error(f"Display update error: {e}")
+                    break
+
+        async def do_work():
+            # Start display update loop
+            update_task = asyncio.create_task(update_loop())
+
+            error_msg = ''
+            try:
+                error_msg = await self.run_tasks()
+            finally:
+                # Final display update...
+                self.display.update()
+                update_task.cancel()
+                try:
+                    await update_task
+                except asyncio.CancelledError:
+                    pass
+
+            # Final display of results and misc. app data...
+            final_messages = [
+                "\n",
+                f"Finished: See output files under {self.output_path}.",
+            ]
+            self.display.report_results(self, error_msg)
+            await self.display.final_update(final_messages)
+
+        await self.display.run_live(do_work)
+
+    async def __finish_init(self):
         """
-        Initialize the MCApp. This isn't done during __init__, so we can do this
-        step asynchronously...
+        Finish initializing the object by creating the MCApp, Orchestrator, the display, etc..
+        This isn't done during __init__, because all components have to be constructed in a 
+        particular order, so we can do this step asynchronously...
         """ 
+
         self.mcp_app = MCPApp(name=self.app_name)
         self.logger = self.mcp_app.logger
 
@@ -262,9 +313,11 @@ class DeepSearch():
 
             self.token_counter = app.context.token_counter
             self.logger = app.logger
-            return app
+            
+            self.display = self.make_display(self, self.variables)
+            self.logger.error(str(self.display))
 
-    async def run(self) -> str:
+    async def run_tasks(self) -> str:
         """
         Iterate through `tasks`, where the results of previous
         tasks are passed as part of the next task's prompt.
@@ -291,14 +344,39 @@ class DeepSearch():
             for res in result:
                 file.write(str(res))
                 file.write('\n\n')
+    
+    def __print_details(self):
+        message_fmt = "    {0:25s}  {1}"
+        pwd = os.path.dirname(os.path.realpath(__file__))
+        props_str = "\n".join([
+            message_fmt.format(f"{key}:", str(value)) for key, value in self.variables.items()
+        ])
+        tasks_str = "\n".join([
+            message_fmt.format(f"{n+1}:", str(self.tasks[n])) for n in range(len(self.tasks))
+        ])
+        message = f"""
+{self.app_name}:
+  Tasks:
+{tasks_str}  
+  Properties:
+{props_str}  
+  UX:                    {self.variables.get('ux', "unknown!")}
+  Output path:           {self.output_path}
+  MCP Agent Config:      {self.config}
+"""
+        print(message)
+        self.logger.info(message)
 
-    @classmethod
+        # Just to give the user time to see the above before the UX starts.
+        time.sleep(2.0)  
+
+    @staticmethod
     def make_default_config(
         short_run: bool,
         name: str,
         available_servers: list[str]) -> DeepOrchestratorConfig:
         """Create configuration for the Deep Orchestrator"""
-        if args.short_run:
+        if short_run:
             execution_config=ExecutionConfig(
                 max_iterations=2,
                 max_replans=2,

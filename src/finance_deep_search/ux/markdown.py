@@ -2,6 +2,8 @@
 """
 The Markdown-formatted streaming output version of Deep Orchestrator Finance Research Example
 """
+# Allow types to self-reference during their definitions.
+from __future__ import annotations
 
 import argparse
 import json
@@ -9,7 +11,7 @@ import re
 import time
 from datetime import datetime, timedelta
 from json.decoder import JSONDecodeError
-from typing import cast
+from typing import cast, Callable, Generic
 
 from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
 from openai.types.chat import ChatCompletionMessage
@@ -17,10 +19,12 @@ from anthropic.types import Message
 
 from common.string_utils import MarkdownUtil, clean_json_string
 from common.deep_search import DeepSearch, BaseTask, GenerateTask, AgentTask, TaskStatus
-from finance_deep_search.ux.markdown_elements import (MarkdownElement,
-                                                      MarkdownSection,
-                                                      MarkdownTable,
-                                                      MarkdownTree)
+from ux import Display
+from ux.markdown_elements import (
+    MarkdownElement,
+    MarkdownSection,
+    MarkdownTable,
+    MarkdownTree)
 
 
 class MarkdownDeepOrchestratorMonitor():
@@ -336,24 +340,22 @@ class MarkdownDeepOrchestratorMonitor():
         self.execution_time = self.end_time - self.start_time
         return self.execution_time
 
-class MarkdownDisplay():
-    def __init__(self, title: str,
-        deep_search: DeepSearch,
-        monitor: MarkdownDeepOrchestratorMonitor,
-        args: argparse.Namespace,
-        print_on_update: bool = True):
-        """
-        Create the Markdown display. 
-        TODO: Make print_on_update user configurable...
-        """
-        self.print_on_update = print_on_update
-        self.deep_search = deep_search
-        self.orchestrator = self.deep_search.orchestrator
-        self.monitor = monitor
-        self.layout = MarkdownDisplay.__make_layout(title, self.deep_search.properties())
-        self.args = args
-        ticker = self.deep_search.variables['ticker']
-        self.research_results_file = f"{self.args.output_path}/{ticker}_report.markdown"
+
+class MarkdownDisplay(Display[DeepSearch]):
+    def __init__(self, 
+        title: str,
+        system: DeepSearch,
+        update_iteration_frequency_secs: float = 1.0,
+        variables: dict[str, any] = {}):
+        super().__init__(title, system, update_iteration_frequency_secs, variables)
+        self.print_on_update: bool = variables.get('print_on_update', True)
+        output_path = variables['output_path']
+        ticker = variables['ticker']
+        self.research_results_file = output_path / f"{ticker}_report.markdown"
+
+        self.orchestrator = self.system.orchestrator
+        self.monitor = MarkdownDeepOrchestratorMonitor(self.orchestrator)
+        self.layout = MarkdownDisplay.__make_layout(title, self.system.properties())
 
     def __make_layout(title: str, properties: dict[str,any]) -> MarkdownSection:
         layout = MarkdownSection(title=title)
@@ -385,6 +387,9 @@ class MarkdownDisplay():
             'policy': MarkdownSection(title="⚙️ Policy Engine"),
         })
         return layout
+
+    async def run_live(self, function: Callable[[], None]):
+        await function()
 
     def update(self) -> MarkdownSection:
         """
@@ -436,7 +441,7 @@ class MarkdownDisplay():
         except (JSONDecodeError, TypeError) as err:
             err_msg = f"{err} raised while parsing attempting to parse {context} results."
             if log_failure:
-                self.deep_search.logger.warning(f"{err_msg}: input = {s}")
+                self.system.logger.warning(f"{err_msg}: input = {s}")
             return (err_msg, None)
 
     def __parse_openai_message(self, message_index: int, obj: any) -> list[any]:
@@ -598,17 +603,17 @@ class MarkdownDisplay():
         return result_section
 
 
-    def report_results(self, deep_search: DeepSearch, error_msg: str):
+    def report_results(self, error_msg: str):
         """
         TODO: The matching of tasks to method calls for formatting is too fragile!
         """
-        content = [f"See also the directory `{deep_search.output_path}` for results files."]
+        content = [f"See also the directory `{self.system.output_path}` for results files."]
         if error_msg:
             content.append(f"> **ERROR:** {error_msg}")
         results_section = self.add_section("Results", content=content)
         
         results_subsections = []
-        for task in deep_search.tasks:
+        for task in self.system.tasks:
             title = ''
             if task.name.find('financial') >= 0:
                 title = "📊 Financial Research Result"
@@ -622,7 +627,7 @@ class MarkdownDisplay():
 
         results_section.add_subsections(results_subsections)
 
-    def get_final_statistics(self) -> MarkdownSection:
+    def _get_final_statistics(self) -> MarkdownSection:
         """Get final statistics for display"""
 
         # Create summary table
@@ -653,11 +658,11 @@ class MarkdownDisplay():
         )
         return self.add_section("📊 Final Statistics", [summary_table])
 
-    def get_budget_summary(self) -> MarkdownSection:
+    def _get_budget_summary(self) -> MarkdownSection:
         budget_summary = self.orchestrator.budget.get_status_summary()
         return self.add_section("Budget Summary", [budget_summary])
 
-    def get_knowledge_summary(self) -> MarkdownSection:
+    def _get_knowledge_summary(self) -> MarkdownSection:
         knowledge_table = 'None available...'
         # Display knowledge learned
         if self.orchestrator.memory.knowledge:
@@ -679,18 +684,18 @@ class MarkdownDisplay():
 
         return self.add_section("🧠 Knowledge Extracted", [knowledge_table])
 
-    async def get_token_usage(self) -> MarkdownSection:
+    async def _get_token_usage(self) -> MarkdownSection:
         """Display the token usage, if available."""
         summary_info = ["Token usage not available"]
-        if self.deep_search.token_counter:
-            summary = await self.deep_search.token_counter.get_summary()
+        if self.system.token_counter:
+            summary = await self.system.token_counter.get_summary()
             if summary and hasattr(summary, "usage"):
                 summary_info = [f"* Total Tokens: {summary.usage.total_tokens}"]
                 if hasattr(summary, "cost"):
                     summary_info.append(f"* Total Cost: ${summary.cost:.4f}")
         return self.add_section("Total Tokens", summary_info)
 
-    def get_workspace_artifacts(self) -> MarkdownSection:
+    def _get_workspace_artifacts(self) -> MarkdownSection:
         """Display workspace artifacts if any were created."""
         artifacts_info = ["Workspace artifacts usage not available"]
         if self.orchestrator.memory.artifacts:
@@ -700,7 +705,7 @@ class MarkdownDisplay():
 
         return self.add_section("📁 Artifacts Created", artifacts_info)
 
-    async def final_data_update(self) -> list[MarkdownSection]:
+    async def final_update(self, final_messages: list[str]) -> list[MarkdownSection]:
         """
         Prints and also returns the list of Markdown sections for the final data.
         They are also added to the whole document by the other methods called here
@@ -708,11 +713,11 @@ class MarkdownDisplay():
         """
         self.monitor.update_execution_time()
         sections = [
-            self.get_final_statistics(),
-            self.get_budget_summary(),
-            self.get_knowledge_summary(),
-            await self.get_token_usage(),
-            self.get_workspace_artifacts(),
+            self._get_final_statistics(),
+            self._get_budget_summary(),
+            self._get_knowledge_summary(),
+            await self._get_token_usage(),
+            self._get_workspace_artifacts(),
         ]
         for section in sections:
             print(section)
@@ -720,20 +725,25 @@ class MarkdownDisplay():
         all_sections = str(self)
         with open(self.research_results_file, 'w') as file:
             file.write(all_sections)
-        return sections
 
-    def show_final_messages(self, final_messages: list[str]):
         final_messages.append(
             f"Research results and application status data written to {self.research_results_file}.")
         for fm in final_messages:
             print(fm)
-            self.deep_search.logger.info(fm)
+            self.system.logger.info(fm)
 
+        return sections
 
-def markdown_init(title: str, deep_search: DeepSearch, args: argparse.Namespace) -> MarkdownDisplay:
-    monitor = MarkdownDeepOrchestratorMonitor(deep_search.orchestrator)
-    display = MarkdownDisplay(title, deep_search, monitor, args)
-    return display
+    # TODO: more attributes?
+    def __str__(self) -> str:
+        s = super().__str__()
+        return f"""MarkdownDisplay({s})"""
 
-async def markdown_run_live(display: MarkdownDisplay, f):
-    await f(display)
+    @staticmethod
+    def make(
+        title: str,
+        system: DeepSearch,
+        update_iteration_frequency_secs: float = 1.0,
+        variables: dict[str,any] = {}) -> MarkdownDisplay:
+        """A factory method for creating instances."""
+        return MarkdownDisplay(title, system, update_iteration_frequency_secs, variables)
