@@ -281,7 +281,7 @@ class DeepSearch():
                 "\n",
                 f"Finished: See output files under {self.output_path}.",
             ]
-            self.display.report_results(self, error_msg)
+            self.display.report_results(error_msg)
             await self.display.final_update(final_messages)
 
         await self.display.run_live(do_work)

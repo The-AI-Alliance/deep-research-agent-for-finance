@@ -41,7 +41,7 @@ if __name__ == "__main__":
     def_excel_writer_agent_prompt_file = "excel_writer_agent.md"
 
     parser = argparse.ArgumentParser(
-        description="Deep Finance Research using orchestrated AI agents",
+        description="Finance Deep Research using orchestrated AI agents",
         epilog="""
 Due to current limitations, you must use either OpenAI, Anthropic, or local models
 served by ollama, and you have to tell us which one using the `--provider` argument,
@@ -135,7 +135,7 @@ to use the correct settings!
     # See the project README for details.
     config: DeepOrchestratorConfig = DeepSearch.make_default_config(
         args.short_run,
-        "DeepFinancialResearcher",
+        "FinancialDeepResearcher",
         ["excel_writer", "fetch", "filesystem", "financial-datasets", "yfmcp"])
     
     max_iterations = 2 if args.short_run else 10
@@ -144,6 +144,7 @@ to use the correct settings!
         "ticker": args.ticker,
         "company_name": args.company_name,
         "reporting_currency": args.reporting_currency,
+        "units": f"{args.reporting_currency} millions",
         "temperature": 0.7, 
         "max_iterations": max_iterations,
         "short_run": args.short_run,

@@ -314,6 +314,29 @@ class MarkdownDeepOrchestratorMonitor():
         table.add_row(["Failure Rate", f"{policy.get_failure_rate():.1%}"])
         return table
 
+    def get_status_summary_table(self) -> MarkdownTable:
+        """Get overall status summary as a Markdown table."""
+        self.update_execution_time()
+
+        table = MarkdownTable(title="📊 Status", 
+            columns=[('Quantity', 'left'),('Value', 'right')])
+        table.add_row(["Objective", f"{self.orchestrator.objective[:50]}... (see full objective below)"])
+        table.add_row(["Iteration", self.orchestrator.iteration/self.orchestrator.config.execution.max_iterations])
+        table.add_row(["Replans",   self.orchestrator.replan_count/self.orchestrator.config.execution.max_replans])
+        table.add_row(["Elapsed",   self.execution_time])
+        return table
+
+    def get_objective_section(self) -> MarkdownSection:
+        content = [
+            "The _full objective_ abbreviated in the table above is shown next.",
+            "Note that `{{foo}}` strings are part of the prompt that were replaced with appropriate values, e.g., `{{ticker}}` is replaced with the ticker symbol.",
+            "\n",
+        ]
+        content.extend([f"> {line}" for line in self.orchestrator.objective.split('\n')])
+        content.extend(["\n", "(End of the objective listing...)"])
+        objective = MarkdownSection(title="Full Objective", content=content)
+        return objective
+
     def get_status_summary_content(self) -> (MarkdownTable, MarkdownSection):
         """Get overall status summary as a Markdown table and other content."""
         self.update_execution_time()
@@ -355,9 +378,9 @@ class MarkdownDisplay(Display[DeepSearch]):
 
         self.orchestrator = self.system.orchestrator
         self.monitor = MarkdownDeepOrchestratorMonitor(self.orchestrator)
-        self.layout = MarkdownDisplay.__make_layout(title, self.system.properties())
+        self.layout = self.__make_layout(title, self.system.properties())
 
-    def __make_layout(title: str, properties: dict[str,any]) -> MarkdownSection:
+    def __make_layout(self, title: str, properties: dict[str,any]) -> MarkdownSection:
         layout = MarkdownSection(title=title)
         
         # Make a Markdown table of the runtime properties. First wrap the keys in `...`
@@ -369,24 +392,26 @@ class MarkdownDisplay(Display[DeepSearch]):
 
         # Main structure
         layout.add_subsections({
-            "top_section": MarkdownSection(title="App Runtime Stats"),
-            "botton_section": MarkdownSection(title="Financial Results"),
+            "statistics_section": MarkdownSection(title="💰 Runtime Statistics",
+                content=["This section provides general information about the runtime statistics."]),
+            "objective_section": MarkdownSection(title="⚙️ Research Objective",
+                content=["This section provides detailed information about the research _objective_, such as the prompt."],
+                subsections=[self.monitor.get_objective_section()]),
+            "results_section": MarkdownSection(title="📊 📈 Results", 
+                content=["This section provides the research results.", "In progress..."]),
         })
 
-        # Top section - queue, plan, and memory
-        layout["top_section"].add_subsections({
-            "queue": MarkdownSection(title="Task Queue"),
-            "plan": MarkdownSection(title="Current Plan"),
+        # Top section - queue, plan, memory, budget, and other status
+        layout["statistics_section"].add_subsections({
+            "queue":  MarkdownSection(title="Task Queue"),
+            "plan":   MarkdownSection(title="Current Plan"),
             "memory": MarkdownSection(title="Memory"),
+            'budget': MarkdownSection(title="Runtime Budget Statistics"),
+            'policy': MarkdownSection(title="Policy Engine"),
+            'status': MarkdownSection(title="Status Summary"),
         })
 
-        # Bottom section - budget, status, and agents, and final results added later.
-        layout["botton_section"].add_subsections({
-            'budget': MarkdownSection(title="💰 Runtime Budget Statistics"),
-            'status': MarkdownSection(title="📊 Status Summary"),
-            'policy': MarkdownSection(title="⚙️ Policy Engine"),
-        })
-        return layout
+        return layout 
 
     async def run_live(self, function: Callable[[], None]):
         await function()
@@ -396,26 +421,26 @@ class MarkdownDisplay(Display[DeepSearch]):
         Update the display with the current state. For 'behavioral' compatibility
         with the Rich UX, this method also calls print, if `self.print_on_update`
         is true.
+        The `objective_section` and `results_section` are not updated here. The former
+        doesn't change after being initialized above and the latter is only updated
+        at the very end of the run.
         """
         self.monitor.update_execution_time()
-
-        top_section = self.layout["top_section"]
-        top_section["queue"].set_intro_content([self.monitor.get_queue_tree()])
-        top_section["plan"].set_intro_content([self.monitor.get_plan_table()])
-        top_section["memory"].set_intro_content([
+        
+        statistics = self.layout["statistics_section"]
+        statistics["queue"].set_intro_content([self.monitor.get_queue_tree()])
+        statistics["plan"].set_intro_content([self.monitor.get_plan_table()])
+        statistics["memory"].set_intro_content([
             self.monitor.get_memory_table(),
             self.monitor.get_knowledge_table()])
-
-        bottom_section = self.layout["botton_section"] 
-        bottom_section["budget"].set_intro_content([self.monitor.get_budget_table()])
-        summary_table, summary_obj_section = self.monitor.get_status_summary_content()
-        bottom_section["status"].set_intro_content([summary_table])
-        bottom_section["status"].set_subsections([summary_obj_section])
-        bottom_section["policy"].set_intro_content(
+        statistics["budget"].set_intro_content([self.monitor.get_budget_table()])
+        statistics["policy"].set_intro_content(
             [self.monitor.get_policy_table(), self.monitor.get_agents_table()])
+        statistics["status"].set_intro_content([self.monitor.get_status_summary_table()])
         
         if self.print_on_update:
-            print(self.layout)
+            # Only print the statistics, which may have changed.
+            print(self.layout["statistics_section"])
         return self.layout
 
     def __repr__(self) -> str:
@@ -453,7 +478,7 @@ class MarkdownDisplay(Display[DeepSearch]):
             audio: str,
             function_call: str,
             tool_calls: str) -> MarkdownTable:
-            table = MarkdownTable(title=f"OpenAI/Ollama Reply Message #{message_index}: Metadata",
+            table = MarkdownTable(title=f"✉️ OpenAI/Ollama Reply Message #{message_index}: Metadata",
                 columns = [('Item', 'left'), ('Value', 'right')])
             table.add_row(['refusal', str(refusal)])
             table.add_row(['role', str(role)])
@@ -489,7 +514,7 @@ class MarkdownDisplay(Display[DeepSearch]):
           
         all_content: list[any] = []
         if content:
-            all_content = [f"Reply Message #{message_index} Content:"]
+            all_content = [f"✉️ Reply Message #{message_index} Content:"]
             all_content.extend([f"> {line}" for line in content])
             all_content.extend(['\n', "(end content)"])
         if metadata_table:
@@ -509,7 +534,7 @@ class MarkdownDisplay(Display[DeepSearch]):
             total_cost_usd: float | None = None,
             usage: dict[str, any] | None = None, 
             structured_output: any = None) -> MarkdownTable:
-            table = MarkdownTable(title=f"Anthropic Reply Message #{message_index}: Metadata",
+            table = MarkdownTable(title=f"✉️ Anthropic Reply Message #{message_index}: Metadata",
                 columns = [('Item', 'left'), ('Value', 'right')])
             table.add_row(['subtype', subtype])
             table.add_row(['duration_ms', str(duration_ms)])
@@ -596,7 +621,7 @@ class MarkdownDisplay(Display[DeepSearch]):
                         result_content = str(result).split('\n')
                     content.extend([f"> {line}" for line in result_content])
 
-            ss = MarkdownSection(title=f"Reply Message #{i+1}", content=content)
+            ss = MarkdownSection(title=f"✉️ Reply Message #{i+1}", content=content)
             subsections.append(ss)
 
         result_section.add_subsections(subsections)
@@ -610,7 +635,8 @@ class MarkdownDisplay(Display[DeepSearch]):
         content = [f"See also the directory `{self.system.output_path}` for results files."]
         if error_msg:
             content.append(f"> **ERROR:** {error_msg}")
-        results_section = self.add_section("Results", content=content)
+        results_section = self.layout["results_section"]
+        results_section.set_intro_content(content=content)
         
         results_subsections = []
         for task in self.system.tasks:
@@ -660,7 +686,7 @@ class MarkdownDisplay(Display[DeepSearch]):
 
     def _get_budget_summary(self) -> MarkdownSection:
         budget_summary = self.orchestrator.budget.get_status_summary()
-        return self.add_section("Budget Summary", [budget_summary])
+        return self.add_section("💶 Budget Summary", [budget_summary])
 
     def _get_knowledge_summary(self) -> MarkdownSection:
         knowledge_table = 'None available...'
@@ -693,13 +719,13 @@ class MarkdownDisplay(Display[DeepSearch]):
                 summary_info = [f"* Total Tokens: {summary.usage.total_tokens}"]
                 if hasattr(summary, "cost"):
                     summary_info.append(f"* Total Cost: ${summary.cost:.4f}")
-        return self.add_section("Total Tokens", summary_info)
+        return self.add_section("🪙 Total Tokens", summary_info)
 
     def _get_workspace_artifacts(self) -> MarkdownSection:
         """Display workspace artifacts if any were created."""
         artifacts_info = ["Workspace artifacts usage not available"]
         if self.orchestrator.memory.artifacts:
-            artifacts_info = ["📁 Artifacts Created:"]
+            artifacts_info = []
             for name in list(self.orchestrator.memory.artifacts.keys())[:5]:
                 artifacts_info.append(f"* {name}")
 
