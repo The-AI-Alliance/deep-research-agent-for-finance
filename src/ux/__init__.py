@@ -35,5 +35,5 @@ class Display(Generic[SYSTEM]):
         pass
 
     def __str__(self) -> str:
-        return f"""title: "{self.title}", update iteration frequency: {self.update_iteration_frequency}"""
+        return f"""title: "{self.title}", update iteration frequency: {self.update_iteration_frequency_secs}"""
     

@@ -255,9 +255,9 @@ class DeepSearch():
             while True:
                 try:
                     self.display.update()
-                    await asyncio.sleep(self.display.update_iteration_frequency)
+                    await asyncio.sleep(self.display.update_iteration_frequency_secs)
                 except Exception as e:
-                    mcp_app.logger.error(f"Display update error: {e}")
+                    self.logger.error(f"Display update error: {e}")
                     break
 
         async def do_work():
@@ -312,10 +312,9 @@ class DeepSearch():
             app.context.config.mcp.servers["filesystem"].args.extend([os.getcwd()])
 
             self.token_counter = app.context.token_counter
-            self.logger = app.logger
             
             self.display = self.make_display(self, self.variables)
-            self.logger.error(str(self.display))
+            self.logger.debug(str(self.display))
 
     async def run_tasks(self) -> str:
         """
