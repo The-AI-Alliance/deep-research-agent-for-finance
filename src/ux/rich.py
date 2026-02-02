@@ -1,5 +1,5 @@
 """
-The Rich Console version of Deep Orchestrator Finance Research Example
+The Rich Console version of Deep Orchestrator Research Example
 """
 # Allow types to self-reference during their definitions.
 from __future__ import annotations
@@ -326,7 +326,7 @@ class RichDisplay(Display[DeepSearch]):
 
         # Header
         self.layout["header"].update(
-            Panel("Deep Finance Research", style="bold blue")
+            Panel("Deep Research", style="bold blue")
         )
 
         self.layout["buffer"].update("")
@@ -449,20 +449,10 @@ class RichDisplay(Display[DeepSearch]):
     def report_results(self, error_msg: str):
         strs = []
         for task in self.system.tasks:
-            title = ''
-            border_style = "green"
-            if task.name.find('financial') >= 0:
-                border_style = "green" if task.status == TaskStatus.FINISHED_OK else "red"
-                title = "📊 Financial Research Result"
-            elif task.name.find('excel') >= 0:
-                border_style = "blue" if task.status == TaskStatus.FINISHED_OK else "red"
-                title = "📈 Excel Creation Result"
-            else:
-                raise ValueError(f"Unexpected task name: {task.name}\n(tasks = {tasks})")
-            
+            border_style = "green" if task.status == TaskStatus.FINISHED_OK else "red"            
             str = truncate(str(task.result), 2000, '...')
             self.console.print(
-                Panel(str, title=title, border_style=border_style))
+                Panel(str, title=task.title, border_style=border_style))
 
     def __repr__(self) -> str:
         return str(self.layout)

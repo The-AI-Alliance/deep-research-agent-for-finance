@@ -28,8 +28,8 @@ from common.deep_search import DeepSearch, BaseTask, GenerateTask, AgentTask
 from common.path_utils import resolve_path
 from ux import Display
 
-from finance_deep_search.ux.rich import RichDisplay
-from finance_deep_search.ux.markdown import MarkdownDisplay
+from ux.markdown import MarkdownDisplay
+from ux.rich import RichDisplay
 
 if __name__ == "__main__":
 

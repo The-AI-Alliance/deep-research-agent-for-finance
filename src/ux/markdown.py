@@ -11,6 +11,7 @@ import re
 import time
 from datetime import datetime, timedelta
 from json.decoder import JSONDecodeError
+from pathlib import Path
 from typing import cast, Callable, Generic
 
 from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
@@ -280,7 +281,7 @@ class MarkdownDeepOrchestratorMonitor():
     def get_objective_section(self) -> MarkdownSection:
         content = [
             "The _full objective_ abbreviated in the table above is shown next.",
-            "Note that `{{foo}}` strings are part of the prompt that were replaced with appropriate values, e.g., `{{ticker}}` is replaced with the ticker symbol.",
+            "Note that `{{foo}}` strings are part of the prompt that were replaced with appropriate values, e.g., `{{name}}` is replaced with a string for 'name'.",
             "\n",
         ]
         content.extend([f"> {line}" for line in self.orchestrator.objective.split('\n')])
@@ -300,8 +301,7 @@ class MarkdownDeepOrchestratorMonitor():
         table.add_row(["Elapsed",   self.execution_time])
 
         content = [
-            "The _full objective_ abbreviated in the table above is shown next.",
-            "Note that `{{foo}}` strings are part of the prompt that were replaced with appropriate values, e.g., `{{ticker}}` is replaced with the ticker symbol.",
+            "The _full objective_ abbreviated in the table above is shown below.",
             "\n",
         ]
         content.extend([f"> {line}" for line in self.orchestrator.objective.split('\n')])
@@ -314,7 +314,6 @@ class MarkdownDeepOrchestratorMonitor():
         self.execution_time = self.end_time - self.start_time
         return self.execution_time
 
-
 class MarkdownDisplay(Display[DeepSearch]):
     def __init__(self, 
         title: str,
@@ -323,10 +322,9 @@ class MarkdownDisplay(Display[DeepSearch]):
         variables: dict[str, any] = {}):
         super().__init__(title, system, update_iteration_frequency_secs, variables)
         self.print_on_update: bool = variables.get('print_on_update', True)
-        output_path = variables['output_path']
-        ticker = variables['ticker']
-        self.research_results_file = output_path / f"{ticker}_report.markdown"
-
+        output_path = variables.get('output_path', Path('./output'))
+        self.research_report_path = variables.get('research_report_path',
+            output_path / 'research_report.md')
         self.orchestrator = self.system.orchestrator
         self.monitor = MarkdownDeepOrchestratorMonitor(self.orchestrator)
         self.layout = self.__make_layout(title, self.system.properties())
@@ -539,15 +537,15 @@ class MarkdownDisplay(Display[DeepSearch]):
 
         return all_content
 
-    def __make_results_section(self, title: str, task: BaseTask) -> MarkdownSection:
+    def __make_results_section(self, task: BaseTask) -> MarkdownSection:
         task_table = MarkdownTable(
-            title=f'Task `{task.name}` Properties',
+            title=f'Task {task.title} (`{task.name}`) Properties',
             columns=['Property', 'Value'])
         for key, value in vars(task).items():
             if key != 'result':
                 task_table.add_row([key, str(value)])
 
-        result_section = MarkdownSection(title=title, 
+        result_section = MarkdownSection(title=task.title, 
             content=[f"Information for task: {task.name}", task_table])
         
         if not task.result:
@@ -591,15 +589,7 @@ class MarkdownDisplay(Display[DeepSearch]):
         
         results_subsections = []
         for task in self.system.tasks:
-            title = ''
-            if task.name.find('financial') >= 0:
-                title = "📊 Financial Research Result"
-            elif task.name.find('excel') >= 0:
-                title = "📈 Excel Creation Result"
-            else:
-                raise ValueError(f"Unexpected task name: {task.name}\n(tasks = {tasks})")
-
-            s = self.__make_results_section(title, task)
+            s = self.__make_results_section(task)
             results_subsections.append(s)
 
         results_section.add_subsections(results_subsections)
@@ -700,11 +690,11 @@ class MarkdownDisplay(Display[DeepSearch]):
             print(section)
 
         all_sections = str(self)
-        with open(self.research_results_file, 'w') as file:
+        with self.research_report_path.open('w') as file:
             file.write(all_sections)
 
         final_messages.append(
-            f"Research results and application status data written to {self.research_results_file}.")
+            f"Research results and application status data written to {self.research_report_path}.")
         for fm in final_messages:
             print(fm)
             self.system.logger.info(fm)

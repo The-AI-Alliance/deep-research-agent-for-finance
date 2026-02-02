@@ -7,7 +7,7 @@ from pathlib import Path
 import os, re, sys
 from random import sample
 
-from finance_deep_search.ux.markdown_elements import MarkdownTree
+from ux.markdown_elements import MarkdownTree
 
 from tests.utils import (
     no_linefeeds_text,

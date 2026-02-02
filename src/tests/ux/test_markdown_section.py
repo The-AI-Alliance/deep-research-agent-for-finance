@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 import os, re, sys
 
-from finance_deep_search.ux.markdown_elements import MarkdownElement, MarkdownSection
+from ux.markdown_elements import MarkdownElement, MarkdownSection
 
 from tests.utils import no_linefeeds_text, nonempty_no_linefeeds_text
 

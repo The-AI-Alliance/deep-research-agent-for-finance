@@ -210,6 +210,8 @@ print-app-info:
 	@echo "  FIN_RESEARCH_PROMPT_FILE ${FIN_RESEARCH_PROMPT_FILE}"
 	@echo "  EXCEL_WRITER_PROMPT_FILE ${EXCEL_WRITER_PROMPT_FILE}"
 	@echo "OUTPUT_PATH                ${OUTPUT_PATH}"
+	@echo "  OUTPUT_REPORT            ${OUTPUT_REPORT} (under OUTPUT_PATH)"
+	@echo "  OUTPUT_SPREADSHEET       ${OUTPUT_SPREADSHEET} (under OUTPUT_PATH)"
 	@echo "APP_ARGS                   ${APP_ARGS}"
 	@echo
 
