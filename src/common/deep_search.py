@@ -228,8 +228,8 @@ class AgentTask(BaseTask):
             )
 
     def attributes_as_strs(self, exclusions: set[str] = {}) -> dict[str,str]:
-        d = super().attributes_as_strs(exclude)
-        if 'generate_prompt' not in exclude:
+        d = super().attributes_as_strs(exclusions)
+        if 'generate_prompt' not in exclusions:
             d[Variable.make_label('generate_prompt')] = Variable.callout_formatter(self.generate_prompt)
         return d
 
