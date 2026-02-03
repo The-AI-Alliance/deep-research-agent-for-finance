@@ -24,6 +24,7 @@ from rich import box
 
 from common.deep_search import DeepSearch, BaseTask, GenerateTask, AgentTask, TaskStatus
 from common.string_utils import truncate
+from common.variables import Variable
 from ux import Display
 
 from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
@@ -279,7 +280,7 @@ class RichDisplay(Display[DeepSearch]):
         title: str,
         system: DeepSearch,
         update_iteration_frequency_secs: float = 1.0,
-        variables: dict[str, any] = {}):
+        variables: dict[str, Variable] = {}):
         super().__init__(title, system, update_iteration_frequency_secs, variables)
 
         self.start_time = time.time()
@@ -462,6 +463,6 @@ class RichDisplay(Display[DeepSearch]):
         title: str,
         system: DeepSearch,
         update_iteration_frequency_secs: float = 1.0,
-        variables: dict[str,any] = {}) -> RichDisplay:
+        variables: dict[str, Variable] = {}) -> RichDisplay:
         """A factory method for creating instances."""
         return RichDisplay(title, system, update_iteration_frequency_secs, variables)

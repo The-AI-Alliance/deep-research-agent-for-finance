@@ -2,6 +2,7 @@
 """
 The Markdown-formatted streaming output version of Deep Orchestrator Finance Research Example
 """
+from __future__ import annotations
 
 import argparse
 import asyncio
@@ -83,7 +84,7 @@ class MarkdownSection(MarkdownElement):
             else:
                 self.content.append(MarkdownElement(title=str(item)))
 
-    def set_subsections(self, subsections: dict[str,MarkdownElement] | list[MarkdownElement]):
+    def set_subsections(self, subsections: dict[str, MarkdownSection] | list[MarkdownSection]):
         """
         Replace the subsections.
         NOTE: All the levels will be reset to to the parent's level + 1, unless they
@@ -92,20 +93,17 @@ class MarkdownSection(MarkdownElement):
         self.subsections = {}
         self.add_subsections(subsections)
         
-    def add_subsections(self, subsections: dict[str,MarkdownElement] | list[MarkdownElement]):
+    def add_subsections(self, subsections: dict[str,MarkdownSection] | list[MarkdownSection]):
         """
         Add subsections. They will be stored in a dictionary ordered by insertion order
         (a Python dict implementation feature...), which we need to support rendering in
         the correct order. So, insert the subsections in the correct order for displaying.
         Use a dict argument if you want to specify the keys. If you pass a list, the
         element titles will be used as the keys. Hence, use non-empty titles for any 
-        subsections provided. (The declared type is `MarkdownElement`, but this is only
-        because parsing doesn't work if you "self-reference" a type, e.g., `MarkdownSection`.)
-        Storing in a dict allows subsequent updating of a subsection by referring to it by its
-        key. Similarly, a `ValueError` is raised if any keys in the new subsections that
-        already exist in the current subsections.
-        NOTE: All the levels will be reset to to the parent's level + 1, unless they
-        are already >= level+1!
+        subsections provided. Storing in a dict allows subsequent updating of a subsection
+        by referring to it by its key. Similarly, a `ValueError` is raised if any keys in 
+        the new subsections that already exist in the current subsections.
+        NOTE: All the levels will be reset as needed to be >= the parent's level + 1.
         """
         ss = subsections
         if type(subsections) is list:
@@ -116,27 +114,34 @@ class MarkdownSection(MarkdownElement):
         for key, s in ss.items():
             if key in self.subsections:
                 bad_keys.append(key) 
-
             if not isinstance(s, MarkdownSection):
                 bad_elements.append(str(s))
-            else:
-                level = s.level
-                if s.level <= self.level:
-                    s.level = self.level+1 # reset!
-        error = 'add_subsections():'
+        error = 'add_subsections(): '
         if len(bad_keys) > 0:
-            error += f" All new subsections must have a unique key. bad keys = {bad_keys}. Existing keys = <{self.subsections.keys()}>, new keys = <{ss.keys()}>"
+            error += f"All new subsections must have a unique key. bad keys = {bad_keys}. Existing keys = <{self.subsections.keys()}>, new keys = <{ss.keys()}>"
         if len(bad_elements) > 0:
-            error += f" Only MarkdownSections may be added as subsections. Bad elements = <{bad_elements}>."
+            error += f"Only MarkdownSections may be added as subsections. Bad elements = <{bad_elements}>."
         if len(bad_keys) > 0 or len(bad_elements) > 0:
             raise ValueError(error)
 
         self.subsections.update(ss)
+        self._fix_levels()
 
     def clear(self):
         """Remove the leading content and subsections."""
         self.content = []
         self.subsections = {}
+
+    def _fix_levels(self):
+        """
+        Make sure all hierarchies of sections have correct levels, i.e.,
+        if this object has level `l`, then its subsections, must be `>= l+1`,
+        there subsections must have levels `>= l+2`, etc.
+        """
+        for s in self.subsections.values():
+            if s.level <= self.level:
+                s.level = self.level+1 # reset!
+            s._fix_levels()
 
     def __setitem__(self, key: str, item: MarkdownElement):
         """

@@ -213,12 +213,26 @@ class TestMarkdownSection(unittest.TestCase):
         Verify that when adding subsections, their levels will be changed to
         parent.level+1 is not >= parent.level+1.
         """
-        subsection1 = MarkdownSection('Bad1', 1)
-        subsection2 = MarkdownSection('Bad2', 1)
-        section = MarkdownSection(title, 2, [], [subsection1])
+        subsection1   = MarkdownSection('Bad1',   1)
+        subsection11  = MarkdownSection('Bad11',  1)
+        subsection12  = MarkdownSection('Bad12',  1)
+        subsection2   = MarkdownSection('Bad2',   1)
+        subsection21  = MarkdownSection('Bad21',  1)
+        subsection22  = MarkdownSection('Bad22',  1)
+        subsection221 = MarkdownSection('Bad221', 1)
+        section = MarkdownSection(title, 2)
+        subsection1.add_subsections([subsection11, subsection12])
+        subsection22.add_subsections([subsection221])
+        subsection2.add_subsections([subsection21, subsection22])
+        section.add_subsections([subsection1, subsection2])
+
         self.assertEqual(3, subsection1.level)
-        section.add_subsections([subsection2])
         self.assertEqual(3, subsection2.level)
+        self.assertEqual(4, subsection11.level)
+        self.assertEqual(4, subsection12.level)
+        self.assertEqual(4, subsection21.level)
+        self.assertEqual(4, subsection22.level)
+        self.assertEqual(5, subsection221.level)
 
     @given(st.integers(min_value=1, max_value=4), 
         nonempty_no_linefeeds_text, 

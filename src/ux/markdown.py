@@ -20,6 +20,8 @@ from anthropic.types import Message
 
 from common.string_utils import MarkdownUtil, clean_json_string
 from common.deep_search import DeepSearch, BaseTask, GenerateTask, AgentTask, TaskStatus
+from common.variables import Variable
+
 from ux import Display
 from ux.markdown_elements import (
     MarkdownElement,
@@ -281,33 +283,12 @@ class MarkdownDeepOrchestratorMonitor():
     def get_objective_section(self) -> MarkdownSection:
         content = [
             "The _full objective_ abbreviated in the table above is shown next.",
-            "Note that `{{foo}}` strings are part of the prompt that were replaced with appropriate values, e.g., `{{name}}` is replaced with a string for 'name'.",
             "\n",
         ]
         content.extend([f"> {line}" for line in self.orchestrator.objective.split('\n')])
         content.extend(["\n", "(End of the objective listing...)"])
         objective = MarkdownSection(title="Full Objective", content=content)
         return objective
-
-    def get_status_summary_content(self) -> (MarkdownTable, MarkdownSection):
-        """Get overall status summary as a Markdown table and other content."""
-        self.update_execution_time()
-
-        table = MarkdownTable(title="📊 Status", 
-            columns=[('Quantity', 'left'),('Value', 'right')])
-        table.add_row(["Objective", f"{self.orchestrator.objective[:100]}..."])
-        table.add_row(["Iteration", self.orchestrator.iteration/self.orchestrator.config.execution.max_iterations])
-        table.add_row(["Replans",   self.orchestrator.replan_count/self.orchestrator.config.execution.max_replans])
-        table.add_row(["Elapsed",   self.execution_time])
-
-        content = [
-            "The _full objective_ abbreviated in the table above is shown below.",
-            "\n",
-        ]
-        content.extend([f"> {line}" for line in self.orchestrator.objective.split('\n')])
-        content.extend(["\n", "(End of the objective listing...)"])
-        objective = MarkdownSection(title="Full Objective", content=content)
-        return (table, objective)
 
     def update_execution_time(self) -> timedelta:
         self.end_time = time.time()
@@ -319,24 +300,28 @@ class MarkdownDisplay(Display[DeepSearch]):
         title: str,
         system: DeepSearch,
         update_iteration_frequency_secs: float = 1.0,
-        variables: dict[str, any] = {}):
+        variables: dict[str, Variable] = {}):
         super().__init__(title, system, update_iteration_frequency_secs, variables)
-        self.print_on_update: bool = variables.get('print_on_update', True)
-        output_path = variables.get('output_path', Path('./output'))
-        self.research_report_path = variables.get('research_report_path',
+        self.print_on_update: bool = self.__get_var_value('print_on_update', False)
+        output_path = self.__get_var_value('output_path', Path('./output'))
+        self.research_report_path = self.__get_var_value('research_report_path',
             output_path / 'research_report.md')
         self.orchestrator = self.system.orchestrator
         self.monitor = MarkdownDeepOrchestratorMonitor(self.orchestrator)
-        self.layout = self.__make_layout(title, self.system.properties())
+        self.layout = self.__make_layout(title)
 
-    def __make_layout(self, title: str, properties: dict[str,any]) -> MarkdownSection:
+    def __get_var_value(self, key: str, default: any = None) -> any:
+        variable = self.variables.get(key)
+        return variable.value if variable else default
+
+    def __make_layout(self, title: str) -> MarkdownSection:
         layout = MarkdownSection(title=title)
         
         # Make a Markdown table of the runtime properties. First wrap the keys in `...`
         # to render as fixed-width/code font.
         top_table = MarkdownTable("This run's properties", ['Property', 'Value'])
-        for key, value in properties.items():
-            top_table.add_row([f"`{key}`", value])
+        for label, value in Variable.make_formatted(self.variables.values()):
+            top_table.add_row([label, value])
         layout.add_intro_content([top_table])
 
         # Main structure
@@ -344,8 +329,7 @@ class MarkdownDisplay(Display[DeepSearch]):
             "statistics_section": MarkdownSection(title="💰 Runtime Statistics",
                 content=["This section provides general information about the runtime statistics."]),
             "objective_section": MarkdownSection(title="⚙️ Research Objective",
-                content=["This section provides detailed information about the research _objective_, such as the prompt."],
-                subsections=[self.monitor.get_objective_section()]),
+                content=["This section provides detailed information about the research _objective_, such as the prompt."]),
             "results_section": MarkdownSection(title="📊 📈 Results", 
                 content=["This section provides the research results.", "In progress..."]),
         })
@@ -370,9 +354,8 @@ class MarkdownDisplay(Display[DeepSearch]):
         Update the display with the current state. For 'behavioral' compatibility
         with the Rich UX, this method also calls print, if `self.print_on_update`
         is true.
-        The `objective_section` and `results_section` are not updated here. The former
-        doesn't change after being initialized above and the latter is only updated
-        at the very end of the run.
+        The `results_section` is not updated here. It is only updated at the very end
+        of the run.
         """
         self.monitor.update_execution_time()
         
@@ -387,6 +370,12 @@ class MarkdownDisplay(Display[DeepSearch]):
             [self.monitor.get_policy_table(), self.monitor.get_agents_table()])
         statistics["status"].set_intro_content([self.monitor.get_status_summary_table()])
         
+        # TODO: It appears the objective content is initialized once and not changed, but 
+        # isn't available during __make_layout(). Figure out when the following can be 
+        # invoked once, not every call to update().
+        objective = self.layout["objective_section"]
+        objective.set_subsections([self.monitor.get_objective_section()])
+
         if self.print_on_update:
             # Only print the statistics, which may have changed.
             print(self.layout["statistics_section"])
@@ -464,7 +453,7 @@ class MarkdownDisplay(Display[DeepSearch]):
         all_content: list[any] = []
         if content:
             all_content = [f"✉️ Reply Message #{message_index} Content:"]
-            all_content.extend([f"> {line}" for line in content])
+            all_content.extend(content)
             all_content.extend(['\n', "(end content)"])
         if metadata_table:
             all_content.append('\n')
@@ -529,7 +518,7 @@ class MarkdownDisplay(Display[DeepSearch]):
         all_content: list[any] = []
         if content:
             all_content = [f"**Message #{message_index} content:**"]
-            all_content.extend([f"> {line}" for line in content])
+            all_content.extend(content)
             all_content.extend(['\n', "(end content)"])
         if metadata_table:
             all_content.append('\n')
@@ -537,19 +526,19 @@ class MarkdownDisplay(Display[DeepSearch]):
 
         return all_content
 
-    def __make_results_section(self, task: BaseTask) -> MarkdownSection:
+    def __make_results_section(self, task_number: int, task: BaseTask) -> MarkdownSection:
         task_table = MarkdownTable(
-            title=f'Task {task.title} (`{task.name}`) Properties',
+            title=f'**Task {task.title} (`{task.name}`) Properties**',
             columns=['Property', 'Value'])
-        for key, value in vars(task).items():
-            if key != 'result':
-                task_table.add_row([key, str(value)])
+        for key, value in task.attributes_as_strs(exclusions={'result', 'task_prompt'}).items():
+            task_table.add_row([key, value])
 
-        result_section = MarkdownSection(title=task.title, 
+        result_section = MarkdownSection(title=f"Task #{task_number}: {task.title} (`{task.name}`)", 
             content=[f"Information for task: {task.name}", task_table])
         
         if not task.result:
-            result_section.add_intro_content([f"> **ERROR:** No {task.name} results! See the log file for details."])
+            error_str = f"> **ERROR:** No {task.name} results! See the log file for details."
+            result_section.add_intro_content([error_str])
             return result_section
 
         subsections: list[MarkdownSection] = []
@@ -557,18 +546,15 @@ class MarkdownDisplay(Display[DeepSearch]):
             content: list[any] = []
             result = task.result[i]
             result_content = self.__parse_openai_message(i+1, result)
-            if result_content:
-                content.extend(result_content)
-            else:
+            if not result_content:
                 result_content = self.__parse_anthropic_message(i+1, result)
-                if result_content:
-                    content.extend(result_content)
-                else:
+                if not result_content:
                     # Try parsing as JSON, although it probably isn't JSON...
                     (err_msg, result_content) = self.__parse_json(str(result))
                     if not result_content: # not JSON, so just split the text.
                         result_content = str(result).split('\n')
-                    content.extend([f"> {line}" for line in result_content])
+
+            content.extend([f"> {line}" for line in result_content])
 
             ss = MarkdownSection(title=f"✉️ Reply Message #{i+1}", content=content)
             subsections.append(ss)
@@ -588,8 +574,9 @@ class MarkdownDisplay(Display[DeepSearch]):
         results_section.set_intro_content(content=content)
         
         results_subsections = []
-        for task in self.system.tasks:
-            s = self.__make_results_section(task)
+        for i in range(len(self.system.tasks)):
+            task = self.system.tasks[i]
+            s = self.__make_results_section(i+1, task)
             results_subsections.append(s)
 
         results_section.add_subsections(results_subsections)
@@ -709,6 +696,6 @@ class MarkdownDisplay(Display[DeepSearch]):
         title: str,
         system: DeepSearch,
         update_iteration_frequency_secs: float = 1.0,
-        variables: dict[str,any] = {}) -> MarkdownDisplay:
+        variables: dict[str,(str,any)] = {}) -> MarkdownDisplay:
         """A factory method for creating instances."""
         return MarkdownDisplay(title, system, update_iteration_frequency_secs, variables)

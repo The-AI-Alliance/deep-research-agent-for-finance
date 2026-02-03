@@ -1,4 +1,5 @@
 from typing import Callable, Generic, TypeVar
+from common.variables import Variable
 
 SYSTEM = TypeVar("SYSTEM")
 
@@ -7,7 +8,7 @@ class Display(Generic[SYSTEM]):
         title: str,
         system: SYSTEM,
         update_iteration_frequency_secs: float = 1.0,
-        variables: dict[str,any] = {}):
+        variables: dict[str, Variable] = {}):
         self.title = title
         self.system = system
         self.update_iteration_frequency_secs = update_iteration_frequency_secs
@@ -18,7 +19,7 @@ class Display(Generic[SYSTEM]):
         title: str,
         system: SYSTEM,
         update_iteration_frequency_secs: float = 1.0,
-        variables: dict[str,any] = {}):
+        variables: dict[str, Variable] = {}):
         """A factory method for creating instances. Subclasses must define one, too."""
         pass
 

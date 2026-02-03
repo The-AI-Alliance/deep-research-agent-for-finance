@@ -28,15 +28,15 @@ def split_frontmatter_and_content(frontmatter_and_content: str) -> (str, str):
     else:
         return None, frontmatter_and_content
 
-def load_prompt_markdown(prompt_path: Path) -> str:
+def load_prompt_markdown(path: Path) -> str:
     """
     Load a markdown prompt file and return the content after the frontmatter.
     """
     
-    if not prompt_path.exists():
-        raise FileNotFoundError(f"Prompt file not found: {prompt_path}")
+    if not path.exists():
+        raise FileNotFoundError(f"Prompt file not found: {path}")
     
-    with prompt_path.open('r', encoding='utf-8') as f:
+    with path.open('r', encoding='utf-8') as f:
         content = f.read()
         frontmatter, content = split_frontmatter_and_content(content)
         return content

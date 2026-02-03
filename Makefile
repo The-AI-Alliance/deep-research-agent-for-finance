@@ -21,7 +21,7 @@ ARCHITECTURE        ?= $(shell uname -m)
 TICKER                   ?= META
 COMPANY_NAME             ?= Meta Platforms, Inc.
 REPORTING_CURRENCY       ?= USD
-ORCHESTRATOR_MODEL       ?= gpt-4o
+RESEARCH_MODEL           ?= gpt-4o
 EXCEL_WRITER_MODEL       ?= o4-mini
 INFERENCE_PROVIDER       ?= openai
 PROMPTS_DIR              ?= ${app_dir}/prompts
@@ -149,7 +149,7 @@ do-app-run::
 		--prompts-dir "${PROMPTS_DIR}" \
 		--financial-research-prompt-path "${FIN_RESEARCH_PROMPT_FILE}" \
 		--excel-writer-agent-prompt-path "${EXCEL_WRITER_PROMPT_FILE}" \
-		--orchestrator-model "${ORCHESTRATOR_MODEL}" \
+		--research-model "${RESEARCH_MODEL}" \
 		--excel-writer-model "${EXCEL_WRITER_MODEL}" \
 		--provider "${INFERENCE_PROVIDER}" \
 		--verbose \
@@ -203,7 +203,7 @@ print-app-info:
 	@echo "  COMPANY_NAME             ${COMPANY_NAME}"
 	@echo "  REPORTING_CURRENCY       ${REPORTING_CURRENCY}"
 	@echo "Models:"
-	@echo "  ORCHESTRATOR_MODEL       ${ORCHESTRATOR_MODEL}"
+	@echo "  RESEARCH_MODEL           ${RESEARCH_MODEL}"
 	@echo "  EXCEL_WRITER_MODEL       ${EXCEL_WRITER_MODEL}"
 	@echo "Prompts:"
 	@echo "  PROMPTS_DIR              ${PROMPTS_DIR}"

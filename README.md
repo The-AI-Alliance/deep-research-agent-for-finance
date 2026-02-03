@@ -58,7 +58,7 @@ usage: main.py [-h] --ticker TICKER --company-name COMPANY_NAME
                [--output-path OUTPUT_PATH] [--prompts-path PROMPTS_PATH]
                [--financial-research-prompt-path FINANCIAL_RESEARCH_PROMPT_PATH]
                [--excel-writer-agent-prompt-path EXCEL_WRITER_AGENT_PROMPT_PATH]
-               [--orchestrator-model ORCHESTRATOR_MODEL] 
+               [--research-model RESEARCH_MODEL] 
                [--excel-writer-model EXCEL_WRITER_MODEL]
                [--provider {openai,anthropic,ollama}] 
                [--ux {rich,markdown}] 
@@ -86,8 +86,8 @@ options:
                         Path where the Excel writer agent prompt file is located. (Default:
                         excel_writer_agent.md) If the path doesn't contain a directory specification, then the
                         file will be searched for in the value of '--prompts-path'.
-  --orchestrator-model ORCHESTRATOR_MODEL
-                        The model used the orchestrator agent (default: gpt-4o); it should be very capable.
+  --research-model RESEARCH_MODEL
+                        The model used by the research orchestrator (default: gpt-4o); it should be very capable.
   --excel-writer-model EXCEL_WRITER_MODEL
                         The model used for writing results to Excel (default: o4-mini); a less powerful model
                         is sufficient.
@@ -103,7 +103,7 @@ options:
 
 Due to current limitations, you must use either OpenAI, Anthropic, or local models served by ollama, and you
 have to tell us which one using the `--provider` argument, although it defaults to 'openai'. The same provider
-must be used for BOTH the orchestrator and excel writer models, so specify them accordingly. The default is
+must be used for BOTH the research and excel writer models, so specify them accordingly. The default is
 'openai', which works for both OpenAI and Ollama, but you currently have to edit mcp_agent.config.yaml to use
 the correct settings!
 ```
@@ -121,7 +121,7 @@ cd src && uv run main.py \
     --prompts-path "finance_deep_search/prompts" \
     --financial-research-prompt-path "financial_research_agent.md" \
     --excel-writer-agent-prompt-path "excel_writer_agent.md" \
-    --orchestrator-model "gpt-4o" \
+    --research-model "gpt-4o" \
     --excel-writer-model "o4-mini" \
     --provider "openai" \
     --verbose \
@@ -156,8 +156,8 @@ Several output files, including an Excel spreadsheet of data, are written to the
 
 Two prompt files are by default located in [`./src/finance_deep_search/prompts`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/finance_deep_search/prompts) (Note that the command changes directory to `src` first...):
     
-* `--financial-research-prompt-path "financial_research_agent.md"` - for the orchestrator ([repo](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/finance_deep_search/prompts/financial_research_agent.md))
-* `--excel-writer-agent-prompt-path "excel_writer_agent.md"` - for the Excel file writer ([repo](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/finance_deep_search/prompts/excel_writer_agent.md))
+* `--financial-research-prompt-path "financial_research_agent.md"` - for the research task ([repo](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/finance_deep_search/prompts/financial_research_agent.md))
+* `--excel-writer-agent-prompt-path "excel_writer_agent.md"` - for the Excel file writer task ([repo](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/finance_deep_search/prompts/excel_writer_agent.md))
 
 If you specify a value for either argument that includes an absolute or relative directory, then the `--prompts-path` is ignored for it.
 
@@ -165,13 +165,13 @@ If you specify a value for either argument that includes an absolute or relative
 
 ```shell
 ...
-    --orchestrator-model "gpt-4o"
+    --research-model "gpt-4o"
     --excel-writer-model "o4-mini"
     --provider "openai"
 ...
 ```
 
-By default, `gpt-4o` from OpenAI is used for _orchestration_ and `o4-mini` is used for creating an Excel spreadsheet with some of the research results. If you would like to use a model from another provider, there are several options. Note that inference from OpenAI and Anthropic, and local-serving with ollama are currently supported. (However, at this time, Anthropic support hasn't been tested - help wanted!)
+By default, `gpt-4o` from OpenAI is used for research _orchestration_ and `o4-mini` is used for creating an Excel spreadsheet with some of the research results. If you would like to use a model from another provider, there are several options. Note that inference from OpenAI and Anthropic, and local-serving with ollama are currently supported. (However, at this time, Anthropic support hasn't been tested - help wanted!)
 
 The `--provider` argument is a temporary implementation limitation to ensure the correct `mcp-agent` code path is followed. Our intention is to infer this automatically based on the models chosen. This also means that _you must specify two models served by the same provider._ You can't mix and match Anthropic, OpenAI, and ollama models, at this time.
 
@@ -273,7 +273,7 @@ anthropic:
 To use `ollama` instead, you comment out the `openai:` configuration shown and uncomment the other one.
 
 > [!NOTE]
-> If you use ollama to serve models, pick the largest one that runs on your machine. For example, `gpt-oss:20b` works well, but requires more than 20GB of RAM. Use the same model for both orchestration and excel spreadsheet generation. For inference through a provider like OpenAI, it makes sense to use a less costly model for the Excel spreadsheet generation step, but for local inference, this is not an issue and it is better to load and use a single model!
+> If you use ollama to serve models, pick the largest one that runs on your machine. For example, `gpt-oss:20b` works well, but requires more than 20GB of RAM. Use the same model for both research orchestration and excel spreadsheet generation. For inference through a provider like OpenAI, it makes sense to use a less costly model for the Excel spreadsheet generation step, but for local inference, this is not an issue and it is better to load and use a single model!
 >
 > If you use the ollama server app installed on your local machine, open the settings and enable internet access from the model, which is needed to invoke other services to gather financial information! Also select the largest cache size your chosen model(s) support.
 
