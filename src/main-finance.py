@@ -142,6 +142,9 @@ mcp_agent.config.yaml to use the correct settings!
     # Change to app directory
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
+    # Configure variable formatting based on the UX:
+    Variable.set_ux(args.ux)
+
     # Create configuration for the Deep Orchestrator
     # To add additional servers, define them in mcp_agent.config.yaml,
     # then add them by name the list passed for `available_servers`.
@@ -152,7 +155,7 @@ mcp_agent.config.yaml to use the correct settings!
         ["excel_writer", "fetch", "filesystem", "financial-datasets", "yfmcp"])
 
     temperature = 0.7    
-    max_iterations = 2 if args.short_run else 10
+    max_iterations = 1 if args.short_run else 10
 
     prompts_dir_path = Path(args.prompts_dir)
     financial_research_prompt_path = resolve_path(args.financial_research_prompt_path, prompts_dir_path)

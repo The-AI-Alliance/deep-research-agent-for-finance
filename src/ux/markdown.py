@@ -417,7 +417,7 @@ class MarkdownDisplay(Display[DeepSearch]):
             function_call: str,
             tool_calls: str) -> MarkdownTable:
             table = MarkdownTable(title=f"✉️ OpenAI/Ollama Reply Message #{message_index}: Metadata",
-                columns = [('Item', 'left'), ('Value', 'right')])
+                columns = [('Item', 'left'), ('Value', 'left')])
             table.add_row(['refusal', str(refusal)])
             table.add_row(['role', str(role)])
             table.add_row(['annotations', str(annotations)])
@@ -586,7 +586,7 @@ class MarkdownDisplay(Display[DeepSearch]):
 
         # Create summary table
         summary_table = MarkdownTable(title="Execution Summary", 
-            columns = ["Metric", "Value"])
+            columns = [("Metric", "left"), ("Value", "right")])
         
         summary_table.add_row(["Total Time", f"{self.monitor.update_execution_time()}"])
         summary_table.add_row(["Iterations", str(self.orchestrator.iteration)])

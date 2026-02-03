@@ -123,7 +123,7 @@ class BaseTask():
             'output_path':    Variable.file_url_formatter(self.output_path),
             'temperature':    str(self.temperature),
             'max_iterations': str(self.max_iterations),
-            'status':         self.status.name,
+            'status':         Variable.code_formatter(self.status.name),
             'task_prompt':    task_prompt_str,
             'result':         result_str,
         }
@@ -255,9 +255,6 @@ class DeepSearch():
         self.tasks = tasks
         self.output_path = output_path
         self.variables = variables
-
-        ux = self.variables.get('ux')
-        Variable.set_ux(ux.value)
 
         # from mcp_agent.workflows.llm.augmented_llm_openai import OpenAIAugmentedLLM
         # self.llm_factory = OpenAIAugmentedLLM
@@ -414,7 +411,7 @@ class DeepSearch():
         """Create configuration for the Deep Orchestrator"""
         if short_run:
             execution_config=ExecutionConfig(
-                max_iterations=2,
+                max_iterations=1,
                 max_replans=2,
                 max_task_retries=2,
                 enable_parallel=True,
