@@ -128,10 +128,10 @@ class BaseTask():
             'result':         result_str,
         }
         # If `report` and/or `task_prompt` are excluded, we'll pop their "empty" values here.
-        for ex in exclude:
+        for ex in exclusions:
             attrs.pop(ex)
 
-        return dict([(Variable.make_label(key), value) for key, value in attrs])
+        return dict([(Variable.make_label(key), value) for key, value in attrs.items()])
 
     def __repr__(self) -> str: 
         return f"""name: {self.name}, model name: {self.model_name}, prompt path: {self.prompt_template_path}, saved prompt file: {self.task_prompt_saved_file}, status: {self.status}"""
