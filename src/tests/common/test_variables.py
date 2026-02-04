@@ -105,6 +105,17 @@ class TestVariables(unittest.TestCase):
         expected=string.replace('_', ' ').title().strip()
         self.assertEqual(expected, Variable.make_label(string))
 
+    @given(no_brace_nonempty_text())
+    def test_Variable_get_returns_default_if_variable_or_value_None(self, string: str):
+        v = Variable('key', None)
+        self.assertEqual(str, Variable.get(v, str))
+        self.assertEqual(str, Variable.get(None, str))
+
+    @given(no_brace_nonempty_text())
+    def test_Variable_get_returns_value_if_variable_and_value_not_None(self, string: str):
+        v = Variable('key', str)
+        self.assertEqual(str, Variable.get(v, None))
+
     @given(no_brace_text())
     def test_Variable_format_returns_None_if_formatter_None(self, string: str):
         variable = Variable(string, string + "_value", formatter=None)

@@ -8,16 +8,18 @@ clean_dirs      := ${clean_code_dirs} ${clean_doc_dirs}
 src_dir         := src
 app_dir         := finance_deep_search
 
-# Environment variables
+## Environment variables
 MAKEFLAGS           ?= # -w --warn-undefined-variables
 MAKEFLAGS_RECURSIVE ?= # --print-directory (only useful for recursive makes...)
 UNAME               ?= $(shell uname)
 ARCHITECTURE        ?= $(shell uname -m)
 
-# App defaults
+## App defaults
 # Hack: on the command line, use `make APP_ARGS='--foo bar' target` to pass other 
 # command-line arguments, e.g., '--help', to commands executed when building targets
 # that run the app command.
+
+MAIN_APP                   ?= main_finance.py
 TICKER                     ?= META
 COMPANY_NAME               ?= Meta Platforms, Inc.
 REPORTING_CURRENCY         ?= USD
@@ -31,6 +33,12 @@ MARKDOWN_YAML_HEADER_FILE  ?= ${TEMPLATES_DIR}/github_pages_header.yaml
 OUTPUT_DIR                 ?= ${PWD}/output/${TICKER}
 OUTPUT_REPORT              ?= ${TICKER}_report.md
 OUTPUT_SPREADSHEET         ?= ${TICKER}_financials.xlsx
+TEMPERATURE                ?= 0.7
+MAX_ITERATIONS             ?= 25
+# Might be expensive on some inference services!
+MAX_TOKENS                 ?= 500000
+MAX_COST_DOLLARS           ?= 2.0
+MAX_TIME_MINUTES           ?= 15
 UX                         ?= rich
 APP_ARGS                   ?=
 
@@ -40,6 +48,8 @@ JEKYLL_PORT         ?= 4000
 # Used for version tagging release artifacts.
 GIT_HASH            ?= $(shell git show --pretty="%H" --abbrev-commit |head -1)
 NOW                 ?= $(shell date +"%Y%m%d-%H%M%S")
+
+## Define messages
 
 define help_message
 Quick help for this make process
@@ -127,6 +137,8 @@ define ruby_installation_message
 See ruby-lang.org for installation instructions.
 endef
 
+## Define targets
+
 .PHONY: all view-pages view-local clean clean_code clean_docs help 
 .PHONY: setup-jekyll run-jekyll
 .PHONY: app-run app-run-rich app-run-md app-run-markdown do-app-run app-setup app-check uv-check uv-cmd-check venv-check
@@ -140,7 +152,7 @@ app-run-md app-run-markdown::
 app-run-rich:: app-run
 app-run:: app-check do-app-run show-output-files
 do-app-run::
-	cd ${src_dir} && uv run main_finance.py \
+	cd ${src_dir} && uv run ${MAIN_APP} \
 		--ticker "${TICKER}" \
 		--company-name "${COMPANY_NAME}" \
 		--output-dir "${OUTPUT_DIR}" \
@@ -155,6 +167,11 @@ do-app-run::
 		--research-model "${RESEARCH_MODEL}" \
 		--excel-writer-model "${EXCEL_WRITER_MODEL}" \
 		--provider "${INFERENCE_PROVIDER}" \
+		--temperature ${TEMPERATURE} \
+		--max-iterations ${MAX_ITERATIONS} \
+		--max-tokens ${MAX_TOKENS} \
+		--max-cost-dollars ${MAX_COST_DOLLARS} \
+		--max-time-minutes ${MAX_TIME_MINUTES} \
 		--verbose \
 		--ux ${UX} \
 		${APP_ARGS}
@@ -181,8 +198,8 @@ app-setup:: uv-check venv-check
 	uv add mcp-agent
 
 app-help:: 
-	@echo "Help on ${src_dir}/${app_dir}/main.py:"
-	cd ${src_dir} && uv run main.py --help  
+	@echo "Help on ${src_dir}/${app_dir}/${MAIN_APP}:"
+	cd ${src_dir} && uv run ${MAIN_APP} --help  
 	@echo
 	@echo "TIP: Use 'make print-app-info' to see some make variables you can override."
 	@echo "TIP: Use 'make --just-print app-run' to see the default arguments used."

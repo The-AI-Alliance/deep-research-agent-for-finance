@@ -21,6 +21,14 @@ class Variable():
         self.label = label if label != None else Variable.make_label(key) 
         self.formatter = formatter
 
+    @staticmethod
+    def get(variable: Variable, default: any) -> any:
+        """Return the variables value or default if the variable is None or the value is None."""
+        if variable and variable.value:
+            return variable.value
+        else:
+            return default
+
     def format(self, use_basic_formatting: bool = False) -> (str, str, str):
         """
         If formatter is not `None`, then return `(key, label, formatter(value))`.
@@ -73,23 +81,26 @@ class Variable():
         'markdown':  'Markdown',
     }
     
-    url_formatter_md        = lambda u: f"[{u}]({u})"
-    file_url_formatter_md   = lambda f: f"[`{f}`](file://{f})"
-    code_formatter_md       = lambda s: f"`{s}`"
-    dict_formatter_md       = lambda d: '\n'.join([f"`{k}`: {v}" for k,v in d.items()])
-    callout_formatter_md    = lambda s: '\n'.join([f"> {line}" for line in str(s).split('\n')])
+    url_formatter_md              = lambda u: f"[{u}]({u})"
+    file_url_formatter_md         = lambda f: f"[`{f}`](file://{f})"
+    code_formatter_md             = lambda s: f"`{s}`"
+    code_formatter_multiline_md   = lambda s: f"```\n{s}\n```"
+    dict_formatter_md             = lambda d: '\n'.join([f"`{k}`: {v}" for k,v in d.items()])
+    callout_formatter_md          = lambda s: '\n'.join([f"> {line}" for line in str(s).split('\n')])
 
-    url_formatter_rich      = lambda u: str(u)
-    file_url_formatter_rich = lambda f: str(f)
-    code_formatter_rich     = lambda s: str(s)
-    dict_formatter_rich     = lambda d: '\n'.join([f"{k}: {v}" for k,v in d.items()])
-    callout_formatter_rich  = lambda s: str(s)
+    url_formatter_rich            = lambda u: str(u)
+    file_url_formatter_rich       = lambda f: str(f)
+    code_formatter_rich           = lambda s: str(s)
+    code_formatter_multiline_rich = lambda s: str(s)
+    dict_formatter_rich           = lambda d: '\n'.join([f"{k}: {v}" for k,v in d.items()])
+    callout_formatter_rich        = lambda s: str(s)
 
-    url_formatter           = url_formatter_rich
-    file_url_formatter      = file_url_formatter_rich
-    code_formatter          = code_formatter_rich
-    dict_formatter          = dict_formatter_rich
-    callout_formatter       = callout_formatter_rich
+    url_formatter                 = url_formatter_rich
+    file_url_formatter            = file_url_formatter_rich
+    code_formatter                = code_formatter_rich
+    code_formatter_multiline      = code_formatter_multiline_rich
+    dict_formatter                = dict_formatter_rich
+    callout_formatter            = callout_formatter_rich
 
     # Keep consistent with ux_names above!
     def set_ux(ux: str):
@@ -100,17 +111,19 @@ class Variable():
         Variable.which_ux = ux
         match ux:
             case 'rich':
-                Variable.url_formatter      = Variable.url_formatter_rich
-                Variable.file_url_formatter = Variable.file_url_formatter_rich
-                Variable.code_formatter     = Variable.code_formatter_rich
-                Variable.dict_formatter     = Variable.dict_formatter_rich
-                Variable.callout_formatter  = Variable.callout_formatter_rich
+                Variable.url_formatter            = Variable.url_formatter_rich
+                Variable.file_url_formatter       = Variable.file_url_formatter_rich
+                Variable.code_formatter           = Variable.code_formatter_rich
+                Variable.code_formatter_multiline = Variable.code_formatter_multiline_rich
+                Variable.dict_formatter           = Variable.dict_formatter_rich
+                Variable.callout_formatter        = Variable.callout_formatter_rich
             case 'markdown':
-                Variable.url_formatter      = Variable.url_formatter_md
-                Variable.file_url_formatter = Variable.file_url_formatter_md
-                Variable.code_formatter     = Variable.code_formatter_md
-                Variable.dict_formatter     = Variable.dict_formatter_md
-                Variable.callout_formatter  = Variable.callout_formatter_md
+                Variable.url_formatter            = Variable.url_formatter_md
+                Variable.file_url_formatter       = Variable.file_url_formatter_md
+                Variable.code_formatter           = Variable.code_formatter_md
+                Variable.code_formatter_multiline = Variable.code_formatter_multiline_md
+                Variable.dict_formatter           = Variable.dict_formatter_md
+                Variable.callout_formatter        = Variable.callout_formatter_md
             case _:
                 raise ValueError(f"Unrecognized 'ux' value: {ux}")
 

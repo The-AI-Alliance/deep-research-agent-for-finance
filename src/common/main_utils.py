@@ -100,6 +100,30 @@ def add_arg_max_iterations(parser: argparse.ArgumentParser, def_max_iterations: 
         help=f"The maximum number of iterations for inference/analysis passes. (Default: {def_max_iterations}, but a lower value will be used if --short-run is used. Values <= 0 will be converted to 1)"
     )
 
+def add_arg_max_tokens(parser: argparse.ArgumentParser, def_max_tokens: int = 100000):
+    parser.add_argument(
+        "--max-tokens",
+        type=int,
+        default=def_max_tokens,
+        help=f"The maximum number of tokens for inference passes. (Default: {def_max_tokens}, but a lower value will be used if --short-run is used. Values <= 0 will be converted to 10000)"
+    )
+
+def add_arg_max_cost_dollars(parser: argparse.ArgumentParser, def_max_cost_dollars: float = 1.00):
+    parser.add_argument(
+        "--max-cost-dollars",
+        type=float,
+        default=def_max_cost_dollars,
+        help=f"The maximum total cost in USD allowed for inference calls. (Default: {def_max_cost_dollars}, but a lower value will be used if --short-run is used. Values <= 0 will be converted to 1.00)"
+    )
+
+def add_arg_max_time_minutes(parser: argparse.ArgumentParser, def_max_time_minutes: int = 10.0):
+    parser.add_argument(
+        "--max-time-minutes",
+        type=int,
+        default=def_max_time_minutes,
+        help=f"The maximum number of time in minutes allowed for inference passes. (Default: {def_max_time_minutes}, but a lower value will be used if --short-run is used. Values <= 0 will be converted to 10)"
+    )
+
 def add_arg_ux(parser: argparse.ArgumentParser, def_ux: str = 'rich'):
     parser.add_argument(
         "-u", "--ux",
@@ -152,10 +176,25 @@ def process_args(parser: argparse.ArgumentParser) -> (argparse.Namespace, dict[s
     if max_iterations < 1:
         max_iterations = 1
 
+    max_tokens = 10000 if args.short_run else args.max_tokens
+    if max_tokens < 1:
+        max_tokens = 10000
+
+    max_cost_dollars = 1.00 if args.short_run else args.max_cost_dollars
+    if max_cost_dollars <= 0.0:
+        max_cost_dollars = 1.00
+
+    max_time_minutes = 10 if args.short_run else args.max_time_minutes
+    if max_time_minutes < 1:
+        max_time_minutes = 10
+
     return (args, {
         'start_time': datetime.now().strftime('%Y-%m-%d %H:%M%:%S'),
         "temperature": temperature, 
         "max_iterations": max_iterations,
+        "max_tokens": max_tokens,
+        "max_cost_dollars": max_cost_dollars,
+        "max_time_minutes": max_time_minutes,
         "markdown_report_path": markdown_report_path,
         "yaml_header_template_path": markdown_yaml_header_path,
     })
@@ -199,6 +238,10 @@ def var_with_code_fmt(key: str, value: str, label: str = None) -> Variable:
 def var_with_dict_fmt(key: str, value: str, label: str = None, map: dict[str,str] = {}) -> Variable:
     return Variable(key, value, label=label, formatter=map)
 
+# If a corresponding `var_*` function isn't defined for an `add_arg_*` function above,
+# it is because we handle the variable specially in `process_args()` and a value is 
+# added to the variables returned by it for these arguments.
+
 def var_start_time(time: str) -> Variable:
     return Variable("start_time", time)
 
@@ -226,17 +269,18 @@ def var_research_model(model: str) -> Variable:
 def var_ux(ux: str) -> Variable:
     return var_with_dict_fmt("ux", ux, label="UX", map=Variable.ux_names)
 
-def vars_verbose_only(
+def only_verbose_common_vars(
     args: argparse.Namespace,
-    processed_args: dict[str,any],
-    config: any) -> list[Variable]:
+    processed_args: dict[str,any]) -> list[Variable]:
     return [
-        Variable("verbose",         args.verbose, formatter=only_verbose(args)),
-        Variable("short_run",       args.short_run, formatter=only_verbose(args)),
-        Variable("temperature",     processed_args['temperature'], label="LLM Temperature", formatter=only_verbose(args)), 
-        Variable("max_iterations",  processed_args['max_iterations'], label="LLM Max Iterations", formatter=only_verbose(args)),
+        Variable("verbose",           args.verbose, formatter=only_verbose(args)),
+        Variable("short_run",         args.short_run, formatter=only_verbose(args)),
+        Variable("temperature",       processed_args['temperature'], label="LLM Temperature", formatter=only_verbose(args)), 
+        Variable("max_iterations",    processed_args['max_iterations'], label="LLM Max Iterations", formatter=only_verbose(args)),
+        Variable("max_tokens",        processed_args['max_tokens'], label="LLM Max Inference Tokens", formatter=only_verbose(args)),
+        Variable("max_cost_dollars",  processed_args['max_cost_dollars'], label="LLM Max Inference cost in USD", formatter=only_verbose(args)),
+        Variable("max_time_minutes",  processed_args['max_time_minutes'], label="LLM Max Inference time in minutes", formatter=only_verbose(args)),
         # Only used for Markdown UX. TODO: make this user configurable.
-        Variable('print_on_update', False, formatter=only_verbose(args)),
-        Variable("config",          config, label="Configuration", formatter=only_verbose(args, Variable.callout_formatter)),    
+        Variable('print_on_update',   False, formatter=only_verbose(args)),
     ]
 

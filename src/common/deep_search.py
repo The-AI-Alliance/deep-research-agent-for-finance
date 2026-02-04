@@ -47,15 +47,13 @@ class BaseTask():
         model_name: str, 
         prompt_template_path: Path,
         output_dir_path: Path,
-        temperature: float, 
-        max_iterations: int):
+        properties: dict[str,any]):
         self.name = name
         self.title = title
         self.model_name = model_name
         self.prompt_template_path = prompt_template_path
         self.output_dir_path = output_dir_path
-        self.temperature = temperature
-        self.max_iterations = max_iterations
+        self.properties = properties
 
         self.status: TaskStatus = TaskStatus.NOT_STARTED 
         self.result: list[any] = []
@@ -101,33 +99,26 @@ class BaseTask():
         # First create a dictionary with the attribute names as keys and formatted values,
         # which we'll then filter for exclusions, then return a new dictionary with the
         # keys converted to nice labels.
-        # We use slightly "funky" handling of `self.task_prompt` and `self.result`, to 
-        # avoid unnecessary formatting of very large strings, when not desired. Effectively,
-        # we add empty strings for them, then remove them below, so exclusion handling is
-        # uniformly done...
-        task_prompt_str = '' 
-        if 'task_prompt' not in exclusions:
-            task_prompt_str = Variable.callout_formatter(self.task_prompt)
-        result_str = '' 
-        if 'result' not in exclusions:
-            result_str = Variable.callout_formatter(self.result)
-
         attrs = {
-            'name':            Variable.code_formatter(self.name),
-            'title':           self.title,
-            'model_name':      Variable.code_formatter(self.model_name),
+            'name':             Variable.code_formatter(self.name),
+            'title':            self.title,
+            'model_name':       Variable.code_formatter(self.model_name),
             'prompt_template_path': 
-                               Variable.file_url_formatter(self.prompt_template_path),
+                                Variable.file_url_formatter(self.prompt_template_path),
             'task_prompt_saved_file': 
-                               f"Saved prompt: {Variable.file_url_formatter(self.task_prompt_saved_file)}",
-            'output_dir_path': Variable.file_url_formatter(self.output_dir_path),
-            'temperature':     str(self.temperature),
-            'max_iterations':  str(self.max_iterations),
-            'status':          Variable.code_formatter(self.status.name),
-            'task_prompt':     task_prompt_str,
-            'result':          result_str,
+                                f"Saved prompt: {Variable.file_url_formatter(self.task_prompt_saved_file)}",
+            'output_dir_path':  Variable.file_url_formatter(self.output_dir_path),
+            'status':           Variable.code_formatter(self.status.name),
+            'task_prompt':      Variable.code_formatter_multiline(truncate(str(self.task_prompt), 200, '...')),
+            'result':           Variable.code_formatter_multiline(truncate(str(self.result), 200, '...')),
         }
-        # If `report` and/or `task_prompt` are excluded, we'll pop their "empty" values here.
+        # TODO: somewhat fragile hard-coding these specific values:
+        for key in ['temperature', 'max_iterations', 'max_tokens', 'max_cost_dollars', 'max_time_minutes']:
+            value = self.properties.get(key)
+            if value:
+                attrs[key] = str(value)
+
+        # Now remove the key-values we don't want to include.
         for ex in exclusions:
             attrs.pop(ex)
 
@@ -163,6 +154,9 @@ class BaseTask():
                 msg = str(self.result) if self.result else 'No result yet...'
                 logger.debug(f"{self.status}: {msg}")
 
+    def _get_val(self, key: str, default: any) -> any:
+        return Variable.get(self.properties.get(key), default)
+
 class GenerateTask(BaseTask):
     def __init__(self, 
         name: str, 
@@ -170,9 +164,10 @@ class GenerateTask(BaseTask):
         model_name: str, 
         prompt_template_path: Path,
         output_dir_path: Path,
-        temperature: float, 
-        max_iterations: int):
-        super().__init__(name, title, model_name, prompt_template_path, output_dir_path, temperature, max_iterations)
+        properties: dict[str,any]):
+        super().__init__(name, title, model_name, 
+            prompt_template_path, output_dir_path, 
+            properties)
 
     async def _run(self, 
         task_prompt: str, 
@@ -183,8 +178,11 @@ class GenerateTask(BaseTask):
             message=task_prompt,
             request_params=RequestParams(
                 model=self.model_name, 
-                temperature=self.temperature,
-                max_iterations=self.max_iterations,
+                temperature=self._get_val('temperature', 0.7),
+                max_iterations=self._get_val('max_iterations', 10),
+                max_tokens=self._get_val('max_tokens', 100000),
+                max_cost=self._get_val('max_cost_dollars', 2.0),
+                max_time_minutes=self._get_val('max_time_minutes', 10),
             ),
         )
 
@@ -199,9 +197,10 @@ class AgentTask(BaseTask):
         prompt_template_path: Path,
         output_dir_path: Path,
         generate_prompt: str,
-        temperature: float, 
-        max_iterations: int):
-        super().__init__(name, title, model_name, prompt_template_path, output_dir_path, temperature, max_iterations)
+        properties: dict[str,any]):
+        super().__init__(name, title, model_name, 
+            prompt_template_path, output_dir_path, 
+            properties)
         self.generate_prompt = generate_prompt
 
     async def _run(self, 
@@ -222,8 +221,11 @@ class AgentTask(BaseTask):
                 message=self.generate_prompt,
                 request_params=RequestParams(
                     model=self.model_name, 
-                    temperature=self.temperature,
-                    max_iterations=self.max_iterations,
+                    temperature=self._get_val('temperature', 0.7),
+                    max_iterations=self._get_val('max_iterations', 10),
+                    max_tokens=self._get_val('max_tokens', 100000),
+                    max_cost=self._get_val('max_cost_dollars', 2.0),
+                    max_time_minutes=self._get_val('max_time_minutes', 10),
                 ),
             )
 
@@ -383,7 +385,7 @@ class DeepSearch():
                 file.write('\n\n')
     
     def __print_details(self):
-        message_fmt = "    {0:25s}  {1}"
+        message_fmt = "    {0:40s}  {1}"
         pwd = os.path.dirname(os.path.realpath(__file__))
         props_strs = []
         for l, v in Variable.make_formatted(self.variables.values(), use_basic_formatting=True):
@@ -409,12 +411,16 @@ class DeepSearch():
     def make_default_config(
         short_run: bool,
         name: str,
-        available_servers: list[str]) -> DeepOrchestratorConfig:
+        available_servers: list[str],
+        variables: dict[str, Variable]) -> DeepOrchestratorConfig:
         """
         Create configuration for the Deep Orchestrator.
-        TODO: Make all this user configurable.
+        TODO: Make all this user configurable. Not all the queries to `variables`
+        are currently defined by the calling module! Hence, the hard-coded defaults
+        here are used.
         """
         if short_run:
+            # don't use the values passed in through variables.
             execution_config=ExecutionConfig(
                 max_iterations=1,
                 max_replans=2,
@@ -428,17 +434,20 @@ class DeepSearch():
                 max_time_minutes=2,
             )
         else:
+            def get_val(key: str, default: any) -> any:
+                return Variable.get(variables.get(key), default)
+
             execution_config=ExecutionConfig(
-                max_iterations=25,
-                max_replans=2,
-                max_task_retries=5,
-                enable_parallel=True,
-                enable_filesystem=True,
+                max_iterations=get_val('max_iterations', 25),
+                max_replans=get_val('max_replans', 2),
+                max_task_retries=get_val('max_task_retries', 5),
+                enable_parallel=get_val('enable_parallel', True),
+                enable_filesystem=get_val('enable_filesystem', True),
             )
             budget_config=BudgetConfig(
-                max_tokens=100000,
-                max_cost=1.00,
-                max_time_minutes=10,
+                max_tokens=get_val('max_tokens', 100000),
+                max_cost=get_val('max_cost_dollars', 1.00),
+                max_time_minutes=get_val('max_time_minutes', 10),
             )
         config = DeepOrchestratorConfig(
             name=name,

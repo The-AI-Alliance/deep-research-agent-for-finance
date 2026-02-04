@@ -37,6 +37,9 @@ from common.main_utils import (
     add_arg_provider,
     add_arg_temperature,
     add_arg_max_iterations,
+    add_arg_max_tokens,
+    add_arg_max_cost_dollars,
+    add_arg_max_time_minutes,
     add_arg_ux,
     add_arg_short_run,
     add_arg_verbose,
@@ -53,7 +56,8 @@ from common.main_utils import (
     var_research_model,
     var_research_model,
     var_ux,
-    vars_verbose_only,
+    only_verbose_common_vars,
+    only_verbose,
 )
 from common.path_utils import resolve_path, resolve_and_require_path
 from common.variables import Variable
@@ -75,7 +79,10 @@ if __name__ == "__main__":
     def_excel_writer_model = 'o4-mini'
     def_ux = 'rich'
     def_temperature = 0.7
-    def_max_iterations = 10
+    def_max_iterations = 25
+    def_max_tokens = 100000
+    def_max_cost_dollars = 1.00
+    def_max_time_minutes = 10.0
 
     parser = make_parser("Finance Deep Research using orchestrated AI agents")
     parser.add_argument(
@@ -122,6 +129,9 @@ if __name__ == "__main__":
     add_arg_ux(parser, def_ux)
     add_arg_temperature(parser, def_temperature)
     add_arg_max_iterations(parser, def_max_iterations)
+    add_arg_max_tokens(parser, def_max_tokens)
+    add_arg_max_cost_dollars(parser, def_max_cost_dollars)
+    add_arg_max_time_minutes(parser, def_max_time_minutes)
     add_arg_short_run(parser)
     add_arg_verbose(parser)
 
@@ -129,15 +139,6 @@ if __name__ == "__main__":
     
     # Change to app directory
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
-
-    # Create configuration for the Deep Orchestrator
-    # To add additional servers, define them in mcp_agent.config.yaml,
-    # then add them by name the list passed for `available_servers`.
-    # See the project README for details.
-    config: DeepOrchestratorConfig = DeepSearch.make_default_config(
-        args.short_run,
-        "FinancialDeepResearcher",
-        ["excel_writer", "fetch", "filesystem", "financial-datasets", "yfmcp"])
 
     output_dir_path = Path(args.output_dir)
     output_spreadsheet_path = resolve_path(args.output_spreadsheet, output_dir_path)
@@ -175,7 +176,7 @@ if __name__ == "__main__":
         var_ux(args.ux),
     ]
 
-    variables_list.extend(vars_verbose_only(args, processed_args, config))
+    variables_list.extend(only_verbose_common_vars(args, processed_args))
 
     variables = dict([(v.key, v) for v in variables_list])
 
@@ -186,8 +187,7 @@ if __name__ == "__main__":
             model_name=args.research_model,
             prompt_template_path=financial_research_prompt_path,
             output_dir_path=output_dir_path,
-            temperature=processed_args['temperature'], 
-            max_iterations=processed_args['max_iterations']),
+            properties=variables),
         AgentTask(
             name="excel_writer",
             title="📈 Excel Creation Result",
@@ -195,13 +195,25 @@ if __name__ == "__main__":
             prompt_template_path=excel_writer_agent_prompt_path,
             output_dir_path=output_dir_path,
             generate_prompt="Generate the Excel file with the provided financial data.",
-            temperature=processed_args['temperature'], 
-            max_iterations=processed_args['max_iterations']),
+            properties=variables),
     ]
 
     ux_title = "Deep Research Agent for Finance"
 
     make_display = determine_display(args.ux, ux_title, **processed_args)
+
+    # Create configuration for the Deep Orchestrator
+    # To add additional servers, define them in mcp_agent.config.yaml,
+    # then add them by name the list passed for `available_servers`.
+    # See the project README for details.
+    config: DeepOrchestratorConfig = DeepSearch.make_default_config(
+        args.short_run,
+        "FinancialDeepResearcher",
+        ["excel_writer", "fetch", "filesystem", "financial-datasets", "yfmcp"],
+        variables)
+
+    variables["config"] = Variable("config", config, label="Configuration", 
+        formatter=only_verbose(args, Variable.callout_formatter))
 
     deep_search = DeepSearch(
         app_name=def_app_name,

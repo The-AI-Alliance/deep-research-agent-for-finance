@@ -53,14 +53,26 @@ The application provides several command-line options to configure the behavior:
 
 ```shell
 $ cd src && uv run main_finance.py --help
-usage: main_finance.py [-h] --ticker TICKER --company-name COMPANY_NAME [--reporting-currency REPORTING_CURRENCY]
-                       [--output-dir OUTPUT_DIR] [--markdown-report MARKDOWN_REPORT]
-                       [--output-spreadsheet OUTPUT_SPREADSHEET] [--templates-dir TEMPLATES_DIR]
+Help on src/finance_deep_search/main_finance.py:
+cd src && uv run main_finance.py --help  
+usage: main_finance.py [-h] --ticker TICKER --company-name COMPANY_NAME
+                       [--reporting-currency REPORTING_CURRENCY]
+                       [--output-dir OUTPUT_DIR]
+                       [--markdown-report MARKDOWN_REPORT]
+                       [--output-spreadsheet OUTPUT_SPREADSHEET]
+                       [--templates-dir TEMPLATES_DIR]
                        [--financial-research-prompt-path FINANCIAL_RESEARCH_PROMPT_PATH]
                        [--excel-writer-agent-prompt-path EXCEL_WRITER_AGENT_PROMPT_PATH]
-                       [--research-model RESEARCH_MODEL] [--excel-writer-model EXCEL_WRITER_MODEL]
-                       [--provider {openai,anthropic,ollama}] [-u {rich,markdown}] [--temperature TEMPERATURE]
-                       [--max-iterations MAX_ITERATIONS] [--short-run] [-v]
+                       [--markdown-yaml-header MARKDOWN_YAML_HEADER]
+                       [--research-model RESEARCH_MODEL]
+                       [--excel-writer-model EXCEL_WRITER_MODEL]
+                       [--provider {openai,anthropic,ollama}]
+                       [-u {rich,markdown}] [--temperature TEMPERATURE]
+                       [--max-iterations MAX_ITERATIONS]
+                       [--max-tokens MAX_TOKENS]
+                       [--max-cost-dollars MAX_COST_DOLLARS]
+                       [--max-time-minutes MAX_TIME_MINUTES] [--short-run]
+                       [-v]
 
 Finance Deep Research using orchestrated AI agents
 
@@ -70,53 +82,93 @@ options:
   --company-name COMPANY_NAME
                         Full company name
   --reporting-currency REPORTING_CURRENCY
-                        The currency used by the company for financial reporting. (Default:USD)
+                        The currency used by the company for financial
+                        reporting. (Default:USD)
   --output-dir OUTPUT_DIR
-                        Path where Excel and other output files will be saved. (Default: ./output)
+                        Path where Excel and other output files will be saved.
+                        (Default: ./output)
   --markdown-report MARKDOWN_REPORT
-                        Path where a Markdown report is written. Ignored unless --ux markdown is used. (Default:
-                        research_report.md) If the path doesn't contain a directory prefix, then the file will be
-                        written in the directory given by '--output-dir'.
+                        Path where a Markdown report is written. Ignored
+                        unless --ux markdown is used. (Default:
+                        research_report.md) If the path doesn't contain a
+                        directory prefix, then the file will be written in the
+                        directory given by '--output-dir'.
   --output-spreadsheet OUTPUT_SPREADSHEET
-                        Path where the Excel spreadsheet is written. (Default: financials.xlsx) If the path doesn't
-                        contain a directory prefix, then the file will be written in the directory given by '--
-                        output-dir'.
+                        Path where the Excel spreadsheet is written. (Default:
+                        financials.xlsx) If the path doesn't contain a
+                        directory prefix, then the file will be written in the
+                        directory given by '--output-dir'.
   --templates-dir TEMPLATES_DIR
-                        Path to the directory where prompt files are located. (Default: ./prompts)
+                        Path to the directory where template files are located
+                        (e.g., for inference prompts). (Default: ./templates)
   --financial-research-prompt-path FINANCIAL_RESEARCH_PROMPT_PATH
-                        Path where the main research agent prompt file is located. (Default:
-                        financial_research_agent.md) If the path doesn't contain a directory prefix, then the file
-                        will be read in the directory given by '--templates-dir'.
+                        Path where the main research agent prompt file is
+                        located. (Default: financial_research_agent.md) If the
+                        path doesn't contain a directory prefix, then the file
+                        will be read in the directory given by '--templates-
+                        dir'.
   --excel-writer-agent-prompt-path EXCEL_WRITER_AGENT_PROMPT_PATH
-                        Path where the Excel writer agent prompt file is located. (Default: excel_writer_agent.md)
-                        If the path doesn't contain a directory prefix, then the file will be read in the directory
-                        given by '--templates-dir'.
+                        Path where the Excel writer agent prompt file is
+                        located. (Default: excel_writer_agent.md) If the path
+                        doesn't contain a directory prefix, then the file will
+                        be read in the directory given by '--templates-dir'.
+  --markdown-yaml-header MARKDOWN_YAML_HEADER
+                        Path to an optional template for a YAML header to
+                        write at the beginning of the Markdown report. Useful
+                        for publishing the report on a GitHub Pages website.
+                        Ignored unless --ux markdown is used. (Default: None)
+                        If the path doesn't contain a directory prefix, then
+                        the file will be read in the directory given by '--
+                        template-dir'.
   --research-model RESEARCH_MODEL
-                        The model used the research orchestrator agent. (Default: gpt-4o). It should be very
-                        capable.
+                        The model used the research orchestrator agent.
+                        (Default: gpt-4o). It should be very capable.
   --excel-writer-model EXCEL_WRITER_MODEL
-                        The model used for writing results to Excel (default: o4-mini); a less powerful model is
-                        sufficient.
+                        The model used for writing results to Excel (default:
+                        o4-mini); a less powerful model is sufficient.
   --provider {openai,anthropic,ollama}
-                        The inference provider. Where is the model served? See the note at the bottom of this help.
-                        (Default: openai)
+                        The inference provider. Where is the model served? See
+                        the note at the bottom of this help. (Default: openai)
   -u {rich,markdown}, --ux {rich,markdown}
-                        The 'UX' to use. Use 'rich' for a rich console UX and 'markdown' for streaming updates in
-                        markdown syntax. (Default: rich)
+                        The 'UX' to use. Use 'rich' for a rich console UX and
+                        'markdown' for streaming updates in markdown syntax.
+                        (Default: rich)
   --temperature TEMPERATURE
-                        The 'temperature' used during inference calls to models, between 0.0 and 1.0. (Default:
-                        0.7)
+                        The 'temperature' used during inference calls to
+                        models, between 0.0 and 1.0. (Default: 0.7)
   --max-iterations MAX_ITERATIONS
-                        The maximum number of iterations for inference/analysis passes. (Default: 10, but a lower
-                        value will be used if --short-run is used. Values <= 0 will be converted to 1)
-  --short-run           Sets some low maximum thresholds to create a shorter run. This is primarily a debugging
-                        tool, as lower iterations, for example, means lower quality results.
-  -v, --verbose         Print some extra output. Useful for some testing and debugging scenarios.
+                        The maximum number of iterations for
+                        inference/analysis passes. (Default: 25, but a lower
+                        value will be used if --short-run is used. Values <= 0
+                        will be converted to 1)
+  --max-tokens MAX_TOKENS
+                        The maximum number of tokens for inference passes.
+                        (Default: 100000, but a lower value will be used if
+                        --short-run is used. Values <= 0 will be converted to
+                        10000)
+  --max-cost-dollars MAX_COST_DOLLARS
+                        The maximum total cost in USD allowed for inference
+                        calls. (Default: 1.0, but a lower value will be used
+                        if --short-run is used. Values <= 0 will be converted
+                        to 1.00)
+  --max-time-minutes MAX_TIME_MINUTES
+                        The maximum number of time in minutes allowed for
+                        inference passes. (Default: 10.0, but a lower value
+                        will be used if --short-run is used. Values <= 0 will
+                        be converted to 10.0)
+  --short-run           Sets some low maximum thresholds to create a shorter
+                        run. This is primarily a debugging tool, as lower
+                        iterations, for example, means lower quality results.
+  -v, --verbose         Print some extra output. Useful for some testing and
+                        debugging scenarios.
 
-Due to current limitations, you must use either OpenAI, Anthropic, or local models served by ollama, and you have
-to tell us which one using the `--provider` argument, although it defaults to 'openai'. The same provider must be
-used for BOTH the orchestrator and excel writer models, so specify them accordingly. The default is 'openai', which
-works for both OpenAI and Ollama, but you currently have to edit mcp_agent.config.yaml to use the correct settings!
+Due to current limitations, you must use either OpenAI, Anthropic, or local
+models served by ollama, and you have to tell us which one using the
+`--provider` argument, although it defaults to 'openai'. The same provider
+must be used for BOTH the orchestrator and excel writer models, so specify
+them accordingly. The default is 'openai', which works for both OpenAI and
+Ollama, but you currently have to edit mcp_agent.config.yaml to use the
+correct settings!
 ```
 
 The `--ticker` and `--company-name` are required.
@@ -124,7 +176,7 @@ The `--ticker` and `--company-name` are required.
 A `Makefile` provides convenient ways to run the application, get help, etc. The `app-run` command runs the following command with the arguments shown:
 
 ```shell
-cd src && uv run main.py \
+cd src && uv run main_finance.py \
     --ticker "META" \
     --company-name "Meta Platforms, Inc." \
     --reporting-currency "USD" \
@@ -137,14 +189,20 @@ cd src && uv run main.py \
     --excel-writer-model "o4-mini" \
     --provider "openai" \
     --temperature 0.7 \
-    --max-iterations 10 \
+    --max-iterations 25 \
+    --max-tokens 500000 \
+    --max-cost-dollars 1.0 \
+    --max-time-minutes 10.0 \
     --ux rich \
     --verbose
 ```
 
-Some of these arguments are the same as the application's built-in default values.
+Some of these arguments are the same as the application's built-in default values. 
 
-The make target `app-run` is equivalent to `app-run-rich`, which uses the Python Rich console library as a UX. There is also a target `app-run-markdown`, which uses minimal console output and writes a Markdown report at the end. 
+> [!TIP]
+> All the values for the arguments shown here are defined near the top of the `Makefile`, in the `## App defaults` section. So, if you want to change any of these values, edit the corresponding variable definitions there.
+
+The make target `app-run` is equivalent to `app-run-rich`, which uses the Python Rich console library as a UX. There is also a target `app-run-markdown`, which uses minimal console output and writes a Markdown report at the end. (NOTE: We plan to merge these!)
 
 > [!TIP]
 > * Use `make help` to see help on the most important `make` targets.
@@ -198,6 +256,9 @@ If you specify a value for either argument that includes an absolute or relative
     --provider "openai"
     --temperature 0.7 
     --max-iterations 10 
+    --max-tokens 500000
+    --max-cost-dollars 2.0
+    --max-time-minutes 15
   ...
 ```
 
@@ -209,9 +270,15 @@ In addition, at this time you have to edit [`./mcp_agent.config.yaml`](https://g
 
 The `--temperature` affects the randomness of responses during inference calls. The value must be between 0.0 and 1.0. Higher temperature values yield more randomness.
 
-The `--max-iterations` determines how many inference and checking cycles will be attempted during various stages of the agent's work. Higher values yield better results, but with more potential cost. 
+The `--max-*` arguments fine tune limits on execution:
 
-An optional flag is `--short-run`, which overrides `--max-iterations` with a value of 1 and sets other limits more stringently. This is mostly a debugging tool for checking the end-to-end logic of the application, but the results are rarely research results are unlikely to be "good".
+* `--max-iterations` determines how many inference and checking cycles will be attempted during various stages of the agent's work. Higher values yield better results, but with more potential cost. 
+* `--max-tokens` limits the number of inference tokens generated.
+* `--max-cost-dollars` limits the money spent on inference services from OpenAI or Anthropic (It has no effect for Ollama inference).
+* `--max-time-minutes` limits how many minutes the app runs.
+
+> [!NOTE]
+> An optional flag is `--short-run`, which overrides `--max-*` values with smaller numbers and it sets other limits more stringently. This is mostly a debugging tool for checking the end-to-end logic of the application, but expect the research process to not complete successfully, as it easily hits those limits and terminates.
 
 See [Configuration](#configuration) below for more details.
 
@@ -386,7 +453,7 @@ mcp:
       ]
 ```
 
-2. In `src/main.py`, around line 261, change the configuration of the Deep Orchestrator and add your server as a new available server:
+2. In `src/main_finance.py`, around line 215, change the configuration of the Deep Orchestrator and add your server as a new available server:
 
 ```python
     # Add your server to the `available_servers`:
@@ -415,9 +482,9 @@ mcp:
       args: ["your-mcp-server-package"]
 ```
 
-2. Add it to `available_servers` in `src/main.py` as shown above.
+2. Add it to `available_servers` in `src/main_finance.py` as shown above.
 
-See examples in `mcp_agent.config.yaml` and `src/main.py`, such as the `excel` service definition.
+See examples in `mcp_agent.config.yaml` and `src/main_finance.py`, such as the `excel` service definition.
 
 ## Contributing to This Project
 
