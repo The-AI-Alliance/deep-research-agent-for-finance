@@ -306,7 +306,7 @@ class MarkdownDisplay(Display[DeepSearch]):
         title: str,
         system: DeepSearch,
         update_iteration_frequency_secs: float = 10.0,
-        yaml_header_template: str = None
+        yaml_header_template: Path = None
         variables: dict[str, Variable] = {}):
         """Construct a MarkdownDisplay object.
 
@@ -314,19 +314,20 @@ class MarkdownDisplay(Display[DeepSearch]):
             title (str): The H1 title at the top of the document.
             system (DeepSearch): The deep research "system". 
             update_iteration_frequency_secs (float): How frequently to update the display. Multiple seconds is best for this output.
-            yaml_header_template (str): An optional template for a YAML block that will be printed first. Useful for GitHub Pages display. If a 
+            yaml_header_template (Path): An optional template for a YAML block that will be printed first. Useful for GitHub Pages display.
             variables: (dict[str, Variable]): Application-wide key-values. See Discussion below.
         
         Returns:
             MarkdownDisplay: A display object for rendering Markdown.
         
         Discussion:
-            When printing the final report, the following call,
-            `replace_variables(self.yaml_header_template, ..., **self.variables)`
-            will be used to substitute any variables indicated with `{{key}}`. The ...
-            are for `title=self.title, update_iteration_frequency_secs=self.update_iteration_frequency_secs`.
-            See `__repr__()`. This block will be printed first, if not empty, followed by
-            the hierarchical Markdown sections held by `self.layout`.
+            When printing the final report, the following call, the `yaml_header_template`
+            file will be read into a `string` and `replace_variables(string, ..., **self.variables)`
+            will be called to substitute any variables indicated with `{{key}}` entries. The ...
+            are for other attributes not in `variables` that will be passed, too.
+            See `__repr__()`. This YAML block will be printed first, if the template isn't None
+            or the resolved block isn't empty, followed by the hierarchical Markdown sections 
+            held in `self.layout`.
         """
         super().__init__(title, system, update_iteration_frequency_secs, variables)
         self.yaml_header_template = yaml_header_template
@@ -413,9 +414,6 @@ class MarkdownDisplay(Display[DeepSearch]):
             # Only print the statistics, which may have changed.
             print(self.layout["statistics_section"])
         return self.layout
-
-    def __repr__(self) -> str:
-        return str(self.layout)
 
     def add_section(self, title: str, 
         content: list[MarkdownElement | str] = [], 

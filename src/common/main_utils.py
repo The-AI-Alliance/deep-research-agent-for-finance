@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Callable
 
 from common.deep_search import DeepSearch
-from common.path_utils import resolve_path
+from common.path_utils import resolve_and_require_path
 from common.variables import Variable
 
 from ux import Display
@@ -136,8 +136,10 @@ def process_args(parser: argparse.ArgumentParser) -> (argparse.Namespace, dict[s
     if not templates_dir_path.exists():
         raise ValueError(f"Prompt directory '{templates_dir_path}' doesn't exist!")
 
-    markdown_yaml_header_path = Path(args.markdown-yaml-header)
-    
+    markdown_yaml_header_path = None
+    if args.markdown_yaml_header:
+        markdown_yaml_header_path = resolve_and_require_path(args.markdown_yaml_header, templates_dir_path)
+
     temperature = args.temperature
     if args.temperature < 0.0:
         temperature = 0.0
@@ -152,19 +154,19 @@ def process_args(parser: argparse.ArgumentParser) -> (argparse.Namespace, dict[s
         'start_time': datetime.now().strftime('%Y-%m-%d %H:%M%:%S'),
         "temperature": temperature, 
         "max_iterations": max_iterations,
+        "yaml_header_template_path": markdown_yaml_header_path,
     })
 
 def determine_display(
     which_one: str,
     ux_title: str,
-    yaml_header_template: str = None
+    yaml_header_template: Path = None
     ) -> Callable[[DeepSearch, dict[str,(str,any)]], Display]:
     if which_one == "rich":
         ux_update_iteration_frequency_secs = 0.5
         make_display = lambda ds, vs: RichDisplay.make(
             ux_title, ds,
             update_iteration_frequency_secs=ux_update_iteration_frequency_secs,
-            yaml_header_template=yaml_header_template,
             variables=vs)
     elif which_one == "markdown":
         ux_update_iteration_frequency_secs = 10

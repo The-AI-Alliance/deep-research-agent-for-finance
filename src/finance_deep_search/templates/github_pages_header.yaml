@@ -1,0 +1,6 @@
+---
+layout: default
+title: {{title}}
+nav_order: 100
+has_children: false
+---

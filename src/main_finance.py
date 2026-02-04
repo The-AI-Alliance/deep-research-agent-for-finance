@@ -54,7 +54,7 @@ from common.main_utils import (
     var_ux,
     vars_verbose_only,
 )
-from common.path_utils import resolve_path
+from common.path_utils import resolve_path, resolve_and_require_path
 from common.variables import Variable
 from ux import Display
 
@@ -143,8 +143,9 @@ if __name__ == "__main__":
     output_spreadsheet_path = resolve_path(args.output_spreadsheet, output_dir_path)
     
     templates_dir_path = Path(args.templates_dir)
-    financial_research_prompt_path = resolve_path(args.financial_research_prompt_path, templates_dir_path)
-    excel_writer_agent_prompt_path = resolve_path(args.excel_writer_agent_prompt_path, templates_dir_path)
+    # These must exist:
+    financial_research_prompt_path = resolve_and_require_path(args.financial_research_prompt_path, templates_dir_path)
+    excel_writer_agent_prompt_path = resolve_and_require_path(args.excel_writer_agent_prompt_path, templates_dir_path)
 
 
     # The variables dict contains values used by the app components, labels 
@@ -198,7 +199,10 @@ if __name__ == "__main__":
 
     ux_title = "Deep Research Agent for Finance"
 
-    make_display = determine_display(args.ux, ux_title)
+    yaml_header_template_path = processed_args.get('yaml_header_template_path', None)
+
+    make_display = determine_display(args.ux, ux_title,
+        yaml_header_template_path=yaml_header_template_path)
 
     deep_search = DeepSearch(
         app_name=def_app_name,
