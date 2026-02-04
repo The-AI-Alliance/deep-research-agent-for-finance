@@ -349,23 +349,23 @@ class MarkdownDisplay(Display[DeepSearch]):
         
         # Make a Markdown table of the runtime properties. First wrap the keys in `...`
         # to render as fixed-width/code font.
-        top_table = MarkdownTable("This run's properties", ['Property', 'Value'])
+        top_table = MarkdownTable("This Run's Properties", ['Property', 'Value'])
         for label, value in Variable.make_formatted(self.variables.values()):
             top_table.add_row([label, value])
         layout.add_intro_content([
-            "This report begins with information about this invocation of deep research.",
+            "This report begins with some information about this invocation of deep research.",
             "To skip to the results, go to the [**📊 📈 Results**](#results_section) section.",
             top_table
         ])
 
         # Main structure
         layout.add_subsections({
+            "results_section": MarkdownSection(title="📊 📈 Results", 
+                content=["This section provides the research results.", "In progress..."]),
             "statistics_section": MarkdownSection(title="💰 Runtime Statistics",
                 content=["This section provides general information about the runtime statistics."]),
             "objective_section": MarkdownSection(title="⚙️ Research Objective",
                 content=["This section provides detailed information about the research _objective_, such as the prompt."]),
-            "results_section": MarkdownSection(title="📊 📈 Results", 
-                content=["This section provides the research results.", "In progress..."]),
         })
 
         # Top section - queue, plan, memory, budget, and other status

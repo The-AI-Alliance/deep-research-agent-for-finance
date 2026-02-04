@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Callable
 
 from common.deep_search import DeepSearch
-from common.path_utils import resolve_and_require_path
+from common.path_utils import resolve_path, resolve_and_require_path
 from common.variables import Variable
 
 from ux import Display

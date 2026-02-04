@@ -33,7 +33,7 @@ class Variable():
         if not self.formatter:
             return None
         if use_basic_formatting:
-            return (self.key, self.label,str(self.value))
+            return (self.key, self.label, str(self.value))
         elif isinstance(self.formatter, dict):
             return (self.key, self.label, self.formatter.get(self.value, str(self.key)))
         else:
@@ -54,10 +54,8 @@ class Variable():
         """
         result = []
         for variable in variables:
-            tuple = variable.format()
+            tuple = variable.format(use_basic_formatting=use_basic_formatting)
             if tuple:
-                if use_basic_formatting:
-                    tuple[2] = str()
                 result.append((tuple[1], tuple[2]))
         return result
 
