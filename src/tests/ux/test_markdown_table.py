@@ -12,7 +12,7 @@ from ux.markdown_elements import MarkdownTable
 from tests.utils import (
     no_linefeeds_text,
     nonempty_text,
-    nonempty_no_linefeeds_text,
+    no_linefeeds_nonempty_text,
     make_n_samples
 )
 
@@ -74,7 +74,7 @@ class TestMarkdownTable(unittest.TestCase):
                 index += 1
             if len(exp_title) > 0:
                 self.assertEqual(f"**Table: {exp_title}**", all_lines[index], f"s = <{s}>")
-                index += 1
+                index += 2 # skip a blank line
             ecs_str = f"| {' | '.join(exp_columns)} |"
             self.assertEqual(ecs_str, all_lines[index], f"<{ecs_str}> vs. <{all_lines[index]}>? (whole string = <{s}>)")
             index += 1
@@ -88,7 +88,7 @@ class TestMarkdownTable(unittest.TestCase):
                 exp_row_str = '| ' + ' | '.join([str(cell) for cell in exp_row]) + ' |'
                 self.assertEqual(exp_row_str, all_lines[index+i], f"{i}: <{exp_row_str}> == <{all_lines[index+i]}>?")
 
-    @given(st.lists(no_linefeeds_text), justifications(min_size=10, max_size=20))
+    @given(st.lists(no_linefeeds_text()), justifications(min_size=10, max_size=20))
     def test_justify_with_valid_values(self, columns: list[str], justs_samples: list[str | None]):
         """
         Verify that MarkdownTable.justify() correctly maps the allowed justification
@@ -110,7 +110,7 @@ class TestMarkdownTable(unittest.TestCase):
                 case _:
                     raise ValueError(f"Unrecognized column 'justify' value: <{justs[i]}>")
 
-    @given(nonempty_text)
+    @given(nonempty_text())
     def test_justify_with_invalid_values(self, text: str):
         """
         Verify that MarkdownTable.justify() correctly raises errors for invalid values.
@@ -128,7 +128,7 @@ class TestMarkdownTable(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     MarkdownTable.justify('-----', text+j)
 
-    @given(no_linefeeds_text)
+    @given(no_linefeeds_text())
     def test_make_empty_table_with_title(self, title: str):
         """
         Verify that a table constructed with a list of columns and default justifications
@@ -138,7 +138,7 @@ class TestMarkdownTable(unittest.TestCase):
         self.assert_header_rows(table, title, [], [], [])
         self.assertEqual('', str(table))
 
-    @given(st.lists(no_linefeeds_text))
+    @given(st.lists(no_linefeeds_text()))
     def test_make_table_with_columns_that_default_to_left_justification(self, columns: list[str]):
         """
         Verify that a table constructed with a list of columns and default justifications
@@ -147,7 +147,7 @@ class TestMarkdownTable(unittest.TestCase):
         table = MarkdownTable(columns = columns)
         self.assert_header_rows(table, '', columns, ['left' for _ in columns], [])
 
-    @given(st.lists(no_linefeeds_text), justifications(min_size=10, max_size=20))
+    @given(st.lists(no_linefeeds_text()), justifications(min_size=10, max_size=20))
     def test_make_table_with_columns_with_justifications(self, columns: list[str], justs_samples: list[str | None]):
         """
         Verify that a table constructed with a list of columns and specified justifications
@@ -158,7 +158,7 @@ class TestMarkdownTable(unittest.TestCase):
         self.assert_header_rows(table, '', columns, justs, [])
 
 
-    @given(no_linefeeds_text, st.lists(no_linefeeds_text), justifications(min_size=10, max_size=20))
+    @given(no_linefeeds_text(), st.lists(no_linefeeds_text()), justifications(min_size=10, max_size=20))
     def test_make_table_with_columns_with_justifications(self, 
         title: str, columns: list[str], justs_samples: list[str | None]):
         """
@@ -169,7 +169,7 @@ class TestMarkdownTable(unittest.TestCase):
         table = MarkdownTable(title=title, columns = cjs)
         self.assert_header_rows(table, title, columns, justs, [])
 
-    @given(st.lists(no_linefeeds_text))
+    @given(st.lists(no_linefeeds_text()))
     def test_table_add_columns_that_default_to_left_justification(self, columns: list[str]):
         """
         Verify that add_columns with a list of columns and no specified justifications
@@ -185,7 +185,7 @@ class TestMarkdownTable(unittest.TestCase):
         table.add_columns(more_columns)
         self.assert_header_rows(table, '', columns+more_columns, justs+more_justs, [])
 
-    @given(st.lists(no_linefeeds_text), justifications(min_size=10, max_size=20))
+    @given(st.lists(no_linefeeds_text()), justifications(min_size=10, max_size=20))
     def test_table_add_columns_with_justifications(self, columns: list[str], justs_samples: list[str | None]):
         """
         Verify that add_columns with a list of columns and no specified justifications
@@ -200,7 +200,7 @@ class TestMarkdownTable(unittest.TestCase):
         table.add_columns(more_cjs)
         self.assert_header_rows(table, '', columns+more_columns, justs+more_justs, [])
 
-    @given(st.lists(no_linefeeds_text), justifications(min_size=10, max_size=20), st.lists(nonempty_no_linefeeds_text, min_size=1), st.integers(min_value = 1, max_value=10))
+    @given(st.lists(no_linefeeds_text()), justifications(min_size=10, max_size=20), st.lists(no_linefeeds_nonempty_text(), min_size=1), st.integers(min_value = 1, max_value=10))
     def test_table_add_row_with_list_of_cells(self, columns: list[str], justs_samples: list[str | None], cell_samples: list[str], num_rows: int):
         """
         Verify that a table constructed with a list of columns and specified justifications,
@@ -218,7 +218,7 @@ class TestMarkdownTable(unittest.TestCase):
                 table.add_row(row)
         self.assert_header_rows(table, '', columns, justs, rows)
 
-    @given(st.lists(nonempty_no_linefeeds_text), justifications(min_size=10, max_size=20), st.lists(nonempty_no_linefeeds_text, min_size=1), st.integers(min_value = 1, max_value=10))
+    @given(st.lists(no_linefeeds_nonempty_text()), justifications(min_size=10, max_size=20), st.lists(no_linefeeds_nonempty_text(), min_size=1), st.integers(min_value = 1, max_value=10))
     def test_table_add_row_with_list_of_tuples(self, columns: list[str], justs_samples: list[str | None], cell_samples: list[str], num_rows: int):
         """
         Verify that a table constructed with a list of columns and specified justifications,
@@ -240,7 +240,7 @@ class TestMarkdownTable(unittest.TestCase):
         rows_lists = [table.row_dict_to_list(dict(row)) for row in rows]
         self.assert_header_rows(table, '', columns, justs, rows_lists)
 
-    @given(st.lists(nonempty_no_linefeeds_text), justifications(min_size=10, max_size=20), st.lists(nonempty_no_linefeeds_text, min_size=1), st.integers(min_value = 1, max_value=10))
+    @given(st.lists(no_linefeeds_nonempty_text()), justifications(min_size=10, max_size=20), st.lists(no_linefeeds_nonempty_text(), min_size=1), st.integers(min_value = 1, max_value=10))
     def test_table_add_row_with_dict(self, columns: list[str], justs_samples: list[str | None], cell_samples: list[str], num_rows: int):
         """
         Verify that a table constructed with a list of columns and specified justifications,
@@ -263,7 +263,7 @@ class TestMarkdownTable(unittest.TestCase):
         self.assert_header_rows(table, '', columns, justs, rows_lists)
 
 
-    @given(st.lists(nonempty_no_linefeeds_text, min_size=1), nonempty_no_linefeeds_text)
+    @given(st.lists(no_linefeeds_nonempty_text(), min_size=1), no_linefeeds_nonempty_text())
     def test_table_add_row_with_list_of_tuples_with_bad_keys_fails(self, columns: list[str], other_text: str):
         """
         Verify that calling add_row with a tuple containing an unknown column name
@@ -275,7 +275,7 @@ class TestMarkdownTable(unittest.TestCase):
             with self.assertRaises(ValueError):
                 table.add_row([(other_text, 0)])
 
-    @given(st.lists(nonempty_no_linefeeds_text, min_size=1), nonempty_no_linefeeds_text)
+    @given(st.lists(no_linefeeds_nonempty_text(), min_size=1), no_linefeeds_nonempty_text())
     def test_table_add_row_with_dict_with_bad_keys_fails(self, columns: list[str], other_text: str):
         """
         Verify that calling add_row with a map containing an unknown column name
@@ -287,7 +287,7 @@ class TestMarkdownTable(unittest.TestCase):
             with self.assertRaises(ValueError):
                 table.add_row({other_text: 0})
 
-    @given(st.lists(nonempty_no_linefeeds_text, min_size=1), nonempty_no_linefeeds_text)
+    @given(st.lists(no_linefeeds_nonempty_text(), min_size=1), no_linefeeds_nonempty_text())
     def test_row_dict_to_list_with_valid_values(self, columns: list[str], other_text: str):
         """
         Verify that row_dict_to_list properly constructs a row with a partial set of valid keys.
@@ -303,7 +303,7 @@ class TestMarkdownTable(unittest.TestCase):
         row = table.row_dict_to_list(row_dict)
         self.assertEqual(exp_row, row)
 
-    @given(st.lists(nonempty_no_linefeeds_text, min_size=1), nonempty_no_linefeeds_text)
+    @given(st.lists(no_linefeeds_nonempty_text(), min_size=1), no_linefeeds_nonempty_text())
     def test_row_dict_to_list_fails_with_invalid_values(self, columns: list[str], other_text: str):
         """
         Verify that row_dict_to_list raises an error if a key is not a recognized column name.

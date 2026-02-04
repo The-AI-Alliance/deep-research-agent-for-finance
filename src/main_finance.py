@@ -31,7 +31,8 @@ from common.main_utils import (
     make_parser,
     add_arg_output_dir,
     add_arg_markdown_report_path,
-    add_arg_prompts_dir,
+    add_arg_markdown_yaml_header_template_path,
+    add_arg_templates_dir,
     add_arg_research_model,
     add_arg_provider,
     add_arg_temperature,
@@ -45,7 +46,7 @@ from common.main_utils import (
     written_relative_to,
     var_start_time,
     var_output_dir_path,
-    var_prompts_dir_path,
+    var_templates_dir_path,
     var_research_report_path,
     var_provider,
     var_research_model,
@@ -62,10 +63,11 @@ if __name__ == "__main__":
     def_app_name = "finance_deep_research"
     def_reporting_currency = "USD"
     def_output_dir = "./output"
-    def_prompts_dir = "./prompts"
+    def_templates_dir = "./templates"
     def_financial_research_agent_prompt_file = "financial_research_agent.md"
     def_excel_writer_agent_prompt_file = "excel_writer_agent.md"
     def_markdown_report_path = 'research_report.md'
+    def_markdown_yaml_header_template_path = None
     def_excel_spreadsheet_path = 'financials.xlsx'
     def_provider = 'openai'
     def_research_model = 'gpt-4o'
@@ -97,17 +99,18 @@ if __name__ == "__main__":
         default=def_excel_spreadsheet_path,
         help=f"Path where the Excel spreadsheet is written. (Default: {def_excel_spreadsheet_path}) {written_relative_to('output-dir')}"
     )
-    add_arg_prompts_dir(parser, def_prompts_dir)
+    add_arg_templates_dir(parser, def_templates_dir)
     parser.add_argument(
         "--financial-research-prompt-path",
         default=def_financial_research_agent_prompt_file,
-        help=f"Path where the main research agent prompt file is located. (Default: {def_financial_research_agent_prompt_file}) {read_relative_to('prompts-dir')}"
+        help=f"Path where the main research agent prompt file is located. (Default: {def_financial_research_agent_prompt_file}) {read_relative_to('templates-dir')}"
     )
     parser.add_argument(
         "--excel-writer-agent-prompt-path",
         default=def_excel_writer_agent_prompt_file,
-        help=f"Path where the Excel writer agent prompt file is located. (Default: {def_excel_writer_agent_prompt_file}) {read_relative_to('prompts-dir')}"
+        help=f"Path where the Excel writer agent prompt file is located. (Default: {def_excel_writer_agent_prompt_file}) {read_relative_to('templates-dir')}"
     )
+    add_arg_markdown_yaml_header_template_path(parser, def_markdown_yaml_header_template_path)
     add_arg_research_model(parser, def_research_model)
     parser.add_argument(
         "--excel-writer-model",
@@ -139,9 +142,9 @@ if __name__ == "__main__":
     markdown_report_path = resolve_path(args.markdown_report, output_dir_path)
     output_spreadsheet_path = resolve_path(args.output_spreadsheet, output_dir_path)
     
-    prompts_dir_path = Path(args.prompts_dir)
-    financial_research_prompt_path = resolve_path(args.financial_research_prompt_path, prompts_dir_path)
-    excel_writer_agent_prompt_path = resolve_path(args.excel_writer_agent_prompt_path, prompts_dir_path)
+    templates_dir_path = Path(args.templates_dir)
+    financial_research_prompt_path = resolve_path(args.financial_research_prompt_path, templates_dir_path)
+    excel_writer_agent_prompt_path = resolve_path(args.excel_writer_agent_prompt_path, templates_dir_path)
 
 
     # The variables dict contains values used by the app components, labels 
@@ -162,7 +165,7 @@ if __name__ == "__main__":
         var_provider(args.provider),
         var_research_model(args.research_model),
         Variable("excel_writer_model",       args.excel_writer_model, formatter=Variable.code_formatter),
-        var_prompts_dir_path(prompts_dir_path),
+        var_templates_dir_path(templates_dir_path),
         Variable("financial_research_prompt_path", 
                                              financial_research_prompt_path, formatter=Variable.file_url_formatter),
         Variable("excel_writer_agent_prompt_path", 

@@ -18,20 +18,21 @@ ARCHITECTURE        ?= $(shell uname -m)
 # Hack: on the command line, use `make APP_ARGS='--foo bar' target` to pass other 
 # command-line arguments, e.g., '--help', to commands executed when building targets
 # that run the app command.
-TICKER                   ?= META
-COMPANY_NAME             ?= Meta Platforms, Inc.
-REPORTING_CURRENCY       ?= USD
-RESEARCH_MODEL           ?= gpt-4o
-EXCEL_WRITER_MODEL       ?= o4-mini
-INFERENCE_PROVIDER       ?= openai
-PROMPTS_DIR              ?= ${app_dir}/prompts
-FIN_RESEARCH_PROMPT_FILE ?= financial_research_agent.md
-EXCEL_WRITER_PROMPT_FILE ?= excel_writer_agent.md
-OUTPUT_DIR               ?= ${PWD}/output/${TICKER}
-OUTPUT_REPORT            ?= ${TICKER}_report.md
-OUTPUT_SPREADSHEET       ?= ${TICKER}_financials.xlsx
-UX                       ?= rich
-APP_ARGS                 ?=
+TICKER                     ?= META
+COMPANY_NAME               ?= Meta Platforms, Inc.
+REPORTING_CURRENCY         ?= USD
+RESEARCH_MODEL             ?= gpt-4o
+EXCEL_WRITER_MODEL         ?= o4-mini
+INFERENCE_PROVIDER         ?= openai
+TEMPLATES_DIR              ?= ${app_dir}/templates
+FIN_RESEARCH_PROMPT_FILE   ?= ${TEMPLATES_DIR}/financial_research_agent.md
+EXCEL_WRITER_PROMPT_FILE   ?= ${TEMPLATES_DIR}/excel_writer_agent.md
+MARKDOWN_YAML_HEADER_FILE  ?= ${TEMPLATES_DIR}/github_pages_header.yaml
+OUTPUT_DIR                 ?= ${PWD}/output/${TICKER}
+OUTPUT_REPORT              ?= ${TICKER}_report.md
+OUTPUT_SPREADSHEET         ?= ${TICKER}_financials.xlsx
+UX                         ?= rich
+APP_ARGS                   ?=
 
 # Override when running `make view-local` using e.g., `JEKYLL_PORT=8000 make view-local`
 JEKYLL_PORT         ?= 4000
@@ -144,11 +145,13 @@ do-app-run::
 		--company-name "${COMPANY_NAME}" \
 		--output-dir "${OUTPUT_DIR}" \
 		--markdown-report "${OUTPUT_REPORT}" \
+		--markdown-yaml-header "${MARKDOWN_YAML_HEADER}" \
 		--output-spreadsheet "${OUTPUT_SPREADSHEET}" \
 		--reporting-currency "${REPORTING_CURRENCY}" \
-		--prompts-dir "${PROMPTS_DIR}" \
+		--templates-dir "${TEMPLATES_DIR}" \
 		--financial-research-prompt-path "${FIN_RESEARCH_PROMPT_FILE}" \
 		--excel-writer-agent-prompt-path "${EXCEL_WRITER_PROMPT_FILE}" \
+		--markdown-yaml-header "${MARKDOWN_YAML_HEADER_FILE}" \
 		--research-model "${RESEARCH_MODEL}" \
 		--excel-writer-model "${EXCEL_WRITER_MODEL}" \
 		--provider "${INFERENCE_PROVIDER}" \
@@ -205,8 +208,8 @@ print-app-info:
 	@echo "Models:"
 	@echo "  RESEARCH_MODEL           ${RESEARCH_MODEL}"
 	@echo "  EXCEL_WRITER_MODEL       ${EXCEL_WRITER_MODEL}"
-	@echo "Prompts:"
-	@echo "  PROMPTS_DIR              ${PROMPTS_DIR}"
+	@echo "Templates (for prompts, etc.):"
+	@echo "  TEMPLATES_DIR            ${TEMPLATES_DIR}"
 	@echo "  FIN_RESEARCH_PROMPT_FILE ${FIN_RESEARCH_PROMPT_FILE}"
 	@echo "  EXCEL_WRITER_PROMPT_FILE ${EXCEL_WRITER_PROMPT_FILE}"
 	@echo "OUTPUT_DIR                ${OUTPUT_DIR}"

@@ -8,7 +8,9 @@ import os, re, sys
 
 from ux.markdown_elements import MarkdownElement, MarkdownSection
 
-from tests.utils import no_linefeeds_text, nonempty_no_linefeeds_text
+from common.string_utils import to_id
+
+from tests.utils import no_linefeeds_text, no_linefeeds_nonempty_text
 
 class TestMarkdownSection(unittest.TestCase):
     """
@@ -44,7 +46,7 @@ class TestMarkdownSection(unittest.TestCase):
         with self.assertRaises(AssertionError):
             MarkdownSection(None, level)
 
-    @given(nonempty_no_linefeeds_text)
+    @given(no_linefeeds_nonempty_text())
     def test_make_section_with_title_has_level_1_and_no_content_nor_subsections(self, title: str):
         """
         Verify that a section with just a title has level == 1 
@@ -53,7 +55,7 @@ class TestMarkdownSection(unittest.TestCase):
         section = MarkdownSection(title)
         self.assert_section_valid(section, title, 1)
 
-    @given(st.integers(min_value=1, max_value=4), nonempty_no_linefeeds_text)
+    @given(st.integers(min_value=1, max_value=4), no_linefeeds_nonempty_text())
     def test_make_section_with_title_with_no_content(self, level: int, title: str):
         """
         Verify that a section with just a level and title is properly formed.
@@ -62,7 +64,7 @@ class TestMarkdownSection(unittest.TestCase):
         self.assert_section_valid(section, title, level)
 
     @given(st.integers(min_value=1, max_value=4), 
-        nonempty_no_linefeeds_text, 
+        no_linefeeds_nonempty_text(), 
         st.lists(st.text()))
     def test_make_section_with_title_with_content(self, 
         level: int, title: str, content: list[str]):
@@ -74,9 +76,9 @@ class TestMarkdownSection(unittest.TestCase):
         self.assert_section_valid(section, title, level, content_l)
 
     @given(st.integers(min_value=1, max_value=4), 
-        nonempty_no_linefeeds_text, 
+        no_linefeeds_nonempty_text(), 
         st.lists(st.text()),
-        st.lists(nonempty_no_linefeeds_text, max_size=5, unique_by = str))
+        st.lists(no_linefeeds_nonempty_text(), max_size=5, unique_by = str))
     def test_make_section_with_title_with_content_and_subsections_as_a_dict(self, 
         level: int, title: str, content: list[str], subsection_titles: list[str]):
         """
@@ -89,9 +91,9 @@ class TestMarkdownSection(unittest.TestCase):
         self.assert_section_valid(section, title, level, content_l, subsections_d)
 
     @given(st.integers(min_value=1, max_value=4), 
-        nonempty_no_linefeeds_text, 
+        no_linefeeds_nonempty_text(), 
         st.lists(st.text()),
-        st.lists(nonempty_no_linefeeds_text, max_size=5, unique_by = str))
+        st.lists(no_linefeeds_nonempty_text(), max_size=5, unique_by = str))
     def test_make_section_with_title_with_content_and_subsections_as_a_list(self, 
         level: int, title: str, content: list[str], subsection_titles: list[str]):
         """
@@ -105,7 +107,7 @@ class TestMarkdownSection(unittest.TestCase):
         self.assert_section_valid(section, title, level, content_l, subsections_d)
 
     @given(st.integers(min_value=1, max_value=4), 
-        nonempty_no_linefeeds_text, 
+        no_linefeeds_nonempty_text(), 
         st.lists(st.text()))
     def test_section_intro_content_can_be_replaced(self,
         level: int, title: str, content: list[str]):
@@ -123,7 +125,7 @@ class TestMarkdownSection(unittest.TestCase):
         self.assert_section_valid(section, title, level, content_l2)
 
     @given(st.integers(min_value=1, max_value=4), 
-        nonempty_no_linefeeds_text, 
+        no_linefeeds_nonempty_text(), 
         st.lists(st.text()))
     def test_section_add_intro_content_adds_to_the_existing_content(self,
         level: int, title: str, content: list[str]):
@@ -139,8 +141,8 @@ class TestMarkdownSection(unittest.TestCase):
         self.assert_section_valid(section, title, level, content_l+content_l)
 
     @given(st.integers(min_value=1, max_value=4), 
-        nonempty_no_linefeeds_text, 
-        nonempty_no_linefeeds_text)
+        no_linefeeds_nonempty_text(), 
+        no_linefeeds_nonempty_text())
     def test_section_add_intro_content_rejects_MarkdownSections(self,
         level: int, title: str, title2: str):
         """
@@ -153,8 +155,8 @@ class TestMarkdownSection(unittest.TestCase):
             section.add_intro_content([section2])
 
     @given(st.integers(min_value=1, max_value=4), 
-        nonempty_no_linefeeds_text, 
-        st.lists(nonempty_no_linefeeds_text, min_size=1, max_size=5, unique_by = str))
+        no_linefeeds_nonempty_text(), 
+        st.lists(no_linefeeds_nonempty_text(), min_size=1, max_size=5, unique_by = str))
     def test_section_add_subsections_adds_to_the_existing_subsections(self, 
         level: int, title: str, subsection_titles: list[str]):
         """
@@ -174,8 +176,8 @@ class TestMarkdownSection(unittest.TestCase):
         self.assert_section_valid(section, title, level, [], all_ss)
 
     @given(st.integers(min_value=1, max_value=4), 
-        nonempty_no_linefeeds_text, 
-        st.lists(nonempty_no_linefeeds_text, max_size=5, unique_by = str))
+        no_linefeeds_nonempty_text(), 
+        st.lists(no_linefeeds_nonempty_text(), max_size=5, unique_by = str))
     def test_subsections_must_have_new_unique_keys(self, 
         level: int, title: str, subsection_titles: list[str]):
         """
@@ -192,7 +194,7 @@ class TestMarkdownSection(unittest.TestCase):
                 section.add_subsections({key:ss})
 
     @given(st.integers(min_value=1, max_value=4), 
-        nonempty_no_linefeeds_text)
+        no_linefeeds_nonempty_text())
     def test_subsections_must_be_of_type_MarkdownSection(self, 
         level: int, title: str):
         """
@@ -206,7 +208,7 @@ class TestMarkdownSection(unittest.TestCase):
             section.add_subsections([elem])
 
     @given(st.integers(min_value=1, max_value=4), 
-        nonempty_no_linefeeds_text)
+        no_linefeeds_nonempty_text())
     def test_subsections_levels_will_be_reset_to_be_one_larger_if_not_already_larger(self, 
         level: int, title: str):
         """
@@ -235,8 +237,8 @@ class TestMarkdownSection(unittest.TestCase):
         self.assertEqual(5, subsection221.level)
 
     @given(st.integers(min_value=1, max_value=4), 
-        nonempty_no_linefeeds_text, 
-        st.lists(nonempty_no_linefeeds_text, min_size=1, max_size=5, unique_by = str))
+        no_linefeeds_nonempty_text(), 
+        st.lists(no_linefeeds_nonempty_text(), min_size=1, max_size=5, unique_by = str))
     def test_section_all_subsections_can_be_replaced(self, 
         level: int, title: str, subsection_titles: list[str]):
         """
@@ -257,8 +259,8 @@ class TestMarkdownSection(unittest.TestCase):
             self.assertEqual(ss, section[key], f"key = {key}")
 
     @given(st.integers(min_value=1, max_value=4), 
-        nonempty_no_linefeeds_text, 
-        st.lists(nonempty_no_linefeeds_text, min_size=1, max_size=5, unique_by = str))
+        no_linefeeds_nonempty_text(), 
+        st.lists(no_linefeeds_nonempty_text(), min_size=1, max_size=5, unique_by = str))
     def test_section_a_subsection_can_be_replaced_by_index(self, 
         level: int, title: str, subsection_titles: list[str]):
         """
@@ -273,9 +275,9 @@ class TestMarkdownSection(unittest.TestCase):
             self.assertEqual(new_ss_d[key], section[key], f"key = {key}")
 
     @given(st.integers(min_value=1, max_value=4), 
-        nonempty_no_linefeeds_text, 
+        no_linefeeds_nonempty_text(), 
         st.lists(st.text()),
-        st.lists(nonempty_no_linefeeds_text, max_size=5, unique_by = str))
+        st.lists(no_linefeeds_nonempty_text(), max_size=5, unique_by = str))
     def test_section_clear_removes_the_content_and_subsections(self, 
         level: int, title: str, content: list[str], subsection_titles: list[str]):
         """
@@ -290,9 +292,9 @@ class TestMarkdownSection(unittest.TestCase):
         self.assert_section_valid(section, title, level, [], {})
 
     @given(st.integers(min_value=1, max_value=4), 
-        nonempty_no_linefeeds_text, 
-        st.lists(no_linefeeds_text),
-        st.lists(nonempty_no_linefeeds_text, max_size=5, unique_by = str))
+        no_linefeeds_nonempty_text(), 
+        st.lists(no_linefeeds_text()),
+        st.lists(no_linefeeds_nonempty_text(), max_size=5, unique_by = str))
     def test_section___repr__(self, 
         level: int, title: str, content: list[str], subsection_titles: list[str]):
         """
@@ -309,7 +311,7 @@ class TestMarkdownSection(unittest.TestCase):
         s = str(section)
         all_lines = s.split('\n')
         content_strs = [str(me) for me in content_l]
-        subsections_strs = [str(ms) for ms in subsections_l]
+        subsections_strs = [f"""<a id="{to_id(key)}"></a>\n\n{ms}\n""" for key, ms in subsections_d.items()]
         exp_content = f"{'#'*level} {title}\n\n{'\n'.join(content_strs)}\n{'\n'.join(subsections_strs)}".split('\n')
         self.assertEqual(exp_content, all_lines, f"exp_content = <{exp_content}>, all_lines = <{all_lines}>")
 

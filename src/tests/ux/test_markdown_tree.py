@@ -11,9 +11,6 @@ from ux.markdown_elements import MarkdownTree
 
 from tests.utils import (
     no_linefeeds_text,
-    nonempty_text,
-    nonempty_no_linefeeds_text,
-    make_n_samples
 )
 
 class TestMarkdownTree(unittest.TestCase):
@@ -21,7 +18,7 @@ class TestMarkdownTree(unittest.TestCase):
     Test the MarkdownTree class.
     """
 
-    @given(no_linefeeds_text)
+    @given(no_linefeeds_text())
     def test_make_empty_tree(self, label: str):
         """
         Test a tree constructed with just a label has no children.
@@ -32,7 +29,7 @@ class TestMarkdownTree(unittest.TestCase):
         self.assertEqual(tree.bullet, None)
         self.assertEqual(tree.indentation, None)
 
-    @given(no_linefeeds_text, st.integers(min_value=1, max_value=10))
+    @given(no_linefeeds_text(), st.integers(min_value=1, max_value=10))
     def test_make_empty_tree_with_integer_bullet(self, label: str, bullet: int):
         """
         Test a tree constructed with an integer label, a bullet, and no children.
@@ -43,7 +40,7 @@ class TestMarkdownTree(unittest.TestCase):
         self.assertEqual(tree.bullet, str(bullet))
         self.assertEqual(tree.indentation, None)
 
-    @given(no_linefeeds_text, st.from_regex(r'^\W$', fullmatch=True))
+    @given(no_linefeeds_text(), st.from_regex(r'^\W$', fullmatch=True))
     def test_make_empty_tree_with_letter_bullet(self, label: str, bullet: str):
         """
         Test a tree constructed with a label, a letter bullet, and no children.
@@ -54,7 +51,7 @@ class TestMarkdownTree(unittest.TestCase):
         self.assertEqual(tree.children, [])
         self.assertEqual(tree.indentation, None)
 
-    @given(no_linefeeds_text, st.sampled_from(['*', '-']))
+    @given(no_linefeeds_text(), st.sampled_from(['*', '-']))
     def test_make_empty_tree_with_dash_or_star_bullet(self, label: str, bullet: str):
         """
         Test a tree constructed with a label, '*' or '-' as the bullet, and no children.
@@ -65,7 +62,7 @@ class TestMarkdownTree(unittest.TestCase):
         self.assertEqual(tree.children, [])
         self.assertEqual(tree.indentation, None)
 
-    @given(no_linefeeds_text, st.sampled_from([' ', '    ', '\t', '\t\t']))
+    @given(no_linefeeds_text(), st.sampled_from([' ', '    ', '\t', '\t\t']))
     def test_make_empty_tree_with_indentation(self, label: str, indent: str):
         """
         Test a tree constructed with a label, an indentation, and no children.
@@ -76,7 +73,7 @@ class TestMarkdownTree(unittest.TestCase):
         self.assertEqual(tree.children, [])
         self.assertEqual(tree.indentation, indent)
 
-    @given(no_linefeeds_text, no_linefeeds_text)
+    @given(no_linefeeds_text(), no_linefeeds_text())
     def test_make_empty_tree_fails_with_invalid_bullet(self, label: str, bullet: str):
         """
         Verify that a tree constructed with an invalid bullet fails.
@@ -85,7 +82,7 @@ class TestMarkdownTree(unittest.TestCase):
             with self.assertRaises(ValueError):
                 MarkdownTree(label = label, bullet = bullet)
 
-    @given(no_linefeeds_text, st.sampled_from(['*', '-']), st.lists(no_linefeeds_text))
+    @given(no_linefeeds_text(), st.sampled_from(['*', '-']), st.lists(no_linefeeds_text()))
     def test_make_empty_tree_fails_with_invalid_bullet(self, label: str, bullet: str, children: list[str]):
         """
         Verify that a tree constructed with an invalid bullet fails.
@@ -99,10 +96,10 @@ class TestMarkdownTree(unittest.TestCase):
         tree.add_children(children)
         self.assertEqual(tree.children, children)
 
-    @given(no_linefeeds_text, st.sampled_from(['*', '-']), 
+    @given(no_linefeeds_text(), st.sampled_from(['*', '-']), 
         st.sampled_from(['  ', '    ', '\t', '\t\t']), 
-        st.lists(no_linefeeds_text, max_size=5), 
-        st.lists(no_linefeeds_text, max_size=5))
+        st.lists(no_linefeeds_text(), max_size=5), 
+        st.lists(no_linefeeds_text(), max_size=5))
     def test_add_adds_one_nested_bullet_point(self, label: str, bullet: str, indent: str, children: list[str], grand_children: list[str]):
         """
         Verify that adding children works as expected.
@@ -122,10 +119,10 @@ class TestMarkdownTree(unittest.TestCase):
                 child.add(grand_child) 
             self.assertEqual(child.children, grand_children_trees)
 
-    @given(no_linefeeds_text, st.sampled_from(['*', '-']), 
+    @given(no_linefeeds_text(), st.sampled_from(['*', '-']), 
         st.sampled_from(['  ', '    ', '\t', '\t\t']), 
-        st.lists(no_linefeeds_text, max_size=5), 
-        st.lists(no_linefeeds_text, max_size=5))
+        st.lists(no_linefeeds_text(), max_size=5), 
+        st.lists(no_linefeeds_text(), max_size=5))
     def test_add_children_adds_nested_bullet_points(self, label: str, bullet: str, indent: str, children: list[str], grand_children: list[str]):
         """
         Verify that adding children works as expected.
@@ -143,10 +140,10 @@ class TestMarkdownTree(unittest.TestCase):
             child.add_children(grand_children_trees)
             self.assertEqual(child.children, grand_children_trees)
 
-    @given(no_linefeeds_text, st.sampled_from(['*', '-']), 
+    @given(no_linefeeds_text(), st.sampled_from(['*', '-']), 
         st.sampled_from(['  ', '    ', '\t', '\t\t']), 
-        st.lists(no_linefeeds_text, max_size=5), 
-        st.lists(no_linefeeds_text, max_size=5))
+        st.lists(no_linefeeds_text(), max_size=5), 
+        st.lists(no_linefeeds_text(), max_size=5))
     def test_str_returns_nested_bullet_points(self, label: str, bullet: str, indent: str, children: list[str], grand_children: list[str]):
         """
         Verify that str(tree) constructs the expected multi-line, nested bullet string.

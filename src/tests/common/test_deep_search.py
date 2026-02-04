@@ -6,12 +6,6 @@ import unittest
 from pathlib import Path
 import os, re, shutil, sys
 
-from tests.utils import (
-    nonempty_text,
-    no_brace_text,
-    no_brace_non_empty_text,
-)
-
 from finance_deep_search.deep_search import DeepSearch
 from mcp_agent.workflows.deep_orchestrator.config import DeepOrchestratorConfig
 
@@ -40,7 +34,7 @@ class TestDeepSearch(unittest.TestCase):
             research_model_name: str = 'llama3.2:3B',
             excel_writer_model_name: str = 'llama3.2:3B',
             provider: str = 'ollama',
-            prompts_dir: str = 'finance_deep_search/prompts',
+            templates_dir: str = 'finance_deep_search/templates',
             financial_research_prompt_path: str = 'financial_research_agent.md',
             excel_writer_agent_prompt_path: str = 'excel_writer_agent.md',
             output_spreadsheet_path: str = output_dir_path / "META_financials.xlsx",
@@ -55,7 +49,7 @@ class TestDeepSearch(unittest.TestCase):
             research_model_name = research_model_name,
             excel_writer_model_name = excel_writer_model_name,
             provider = provider,
-            prompts_dir = prompts_dir,
+            templates_dir = templates_dir,
             financial_research_prompt_path = financial_research_prompt_path,
             excel_writer_agent_prompt_path = excel_writer_agent_prompt_path,
             output_dir_path = output_dir_path,

@@ -257,9 +257,9 @@ class MarkdownTable(MarkdownElement):
                     return f':{dashes}:'
 
     def __repr__(self) -> str:
-        title_str = ''
+        title_str = '\n\n'
         if len(self.title) > 0:
-            title_str = f"\n**Table: {self.title}**\n"
+            title_str = f"\n**Table: {self.title}**\n\n"
 
         if len(self.columns) == 0:
             return ''

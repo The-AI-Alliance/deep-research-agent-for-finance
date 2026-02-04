@@ -6,12 +6,6 @@ import unittest
 from pathlib import Path
 import os, re, sys
 
-from tests.utils import (
-    nonempty_text,
-    no_brace_text,
-    no_brace_non_empty_text,
-)
-
 from common.prompt_utils import (
     split_frontmatter_and_content,
     load_prompt_markdown,

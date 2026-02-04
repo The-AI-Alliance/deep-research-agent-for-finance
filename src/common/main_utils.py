@@ -55,11 +55,18 @@ def add_arg_markdown_report_path(parser: argparse.ArgumentParser, def_markdown_r
         help=f"Path where a Markdown report is written. Ignored unless --ux markdown is used. (Default: {def_markdown_report_path}) {written_relative_to('output-dir')}"
     )
 
-def add_arg_prompts_dir(parser: argparse.ArgumentParser, def_prompts_dir: str = './prompts'):
+def add_arg_templates_dir(parser: argparse.ArgumentParser, def_templates_dir: str = './templates'):
     parser.add_argument(
-        "--prompts-dir",
-        default=def_prompts_dir,
-        help=f"Path to the directory where prompt files are located. (Default: {def_prompts_dir})"
+        "--templates-dir",
+        default=def_templates_dir,
+        help=f"Path to the directory where template files are located (e.g., for inference prompts). (Default: {def_templates_dir})"
+    )
+
+def add_arg_markdown_yaml_header_template_path(parser: argparse.ArgumentParser, def_markdown_yaml_header_template_path: str = None):
+    parser.add_argument(
+        "--markdown-yaml-header",
+        default=def_markdown_yaml_header_template_path,
+        help=f"Path to an optional template for a YAML header to write at the beginning of the Markdown report. Useful for publishing the report on a GitHub Pages website. Ignored unless --ux markdown is used. (Default: {def_markdown_yaml_header_template}) {read_relative_to('template-dir')}"
     )
 
 def add_arg_research_model(parser: argparse.ArgumentParser, def_research_model: str = 'gpt-4o'):
@@ -125,10 +132,12 @@ def process_args(parser: argparse.ArgumentParser) -> (argparse.Namespace, dict[s
     output_dir_path = Path(args.output_dir)
     output_dir_path.mkdir(parents=True, exist_ok=True)
 
-    prompts_dir_path = Path(args.prompts_dir)
-    if not prompts_dir_path.exists():
-        raise ValueError(f"Prompt directory '{prompts_dir_path}' doesn't exist!")
+    templates_dir_path = Path(args.templates_dir)
+    if not templates_dir_path.exists():
+        raise ValueError(f"Prompt directory '{templates_dir_path}' doesn't exist!")
 
+    markdown_yaml_header_path = Path(args.markdown-yaml-header)
+    
     temperature = args.temperature
     if args.temperature < 0.0:
         temperature = 0.0
@@ -145,16 +154,25 @@ def process_args(parser: argparse.ArgumentParser) -> (argparse.Namespace, dict[s
         "max_iterations": max_iterations,
     })
 
-def determine_display(which_one: str, ux_title: str
+def determine_display(
+    which_one: str,
+    ux_title: str,
+    yaml_header_template: str = None
     ) -> Callable[[DeepSearch, dict[str,(str,any)]], Display]:
     if which_one == "rich":
         ux_update_iteration_frequency_secs = 0.5
         make_display = lambda ds, vs: RichDisplay.make(
-            ux_title, ds, ux_update_iteration_frequency_secs, vs)
+            ux_title, ds,
+            update_iteration_frequency_secs=ux_update_iteration_frequency_secs,
+            yaml_header_template=yaml_header_template,
+            variables=vs)
     elif which_one == "markdown":
         ux_update_iteration_frequency_secs = 10
         make_display = lambda ds, vs: MarkdownDisplay.make(
-            ux_title, ds, ux_update_iteration_frequency_secs, vs)
+            ux_title, ds,
+            update_iteration_frequency_secs=ux_update_iteration_frequency_secs,
+            yaml_header_template=yaml_header_template,
+            variables=vs)
     else:
         # The "ux" argument definition should prevent unexpected values, 
         # but just in case...
@@ -179,8 +197,8 @@ def var_start_time(time: str) -> Variable:
 def var_output_dir_path(path: Path) -> Variable:
     return var_with_file_fmt("output_dir_path", path)
 
-def var_prompts_dir_path(path: Path) -> Variable:
-    return var_with_file_fmt("prompts_dir_path", path)
+def var_templates_dir_path(path: Path) -> Variable:
+    return var_with_file_fmt("templates_dir_path", path)
 
 def var_research_report_path(path: Path) -> Variable:
     return var_with_file_fmt("research_report_path", path)

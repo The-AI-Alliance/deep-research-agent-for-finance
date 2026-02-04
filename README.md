@@ -55,7 +55,7 @@ The application provides several command-line options to configure the behavior:
 $ cd src && uv run main_finance.py --help
 usage: main_finance.py [-h] --ticker TICKER --company-name COMPANY_NAME [--reporting-currency REPORTING_CURRENCY]
                        [--output-dir OUTPUT_DIR] [--markdown-report MARKDOWN_REPORT]
-                       [--output-spreadsheet OUTPUT_SPREADSHEET] [--prompts-dir PROMPTS_DIR]
+                       [--output-spreadsheet OUTPUT_SPREADSHEET] [--templates-dir TEMPLATES_DIR]
                        [--financial-research-prompt-path FINANCIAL_RESEARCH_PROMPT_PATH]
                        [--excel-writer-agent-prompt-path EXCEL_WRITER_AGENT_PROMPT_PATH]
                        [--research-model RESEARCH_MODEL] [--excel-writer-model EXCEL_WRITER_MODEL]
@@ -81,16 +81,16 @@ options:
                         Path where the Excel spreadsheet is written. (Default: financials.xlsx) If the path doesn't
                         contain a directory prefix, then the file will be written in the directory given by '--
                         output-dir'.
-  --prompts-dir PROMPTS_DIR
+  --templates-dir TEMPLATES_DIR
                         Path to the directory where prompt files are located. (Default: ./prompts)
   --financial-research-prompt-path FINANCIAL_RESEARCH_PROMPT_PATH
                         Path where the main research agent prompt file is located. (Default:
                         financial_research_agent.md) If the path doesn't contain a directory prefix, then the file
-                        will be read in the directory given by '--prompts-dir'.
+                        will be read in the directory given by '--templates-dir'.
   --excel-writer-agent-prompt-path EXCEL_WRITER_AGENT_PROMPT_PATH
                         Path where the Excel writer agent prompt file is located. (Default: excel_writer_agent.md)
                         If the path doesn't contain a directory prefix, then the file will be read in the directory
-                        given by '--prompts-dir'.
+                        given by '--templates-dir'.
   --research-model RESEARCH_MODEL
                         The model used the research orchestrator agent. (Default: gpt-4o). It should be very
                         capable.

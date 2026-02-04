@@ -18,7 +18,7 @@ from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
 from openai.types.chat import ChatCompletionMessage
 from anthropic.types import Message
 
-from common.string_utils import MarkdownUtil, clean_json_string
+from common.string_utils import MarkdownUtil, clean_json_string, replace_variables
 from common.deep_search import DeepSearch, BaseTask, GenerateTask, AgentTask, TaskStatus
 from common.variables import Variable
 
@@ -31,7 +31,7 @@ from ux.markdown_elements import (
 
 
 class MarkdownDeepOrchestratorMonitor():
-    """Markdown-based monitor to expose all internal state of the Deep Orchestrator"""
+    """Markdown-based monitor to expose all internal state of the Deep Orchestrator."""
 
     def __init__(self, orchestrator: DeepOrchestrator):
         self.orchestrator = orchestrator
@@ -296,12 +296,41 @@ class MarkdownDeepOrchestratorMonitor():
         return self.execution_time
 
 class MarkdownDisplay(Display[DeepSearch]):
+    """
+    A Markdown "display", which primarily produces a markdown-formatted report
+    at the end of execution, but will also stream some markdown content on updates
+    to the console, if the `Variable('print_on_update')` is defined and set to `True`.
+    """
+
     def __init__(self, 
         title: str,
         system: DeepSearch,
-        update_iteration_frequency_secs: float = 1.0,
+        update_iteration_frequency_secs: float = 10.0,
+        yaml_header_template: str = None
         variables: dict[str, Variable] = {}):
+        """Construct a MarkdownDisplay object.
+
+        Args:
+            title (str): The H1 title at the top of the document.
+            system (DeepSearch): The deep research "system". 
+            update_iteration_frequency_secs (float): How frequently to update the display. Multiple seconds is best for this output.
+            yaml_header_template (str): An optional template for a YAML block that will be printed first. Useful for GitHub Pages display. If a 
+            variables: (dict[str, Variable]): Application-wide key-values. See Discussion below.
+        
+        Returns:
+            MarkdownDisplay: A display object for rendering Markdown.
+        
+        Discussion:
+            When printing the final report, the following call,
+            `replace_variables(self.yaml_header_template, ..., **self.variables)`
+            will be used to substitute any variables indicated with `{{key}}`. The ...
+            are for `title=self.title, update_iteration_frequency_secs=self.update_iteration_frequency_secs`.
+            See `__repr__()`. This block will be printed first, if not empty, followed by
+            the hierarchical Markdown sections held by `self.layout`.
+        """
         super().__init__(title, system, update_iteration_frequency_secs, variables)
+        self.yaml_header_template = yaml_header_template
+
         self.print_on_update: bool = self.__get_var_value('print_on_update', False)
         output_dir_path = self.__get_var_value('output_dir_path', Path('./output'))
         self.research_report_path = self.__get_var_value('research_report_path',
@@ -693,13 +722,21 @@ class MarkdownDisplay(Display[DeepSearch]):
         return sections
 
     def __repr__(self) -> str:
-        return str(self.layout)
+        yaml_header_str = ''
+        if self.yaml_header_template:
+            yaml_header_str = replace_variables(self.yaml_header_template, 
+                title=self.title, 
+                update_iteration_frequency_secs=self.update_iteration_frequency_secs,
+                **self.variables) + '\n\n'
+        return f"{yaml_header_str}{self.layout}"
 
     @staticmethod
     def make(
         title: str,
         system: DeepSearch,
         update_iteration_frequency_secs: float = 1.0,
+        yaml_header_template: str = None,
         variables: dict[str,(str,any)] = {}) -> MarkdownDisplay:
-        """A factory method for creating instances."""
-        return MarkdownDisplay(title, system, update_iteration_frequency_secs, variables)
+        """A factory method for creating instances. See `MarkdownDisplay.__init__() for details."""
+        return MarkdownDisplay(
+            title, system, update_iteration_frequency_secs, yaml_header_template, variables)

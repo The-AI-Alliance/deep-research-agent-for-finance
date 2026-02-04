@@ -26,7 +26,6 @@ from mcp_agent.workflows.llm.augmented_llm import RequestParams
 
 
 from common.prompt_utils import load_prompt_markdown
-from common.path_utils import resolve_path
 from common.string_utils import replace_variables, truncate
 from common.variables import Variable
 from ux import Display
@@ -120,7 +119,7 @@ class BaseTask():
             'prompt_template_path': 
                                Variable.file_url_formatter(self.prompt_template_path),
             'task_prompt_saved_file': 
-                               f"Saved prompt: {Variable.file_url_formatter(self.task_prompt_saved_file)}",            
+                               f"Saved prompt: {Variable.file_url_formatter(self.task_prompt_saved_file)}",
             'output_dir_path': Variable.file_url_formatter(self.output_dir_path),
             'temperature':     str(self.temperature),
             'max_iterations':  str(self.max_iterations),
@@ -409,7 +408,10 @@ class DeepSearch():
         short_run: bool,
         name: str,
         available_servers: list[str]) -> DeepOrchestratorConfig:
-        """Create configuration for the Deep Orchestrator"""
+        """
+        Create configuration for the Deep Orchestrator.
+        TODO: Make all this user configurable.
+        """
         if short_run:
             execution_config=ExecutionConfig(
                 max_iterations=1,
