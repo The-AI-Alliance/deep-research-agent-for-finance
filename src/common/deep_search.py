@@ -47,21 +47,21 @@ class BaseTask():
         title: str, 
         model_name: str, 
         prompt_template_path: Path,
-        output_path: Path,
+        output_dir_path: Path,
         temperature: float, 
         max_iterations: int):
         self.name = name
         self.title = title
         self.model_name = model_name
         self.prompt_template_path = prompt_template_path
-        self.output_path = output_path
+        self.output_dir_path = output_dir_path
         self.temperature = temperature
         self.max_iterations = max_iterations
 
         self.status: TaskStatus = TaskStatus.NOT_STARTED 
         self.result: list[any] = []
         self.task_prompt = '' # lazy loaded...
-        self.task_prompt_saved_file = self.output_path / f"{self.name}_task_prompt.txt"
+        self.task_prompt_saved_file = self.output_dir_path / f"{self.name}_task_prompt.txt"
 
     async def run(self, 
         orchestrator: DeepOrchestrator,
@@ -114,18 +114,19 @@ class BaseTask():
             result_str = Variable.callout_formatter(self.result)
 
         attrs = {
-            'name':           Variable.code_formatter(self.name),
-            'title':          self.title,
-            'model_name':     Variable.code_formatter(self.model_name),
+            'name':            Variable.code_formatter(self.name),
+            'title':           self.title,
+            'model_name':      Variable.code_formatter(self.model_name),
             'prompt_template_path': 
-                              Variable.file_url_formatter(self.prompt_template_path),
-            'task_prompt_saved_file': f"Saved prompt: {Variable.file_url_formatter(self.task_prompt_saved_file)}",            
-            'output_path':    Variable.file_url_formatter(self.output_path),
-            'temperature':    str(self.temperature),
-            'max_iterations': str(self.max_iterations),
-            'status':         Variable.code_formatter(self.status.name),
-            'task_prompt':    task_prompt_str,
-            'result':         result_str,
+                               Variable.file_url_formatter(self.prompt_template_path),
+            'task_prompt_saved_file': 
+                               f"Saved prompt: {Variable.file_url_formatter(self.task_prompt_saved_file)}",            
+            'output_dir_path': Variable.file_url_formatter(self.output_dir_path),
+            'temperature':     str(self.temperature),
+            'max_iterations':  str(self.max_iterations),
+            'status':          Variable.code_formatter(self.status.name),
+            'task_prompt':     task_prompt_str,
+            'result':          result_str,
         }
         # If `report` and/or `task_prompt` are excluded, we'll pop their "empty" values here.
         for ex in exclusions:
@@ -169,10 +170,10 @@ class GenerateTask(BaseTask):
         title: str, 
         model_name: str, 
         prompt_template_path: Path,
-        output_path: Path,
+        output_dir_path: Path,
         temperature: float, 
         max_iterations: int):
-        super().__init__(name, title, model_name, prompt_template_path, output_path, temperature, max_iterations)
+        super().__init__(name, title, model_name, prompt_template_path, output_dir_path, temperature, max_iterations)
 
     async def _run(self, 
         task_prompt: str, 
@@ -197,11 +198,11 @@ class AgentTask(BaseTask):
         title: str, 
         model_name: str, 
         prompt_template_path: Path,
-        output_path: Path,
+        output_dir_path: Path,
         generate_prompt: str,
         temperature: float, 
         max_iterations: int):
-        super().__init__(name, title, model_name, prompt_template_path, output_path, temperature, max_iterations)
+        super().__init__(name, title, model_name, prompt_template_path, output_dir_path, temperature, max_iterations)
         self.generate_prompt = generate_prompt
 
     async def _run(self, 
@@ -246,14 +247,14 @@ class DeepSearch():
             config: DeepOrchestratorConfig,
             provider: str,
             tasks: list[BaseTask],
-            output_path: str,
+            output_dir_path: Path,
             variables: dict[str, Variable]):
         self.app_name = app_name
         self.make_display=make_display
         self.config = config
         self.provider = provider
         self.tasks = tasks
-        self.output_path = output_path
+        self.output_dir_path = output_dir_path
         self.variables = variables
 
         # from mcp_agent.workflows.llm.augmented_llm_openai import OpenAIAugmentedLLM
@@ -317,7 +318,7 @@ class DeepSearch():
             # Final display of results and misc. app data...
             final_messages = [
                 "\n",
-                f"Finished: See output files under {self.output_path}.",
+                f"Finished: See output files under {self.output_dir_path}.",
             ]
             self.display.report_results(error_msg)
             await self.display.final_update(final_messages)
@@ -375,7 +376,7 @@ class DeepSearch():
         return ''
         
     def save_raw_result(self, name: str, result: list[any]):
-        result_file = f"{self.output_path}/{name}_result.txt"
+        result_file = self.output_dir_path / f"{name}_result.txt"
         self.logger.info(f"Writing 'raw' returned result for task {name} to: {result_file}")
         with open(result_file, "w") as file:
             for res in result:

@@ -15,6 +15,7 @@ from tests.utils import (
 from common.string_utils import (
     replace_variables, 
     clean_json_string, 
+    to_id,
     truncate,
     MarkdownUtil
 )
@@ -23,6 +24,15 @@ class TestStringUtils(unittest.TestCase):
     """
     Test the string-related utilities.
     """
+
+    @given(lists(no_brace_text, max_size=10))
+    def test_to_id(self, strings: list[str]):
+        in1  = ' '.join(strings)
+        exp1 = re.sub(r'\s+', ' ', in1).lower()
+        self.assertEqual(exp1, to_id(in1))
+        in2  = '\t'.join(strings)
+        exp2 = re.sub(r'\s+', '\t', in2).lower()
+        self.assertEqual(exp2, to_id(in2))
 
     @given(st.dictionaries(no_brace_non_empty_text, no_brace_text), st.text(), st.text())
     def test_replace_variables_replaces_keys_with_values(self, 

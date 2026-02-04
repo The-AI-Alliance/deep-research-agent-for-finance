@@ -1,5 +1,14 @@
 # Common string utilities
 
+import re
+
+def to_id(s: str) -> str:
+    """
+    Convert to lower case and replace whitespace with '_', to create a valid identifier.
+    Doesn't properly handle all characters!
+    """
+    return re.sub(r'\s+', '_', s).lower()
+
 def replace_variables(string: str, **variables: dict[str,any]) -> str:
     """
     Replace variables in a string with their values.

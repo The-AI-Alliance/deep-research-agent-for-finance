@@ -303,9 +303,9 @@ class MarkdownDisplay(Display[DeepSearch]):
         variables: dict[str, Variable] = {}):
         super().__init__(title, system, update_iteration_frequency_secs, variables)
         self.print_on_update: bool = self.__get_var_value('print_on_update', False)
-        output_path = self.__get_var_value('output_path', Path('./output'))
+        output_dir_path = self.__get_var_value('output_dir_path', Path('./output'))
         self.research_report_path = self.__get_var_value('research_report_path',
-            output_path / 'research_report.md')
+            output_dir_path / 'research_report.md')
         self.orchestrator = self.system.orchestrator
         self.monitor = MarkdownDeepOrchestratorMonitor(self.orchestrator)
         self.layout = self.__make_layout(title)
@@ -322,7 +322,11 @@ class MarkdownDisplay(Display[DeepSearch]):
         top_table = MarkdownTable("This run's properties", ['Property', 'Value'])
         for label, value in Variable.make_formatted(self.variables.values()):
             top_table.add_row([label, value])
-        layout.add_intro_content([top_table])
+        layout.add_intro_content([
+            "This report begins with information about this invocation of deep research.",
+            "To skip to the results, go to the [**📊 📈 Results**](#results_section) section.",
+            top_table
+        ])
 
         # Main structure
         layout.add_subsections({
@@ -567,7 +571,7 @@ class MarkdownDisplay(Display[DeepSearch]):
         """
         TODO: The matching of tasks to method calls for formatting is too fragile!
         """
-        content = [f"See also the directory `{self.system.output_path}` for results files."]
+        content = [f"See also the directory `{self.system.output_dir_path}` for results files."]
         if error_msg:
             content.append(f"> **ERROR:** {error_msg}")
         results_section = self.layout["results_section"]

@@ -52,20 +52,17 @@ uv sync
 The application provides several command-line options to configure the behavior:
 
 ```shell
-$ cd src && uv run main.py --help
-usage: main.py [-h] --ticker TICKER --company-name COMPANY_NAME 
-               [--reporting-currency REPORTING_CURRENCY]
-               [--output-path OUTPUT_PATH] [--prompts-path PROMPTS_PATH]
-               [--financial-research-prompt-path FINANCIAL_RESEARCH_PROMPT_PATH]
-               [--excel-writer-agent-prompt-path EXCEL_WRITER_AGENT_PROMPT_PATH]
-               [--research-model RESEARCH_MODEL] 
-               [--excel-writer-model EXCEL_WRITER_MODEL]
-               [--provider {openai,anthropic,ollama}] 
-               [--ux {rich,markdown}] 
-               [--short-run] 
-               [--verbose]
+$ cd src && uv run main_finance.py --help
+usage: main_finance.py [-h] --ticker TICKER --company-name COMPANY_NAME [--reporting-currency REPORTING_CURRENCY]
+                       [--output-dir OUTPUT_DIR] [--markdown-report MARKDOWN_REPORT]
+                       [--output-spreadsheet OUTPUT_SPREADSHEET] [--prompts-dir PROMPTS_DIR]
+                       [--financial-research-prompt-path FINANCIAL_RESEARCH_PROMPT_PATH]
+                       [--excel-writer-agent-prompt-path EXCEL_WRITER_AGENT_PROMPT_PATH]
+                       [--research-model RESEARCH_MODEL] [--excel-writer-model EXCEL_WRITER_MODEL]
+                       [--provider {openai,anthropic,ollama}] [-u {rich,markdown}] [--temperature TEMPERATURE]
+                       [--max-iterations MAX_ITERATIONS] [--short-run] [-v]
 
-Deep Finance Research using orchestrated AI agents
+Finance Deep Research using orchestrated AI agents
 
 options:
   -h, --help            show this help message and exit
@@ -74,59 +71,80 @@ options:
                         Full company name
   --reporting-currency REPORTING_CURRENCY
                         The currency used by the company for financial reporting. (Default:USD)
-  --output-path OUTPUT_PATH
+  --output-dir OUTPUT_DIR
                         Path where Excel and other output files will be saved. (Default: ./output)
-  --prompts-path PROMPTS_PATH
-                        Path where prompt files are located. (Default: ./prompts)
+  --markdown-report MARKDOWN_REPORT
+                        Path where a Markdown report is written. Ignored unless --ux markdown is used. (Default:
+                        research_report.md) If the path doesn't contain a directory prefix, then the file will be
+                        written in the directory given by '--output-dir'.
+  --output-spreadsheet OUTPUT_SPREADSHEET
+                        Path where the Excel spreadsheet is written. (Default: financials.xlsx) If the path doesn't
+                        contain a directory prefix, then the file will be written in the directory given by '--
+                        output-dir'.
+  --prompts-dir PROMPTS_DIR
+                        Path to the directory where prompt files are located. (Default: ./prompts)
   --financial-research-prompt-path FINANCIAL_RESEARCH_PROMPT_PATH
                         Path where the main research agent prompt file is located. (Default:
-                        financial_research_agent.md) If the path doesn't contain a directory specification,
-                        then the file will be searched for in the value of '--prompts-path'.
+                        financial_research_agent.md) If the path doesn't contain a directory prefix, then the file
+                        will be read in the directory given by '--prompts-dir'.
   --excel-writer-agent-prompt-path EXCEL_WRITER_AGENT_PROMPT_PATH
-                        Path where the Excel writer agent prompt file is located. (Default:
-                        excel_writer_agent.md) If the path doesn't contain a directory specification, then the
-                        file will be searched for in the value of '--prompts-path'.
+                        Path where the Excel writer agent prompt file is located. (Default: excel_writer_agent.md)
+                        If the path doesn't contain a directory prefix, then the file will be read in the directory
+                        given by '--prompts-dir'.
   --research-model RESEARCH_MODEL
-                        The model used by the research orchestrator (default: gpt-4o); it should be very capable.
+                        The model used the research orchestrator agent. (Default: gpt-4o). It should be very
+                        capable.
   --excel-writer-model EXCEL_WRITER_MODEL
-                        The model used for writing results to Excel (default: o4-mini); a less powerful model
-                        is sufficient.
+                        The model used for writing results to Excel (default: o4-mini); a less powerful model is
+                        sufficient.
   --provider {openai,anthropic,ollama}
-                        The inference provider. Where is the model served? See the note at the bottom of this
-                        help. (Default: openai)
+                        The inference provider. Where is the model served? See the note at the bottom of this help.
+                        (Default: openai)
   -u {rich,markdown}, --ux {rich,markdown}
-                        The 'UX' to use. Use 'rich' (the default) for a rich console UX and 'markdown' for
-                        streaming updates in markdown syntax.
-  --short-run           Sets some low maximum thresholds to create a shorter run. This is primarily a
-                        debugging tool, as lower iterations, for example, means lower quality results.
+                        The 'UX' to use. Use 'rich' for a rich console UX and 'markdown' for streaming updates in
+                        markdown syntax. (Default: rich)
+  --temperature TEMPERATURE
+                        The 'temperature' used during inference calls to models, between 0.0 and 1.0. (Default:
+                        0.7)
+  --max-iterations MAX_ITERATIONS
+                        The maximum number of iterations for inference/analysis passes. (Default: 10, but a lower
+                        value will be used if --short-run is used. Values <= 0 will be converted to 1)
+  --short-run           Sets some low maximum thresholds to create a shorter run. This is primarily a debugging
+                        tool, as lower iterations, for example, means lower quality results.
   -v, --verbose         Print some extra output. Useful for some testing and debugging scenarios.
 
-Due to current limitations, you must use either OpenAI, Anthropic, or local models served by ollama, and you
-have to tell us which one using the `--provider` argument, although it defaults to 'openai'. The same provider
-must be used for BOTH the research and excel writer models, so specify them accordingly. The default is
-'openai', which works for both OpenAI and Ollama, but you currently have to edit mcp_agent.config.yaml to use
-the correct settings!
+Due to current limitations, you must use either OpenAI, Anthropic, or local models served by ollama, and you have
+to tell us which one using the `--provider` argument, although it defaults to 'openai'. The same provider must be
+used for BOTH the orchestrator and excel writer models, so specify them accordingly. The default is 'openai', which
+works for both OpenAI and Ollama, but you currently have to edit mcp_agent.config.yaml to use the correct settings!
 ```
 
 The `--ticker` and `--company-name` are required.
 
-A `Makefile` provides convenient ways to run the application, get help, etc. The `run-app` command runs the following command, where `META` is passed as the default ticker (with the corresponding company name) and the other arguments shown are actually equivalent to the default values, with a few exceptions:
+A `Makefile` provides convenient ways to run the application, get help, etc. The `app-run` command runs the following command with the arguments shown:
 
 ```shell
 cd src && uv run main.py \
     --ticker "META" \
     --company-name "Meta Platforms, Inc." \
-    --output-path "./output/META" \
     --reporting-currency "USD" \
+    --output-dir "./output/META" \
+    --markdown-report "./output/META/META_report.md" \
     --prompts-path "finance_deep_search/prompts" \
-    --financial-research-prompt-path "financial_research_agent.md" \
-    --excel-writer-agent-prompt-path "excel_writer_agent.md" \
+    --financial-research-prompt-path "./prompts/financial_research_agent.md" \
+    --excel-writer-agent-prompt-path "./prompts/excel_writer_agent.md" \
     --research-model "gpt-4o" \
     --excel-writer-model "o4-mini" \
     --provider "openai" \
-    --verbose \
-    --ux rich
+    --temperature 0.7 \
+    --max-iterations 10 \
+    --ux rich \
+    --verbose
 ```
+
+Some of these arguments are the same as the application's built-in default values.
+
+The make target `app-run` is equivalent to `app-run-rich`, which uses the Python Rich console library as a UX. There is also a target `app-run-markdown`, which uses minimal console output and writes a Markdown report at the end. 
 
 > [!TIP]
 > * Use `make help` to see help on the most important `make` targets.
@@ -138,11 +156,21 @@ Let's go through some of the options shown. (We already discussed `--ticker` and
 
 ```shell
     ...
-    --output-path "./output/META"
+    --output-dir "./output/META"
     ...
 ```
 
-Several output files, including an Excel spreadsheet of data, are written to the value passed with `--output-path`. The application's default value is `./output`. (Actually, the full absolute path to `./output` is used.) However, the `make` target uses `./output/$TICKER`, so you can easily run the job for different companies and not clobber results for other companies.
+Several output files, including an Excel spreadsheet of data, are written to the value passed with `--output-dir`. The application's default value is `./output`. (Actually, the full absolute path to `./output` is used.) However, the `make` target uses `./output/$TICKER`, so you can easily run the job for different companies and not clobber results for other companies.
+
+### Markdown Report
+
+```shell
+    ...
+    --markdown-report "./output/META/META_report.md"
+    ...
+```
+
+Write a Markdown-formatted report at the end. This option is ignored unless `--ux markdown` is used.
 
 ### Prompt File Locations
 
@@ -164,11 +192,13 @@ If you specify a value for either argument that includes an absolute or relative
 ### Models
 
 ```shell
-...
+  ...
     --research-model "gpt-4o"
     --excel-writer-model "o4-mini"
     --provider "openai"
-...
+    --temperature 0.7 
+    --max-iterations 10 
+  ...
 ```
 
 By default, `gpt-4o` from OpenAI is used for research _orchestration_ and `o4-mini` is used for creating an Excel spreadsheet with some of the research results. If you would like to use a model from another provider, there are several options. Note that inference from OpenAI and Anthropic, and local-serving with ollama are currently supported. (However, at this time, Anthropic support hasn't been tested - help wanted!)
@@ -176,6 +206,12 @@ By default, `gpt-4o` from OpenAI is used for research _orchestration_ and `o4-mi
 The `--provider` argument is a temporary implementation limitation to ensure the correct `mcp-agent` code path is followed. Our intention is to infer this automatically based on the models chosen. This also means that _you must specify two models served by the same provider._ You can't mix and match Anthropic, OpenAI, and ollama models, at this time.
 
 In addition, at this time you have to edit [`./mcp_agent.config.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/mcp_agent.config.yaml) to uncomment the correct definition of `openai` settings. 
+
+The `--temperature` affects the randomness of responses during inference calls. The value must be between 0.0 and 1.0. Higher temperature values yield more randomness.
+
+The `--max-iterations` determines how many inference and checking cycles will be attempted during various stages of the agent's work. Higher values yield better results, but with more potential cost. 
+
+An optional flag is `--short-run`, which overrides `--max-iterations` with a value of 1 and sets other limits more stringently. This is mostly a debugging tool for checking the end-to-end logic of the application, but the results are rarely research results are unlikely to be "good".
 
 See [Configuration](#configuration) below for more details.
 
@@ -188,11 +224,11 @@ See [Configuration](#configuration) below for more details.
 ...
 ```
 
-The `--verbose` option (used by default in the `make run-app` command), just prints some extra information at the beginning of execution. It does nothing else at this time.
+The `--verbose` option (used by default in the `make app-run` command), just prints some extra information at the beginning of execution (and in the optional Markdown report).
 
 By default, a [Rich](https://rich.readthedocs.io/en/stable/introduction.html) console-based UI is used to show progress and final results. 
 
-An alternative provided uses "streaming" Markdown output (`--ux markdown`), where updates are written in Markdown-formatted tables and bullets to the console (of limited use...), then a final report is written to a Markdown file, `$OUTPUT/research_result.markdown`. The repo contains an example from a test run of the above default command: [`./output/META/research_result_example.markdown`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/output/META/research_result_example.markdown).
+The alternative, `--ux markdown`, produces less console output and generates a Markdown-formatted report at the end, which is written to the value of the `--markdown-report` option discussed above. The repo contains an example from a test run of the above default command with `--ux markdown` (This command is equivalent to what `make app-run-markdown` runs). The example report is [`./output/gpt-oss_20b/META_report.md`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/output/gpt-oss_20b/META_report.md).
 
 ## What the Application Does
 

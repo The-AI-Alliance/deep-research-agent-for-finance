@@ -15,7 +15,8 @@ from tests.utils import (
 from finance_deep_search.deep_search import DeepSearch
 from mcp_agent.workflows.deep_orchestrator.config import DeepOrchestratorConfig
 
-output_path = './tests/output/META'
+output_dir = './tests/output/META'
+output_dir_path = Path(output_dir)
 
 class TestDeepSearch(unittest.TestCase):
     """
@@ -24,11 +25,11 @@ class TestDeepSearch(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        os.makedirs(output_path, exist_ok=True)
+        os.makedirs(output_dir, exist_ok=True)
 
     @classmethod
     def tearDownClass(cls):
-        shutil.rmtree(output_path)
+        shutil.rmtree(output_dir)
 
     def make(self,
             app_name: str = 'DeepSearchTest',
@@ -42,7 +43,7 @@ class TestDeepSearch(unittest.TestCase):
             prompts_dir: str = 'finance_deep_search/prompts',
             financial_research_prompt_path: str = 'financial_research_agent.md',
             excel_writer_agent_prompt_path: str = 'excel_writer_agent.md',
-            output_spreadsheet_path: str = f'{output_path}/META_financials.xlsx',
+            output_spreadsheet_path: str = output_dir_path / "META_financials.xlsx",
             short_run: bool = False,
             verbose: bool = False):
         return DeepSearch(
@@ -57,7 +58,7 @@ class TestDeepSearch(unittest.TestCase):
             prompts_dir = prompts_dir,
             financial_research_prompt_path = financial_research_prompt_path,
             excel_writer_agent_prompt_path = excel_writer_agent_prompt_path,
-            output_path = output_path,
+            output_dir_path = output_dir_path,
             output_spreadsheet_path = output_spreadsheet_path,
             short_run = short_run,
             verbose = verbose,

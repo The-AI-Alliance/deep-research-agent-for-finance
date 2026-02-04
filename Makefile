@@ -27,7 +27,7 @@ INFERENCE_PROVIDER       ?= openai
 PROMPTS_DIR              ?= ${app_dir}/prompts
 FIN_RESEARCH_PROMPT_FILE ?= financial_research_agent.md
 EXCEL_WRITER_PROMPT_FILE ?= excel_writer_agent.md
-OUTPUT_PATH              ?= ${PWD}/output/${TICKER}
+OUTPUT_DIR               ?= ${PWD}/output/${TICKER}
 OUTPUT_REPORT            ?= ${TICKER}_report.md
 OUTPUT_SPREADSHEET       ?= ${TICKER}_financials.xlsx
 UX                       ?= rich
@@ -139,11 +139,11 @@ app-run-md app-run-markdown::
 app-run-rich:: app-run
 app-run:: app-check do-app-run show-output-files
 do-app-run::
-	cd ${src_dir} && uv run main-finance.py \
+	cd ${src_dir} && uv run main_finance.py \
 		--ticker "${TICKER}" \
 		--company-name "${COMPANY_NAME}" \
-		--output-path "${OUTPUT_PATH}" \
-		--output-report "${OUTPUT_REPORT}" \
+		--output-dir "${OUTPUT_DIR}" \
+		--markdown-report "${OUTPUT_REPORT}" \
 		--output-spreadsheet "${OUTPUT_SPREADSHEET}" \
 		--reporting-currency "${REPORTING_CURRENCY}" \
 		--prompts-dir "${PROMPTS_DIR}" \
@@ -157,8 +157,8 @@ do-app-run::
 		${APP_ARGS}
 show-output-files::
 	@echo
-	@echo "Output files in ${OUTPUT_PATH}:"
-	@cd ${OUTPUT_PATH} && find . -type f -exec ls -lh {} \;
+	@echo "Output files in ${OUTPUT_DIR}:"
+	@cd ${OUTPUT_DIR} && find . -type f -exec ls -lh {} \;
 
 test tests:: uv-check
 	cd ${src_dir} && uv run python -m unittest discover
@@ -209,9 +209,9 @@ print-app-info:
 	@echo "  PROMPTS_DIR              ${PROMPTS_DIR}"
 	@echo "  FIN_RESEARCH_PROMPT_FILE ${FIN_RESEARCH_PROMPT_FILE}"
 	@echo "  EXCEL_WRITER_PROMPT_FILE ${EXCEL_WRITER_PROMPT_FILE}"
-	@echo "OUTPUT_PATH                ${OUTPUT_PATH}"
-	@echo "  OUTPUT_REPORT            ${OUTPUT_REPORT} (under OUTPUT_PATH)"
-	@echo "  OUTPUT_SPREADSHEET       ${OUTPUT_SPREADSHEET} (under OUTPUT_PATH)"
+	@echo "OUTPUT_DIR                ${OUTPUT_DIR}"
+	@echo "  OUTPUT_REPORT            ${OUTPUT_REPORT} (under OUTPUT_DIR)"
+	@echo "  OUTPUT_SPREADSHEET       ${OUTPUT_SPREADSHEET} (under OUTPUT_DIR)"
 	@echo "APP_ARGS                   ${APP_ARGS}"
 	@echo
 

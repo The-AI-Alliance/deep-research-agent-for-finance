@@ -17,6 +17,8 @@ from typing import Callable
 from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
 from mcp_agent.workflows.deep_orchestrator.config import DeepOrchestratorConfig
 
+from common.string_utils import to_id
+
 class MarkdownElement():
     """Super type of the other markdown-related types.
     Note: There are places in subtype method signatures where `MarkdownElement`
@@ -160,8 +162,11 @@ class MarkdownSection(MarkdownElement):
         return self.subsections[key]
  
     def __repr__(self) -> str:
+        def ss(key: str, subsection: MarkdownSection) -> str:
+            return f"""<a id="{to_id(key)}"></a>\n\n{subsection}\n"""
+
         content_str = '\n'.join([str(c) for c in self.content])
-        subsections_str = '\n'.join([str(s) for s in self.subsections.values()])
+        subsections_str = '\n'.join([ss(k,s) for k,s in self.subsections.items()])
         return f"{self.level*'#'} {self.title}\n\n{content_str}\n{subsections_str}"
 
     def __eq__(self, other: any) -> bool:
