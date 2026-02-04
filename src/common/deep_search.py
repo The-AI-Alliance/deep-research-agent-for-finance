@@ -242,7 +242,7 @@ class DeepSearch():
     """
     def __init__(self,
             app_name: str,
-            make_display: Callable[[DeepSearch], Display],
+            make_display: Callable[[DeepSearch, dict[str, Variable]], Display],
             config: DeepOrchestratorConfig,
             provider: str,
             tasks: list[BaseTask],

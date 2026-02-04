@@ -48,6 +48,7 @@ from common.main_utils import (
     var_output_dir_path,
     var_templates_dir_path,
     var_research_report_path,
+    var_yaml_header_template_path,
     var_provider,
     var_research_model,
     var_research_model,
@@ -139,7 +140,6 @@ if __name__ == "__main__":
         ["excel_writer", "fetch", "filesystem", "financial-datasets", "yfmcp"])
 
     output_dir_path = Path(args.output_dir)
-    markdown_report_path = resolve_path(args.markdown_report, output_dir_path)
     output_spreadsheet_path = resolve_path(args.output_spreadsheet, output_dir_path)
     
     templates_dir_path = Path(args.templates_dir)
@@ -161,7 +161,8 @@ if __name__ == "__main__":
         Variable("reporting_currency",       args.reporting_currency),
         Variable("units",                    f"{args.reporting_currency} millions"),
         var_output_dir_path(output_dir_path),
-        var_research_report_path(markdown_report_path),
+        var_research_report_path(processed_args['markdown_report_path']),
+        var_yaml_header_template_path(processed_args['yaml_header_template_path']),
         Variable("output_spreadsheet_path",  output_spreadsheet_path, formatter=Variable.file_url_formatter),
         var_provider(args.provider),
         var_research_model(args.research_model),
@@ -173,6 +174,7 @@ if __name__ == "__main__":
                                              excel_writer_agent_prompt_path, formatter=Variable.file_url_formatter),
         var_ux(args.ux),
     ]
+
     variables_list.extend(vars_verbose_only(args, processed_args, config))
 
     variables = dict([(v.key, v) for v in variables_list])

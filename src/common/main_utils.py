@@ -132,6 +132,8 @@ def process_args(parser: argparse.ArgumentParser) -> (argparse.Namespace, dict[s
     output_dir_path = Path(args.output_dir)
     output_dir_path.mkdir(parents=True, exist_ok=True)
 
+    markdown_report_path = resolve_path(args.markdown_report, output_dir_path)
+
     templates_dir_path = Path(args.templates_dir)
     if not templates_dir_path.exists():
         raise ValueError(f"Prompt directory '{templates_dir_path}' doesn't exist!")
@@ -154,6 +156,7 @@ def process_args(parser: argparse.ArgumentParser) -> (argparse.Namespace, dict[s
         'start_time': datetime.now().strftime('%Y-%m-%d %H:%M%:%S'),
         "temperature": temperature, 
         "max_iterations": max_iterations,
+        "markdown_report_path": markdown_report_path,
         "yaml_header_template_path": markdown_yaml_header_path,
     })
 
@@ -207,6 +210,9 @@ def var_templates_dir_path(path: Path) -> Variable:
 
 def var_research_report_path(path: Path) -> Variable:
     return var_with_file_fmt("research_report_path", path)
+
+def var_yaml_header_template_path(path: Path) -> Variable:
+    return var_with_file_fmt("yaml_header_template_path", path)
 
 def var_provider(provider: str) -> Variable:
     return var_with_dict_fmt("provider", provider, map=Variable.provider_names)
