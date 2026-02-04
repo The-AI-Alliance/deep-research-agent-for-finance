@@ -113,9 +113,16 @@ class TestVariables(unittest.TestCase):
     @given(no_brace_text())
     def test_Variable_format_returns_simple_str_if_use_basic_formatting_true(self, string: str):
         vstr = string + "_value"
-        variable = Variable(string, vstr, formatter=str)
+        variable = Variable(string, vstr, formatter=lambda s: s.upper())
         _, _, actual = variable.format(use_basic_formatting=True)
         self.assertEqual(vstr, actual)
+
+    @given(no_brace_text())
+    def test_Variable_format_returns_formatted_str_if_formatter_not_None(self, string: str):
+        vstr = string + "_value"
+        variable = Variable(string, vstr, formatter=lambda s: s.upper())
+        _, _, actual = variable.format()
+        self.assertEqual(vstr.upper(), actual)
 
     @given(st.sampled_from(['rich', 'markdown']))
     def test_Variable_ux_names(self, ux):
