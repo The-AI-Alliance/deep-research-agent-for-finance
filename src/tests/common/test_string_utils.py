@@ -24,16 +24,16 @@ class TestStringUtils(unittest.TestCase):
     Test the string-related utilities.
     """
 
-    @given(lists(no_brace_text()(), max_size=10))
+    @given(st.lists(no_brace_text(), max_size=10))
     def test_to_id(self, strings: list[str]):
         in1  = ' '.join(strings)
-        exp1 = re.sub(r'\s+', ' ', in1).lower()
+        exp1 = re.sub(r'\s+', '_', in1).lower()
         self.assertEqual(exp1, to_id(in1))
         in2  = '\t'.join(strings)
-        exp2 = re.sub(r'\s+', '\t', in2).lower()
+        exp2 = re.sub(r'\s+', '_', in2).lower()
         self.assertEqual(exp2, to_id(in2))
 
-    @given(st.dictionaries(no_brace_nonempty_text(), no_brace_text()()), st.text(), st.text())
+    @given(st.dictionaries(no_brace_nonempty_text(), no_brace_text()), st.text(), st.text())
     def test_replace_variables_replaces_keys_with_values(self, 
         kvs: dict[str, str], delimiter, prefix_suffix):
         """
@@ -41,14 +41,14 @@ class TestStringUtils(unittest.TestCase):
         in the text.
         We ignore whitespace at the beginnings and the ends of strings.
         """
-        key_strs = ['{{'+str(key)+'}}' for key in kvs.keys()]
-        text = f'{prefix_suffix}{delimiter.join(key_strs)}{prefix_suffix}'
-        expected_text = f'{prefix_suffix}{delimiter.join(kvs.values())}{prefix_suffix}'
-        actual_text = replace_variables(text, **kvs)
-        et = expected_text.strip()
-        at = actual_text.strip()
-        self.assertEqual(et, at,
-            f'<{et}> != <{at}> (kvs: {kvs}, text = {text})')
+        key_strs = ['{{'+key+'}}' for key in kvs.keys()]
+        text = f"{prefix_suffix}{delimiter.join(key_strs)}{prefix_suffix}"
+        et = f"{prefix_suffix}{delimiter.join(kvs.values())}{prefix_suffix}"
+        at = replace_variables(text, **kvs)
+        expected_text = et.strip()
+        actual_text = at.strip()
+        self.assertEqual(expected_text, actual_text,
+            f'<{expected_text}> != <{actual_text}> (kvs: {kvs}, text = {text}, delimiter = {delimiter}, prefix_suffix = {prefix_suffix})')
 
     @given(st.text(max_size=25), st.integers(min_value=0, max_value=20), st.sampled_from(['', '...']))
     def test_truncate(self, s: str, n: int, ellipsis: str):
@@ -64,8 +64,8 @@ class TestStringUtils(unittest.TestCase):
             self.assertEqual(s[:n]+ellipsis, sn)
 
     @given(
-        st.dictionaries(no_brace_nonempty_text(), no_brace_text()()),
-        st.dictionaries(no_brace_nonempty_text(), no_brace_text()()),
+        st.dictionaries(no_brace_nonempty_text(), no_brace_text()),
+        st.dictionaries(no_brace_nonempty_text(), no_brace_text()),
         st.integers(),
         st.floats(),
         st.tuples(st.text(), st.text()),

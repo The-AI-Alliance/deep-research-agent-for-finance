@@ -199,10 +199,7 @@ if __name__ == "__main__":
 
     ux_title = "Deep Research Agent for Finance"
 
-    yaml_header_template_path = processed_args.get('yaml_header_template_path', None)
-
-    make_display = determine_display(args.ux, ux_title,
-        yaml_header_template_path=yaml_header_template_path)
+    make_display = determine_display(args.ux, ux_title, **processed_args)
 
     deep_search = DeepSearch(
         app_name=def_app_name,

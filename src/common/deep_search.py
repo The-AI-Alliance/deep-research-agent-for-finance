@@ -385,7 +385,9 @@ class DeepSearch():
     def __print_details(self):
         message_fmt = "    {0:25s}  {1}"
         pwd = os.path.dirname(os.path.realpath(__file__))
-        props_strs = [message_fmt.format(f"{l}:", v) for l, v in Variable.make_formatted(self.variables.values())]
+        props_strs = []
+        for l, v in Variable.make_formatted(self.variables.values(), use_basic_formatting=True):
+            props_strs.append(message_fmt.format(f"{l}:", v))
         props_str = "\n".join(props_strs)
         tasks_str = "\n".join([
             message_fmt.format(f"{n+1}:", str(self.tasks[n])) for n in range(len(self.tasks))

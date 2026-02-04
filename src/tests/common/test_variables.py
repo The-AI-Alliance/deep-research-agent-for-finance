@@ -31,7 +31,7 @@ class TestVariables(unittest.TestCase):
         Variable.set_ux(TestVariables.save_ux)
 
     @given(
-        st.dictionaries(no_brace_nonempty_text(), no_brace_text()()), 
+        st.dictionaries(no_brace_nonempty_text(), no_brace_text()), 
         parent_path_text(),         # URL parent path
         no_brace_nonempty_text(),  # URL end
         parent_path_text(),         # file name parent path
@@ -91,7 +91,7 @@ class TestVariables(unittest.TestCase):
             self.assertEqual(expected_fmts[i], variable.formatter)
             self.assertEqual(expected_strs[i], value_str)
 
-    @given(no_brace_text()())
+    @given(no_brace_text())
     def test_Variable_label_created_if_not_provided(self, string: str):
         # Add leading letter...''
         s = 'a'+string
@@ -100,15 +100,22 @@ class TestVariables(unittest.TestCase):
         self.assertEqual(expected, variable.label)
         self.assertTrue(variable.label != variable.key)
 
-    @given(no_brace_text()())
+    @given(no_brace_text())
     def test_Variable_make_label(self, string: str):
         expected=string.replace('_', ' ').title().strip()
         self.assertEqual(expected, Variable.make_label(string))
 
-    @given(no_brace_text()())
+    @given(no_brace_text())
     def test_Variable_format_returns_None_if_formatter_None(self, string: str):
         variable = Variable(string, string + "_value", formatter=None)
         self.assertEqual(None, variable.format())
+
+    @given(no_brace_text())
+    def test_Variable_format_returns_simple_str_if_use_basic_formatting_true(self, string: str):
+        vstr = string + "_value"
+        variable = Variable(string, vstr, formatter=str)
+        _, _, actual = variable.format(use_basic_formatting=True)
+        self.assertEqual(vstr, actual)
 
     @given(st.sampled_from(['rich', 'markdown']))
     def test_Variable_ux_names(self, ux):

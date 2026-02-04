@@ -66,7 +66,7 @@ def add_arg_markdown_yaml_header_template_path(parser: argparse.ArgumentParser, 
     parser.add_argument(
         "--markdown-yaml-header",
         default=def_markdown_yaml_header_template_path,
-        help=f"Path to an optional template for a YAML header to write at the beginning of the Markdown report. Useful for publishing the report on a GitHub Pages website. Ignored unless --ux markdown is used. (Default: {def_markdown_yaml_header_template}) {read_relative_to('template-dir')}"
+        help=f"Path to an optional template for a YAML header to write at the beginning of the Markdown report. Useful for publishing the report on a GitHub Pages website. Ignored unless --ux markdown is used. (Default: {def_markdown_yaml_header_template_path}) {read_relative_to('template-dir')}"
     )
 
 def add_arg_research_model(parser: argparse.ArgumentParser, def_research_model: str = 'gpt-4o'):
@@ -160,20 +160,23 @@ def process_args(parser: argparse.ArgumentParser) -> (argparse.Namespace, dict[s
 def determine_display(
     which_one: str,
     ux_title: str,
-    yaml_header_template: Path = None
-    ) -> Callable[[DeepSearch, dict[str,(str,any)]], Display]:
+    **kvs) -> Callable[[DeepSearch, dict[str,(str,any)]], Display]:
+    yaml = kvs.get('yaml_header_template_path', None)
+    update_freq = kvs.get('update_iteration_frequency_secs', 0.0)
     if which_one == "rich":
-        ux_update_iteration_frequency_secs = 0.5
+        if update_freq <= 0.0:
+            update_freq = 0.5  #default
         make_display = lambda ds, vs: RichDisplay.make(
             ux_title, ds,
-            update_iteration_frequency_secs=ux_update_iteration_frequency_secs,
+            update_iteration_frequency_secs=update_freq,
             variables=vs)
     elif which_one == "markdown":
-        ux_update_iteration_frequency_secs = 10
+        if update_freq <= 0.0:
+            update_freq = 10  #default
         make_display = lambda ds, vs: MarkdownDisplay.make(
             ux_title, ds,
-            update_iteration_frequency_secs=ux_update_iteration_frequency_secs,
-            yaml_header_template=yaml_header_template,
+            update_iteration_frequency_secs=update_freq,
+            yaml_header_template=yaml,
             variables=vs)
     else:
         # The "ux" argument definition should prevent unexpected values, 

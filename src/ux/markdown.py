@@ -306,7 +306,7 @@ class MarkdownDisplay(Display[DeepSearch]):
         title: str,
         system: DeepSearch,
         update_iteration_frequency_secs: float = 10.0,
-        yaml_header_template: Path = None
+        yaml_header_template: Path = None,
         variables: dict[str, Variable] = {}):
         """Construct a MarkdownDisplay object.
 
@@ -722,10 +722,13 @@ class MarkdownDisplay(Display[DeepSearch]):
     def __repr__(self) -> str:
         yaml_header_str = ''
         if self.yaml_header_template:
-            yaml_header_str = replace_variables(self.yaml_header_template, 
-                title=self.title, 
-                update_iteration_frequency_secs=self.update_iteration_frequency_secs,
-                **self.variables) + '\n\n'
+            with self.yaml_header_template.open('r') as file: 
+                template_str = file.read()
+            if template_str:
+                yaml_header_str = replace_variables(template_str, 
+                    title=self.title, 
+                    update_iteration_frequency_secs=self.update_iteration_frequency_secs,
+                    **self.variables) + '\n\n'
         return f"{yaml_header_str}{self.layout}"
 
     @staticmethod

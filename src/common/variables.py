@@ -21,14 +21,20 @@ class Variable():
         self.label = label if label != None else Variable.make_label(key) 
         self.formatter = formatter
 
-    def format(self) -> (str, str, str):
+    def format(self, use_basic_formatting: bool = False) -> (str, str, str):
         """
         If formatter is not `None`, then return `(key, label, formatter(value))`.
         Otherwise return `None`. 
+        Pass `use_basic_formatting = True` to just print values with `str(value)`,
+        such as when writing to the console on startup, before the display UX is 
+        initialized, for example. Just as for normal formatting, whether or not to
+        print a variable in this case is still decided by whether or not formatter is None.
         """
         if not self.formatter:
             return None
-        if isinstance(self.formatter, dict):
+        if use_basic_formatting:
+            return (self.key, self.label,str(self.value))
+        elif isinstance(self.formatter, dict):
             return (self.key, self.label, self.formatter.get(self.value, str(self.key)))
         else:
             return (self.key, self.label, self.formatter(self.value))
@@ -39,16 +45,19 @@ class Variable():
         """Replace '_' with ' ', capitalize words and strip whitespace on the ends."""
         return s.replace('_', ' ').title().strip()
 
-    def make_formatted(variables: Sequence[Variable]) -> list[(str,str)]:
+    def make_formatted(variables: Sequence[Variable], use_basic_formatting: bool = False) -> list[(str,str)]:
         """
         A helper method for common uses of Variables; return a list of
         `(label, formatted(value))` pairs from the input sequence of
         Variables, filtering out any were `variable.format() == `None`.
+        The `use_basic_formatting` argument is passed to `format()`.
         """
         result = []
         for variable in variables:
             tuple = variable.format()
             if tuple:
+                if use_basic_formatting:
+                    tuple[2] = str()
                 result.append((tuple[1], tuple[2]))
         return result
 

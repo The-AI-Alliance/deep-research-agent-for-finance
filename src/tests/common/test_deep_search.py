@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 import os, re, shutil, sys
 
-from finance_deep_search.deep_search import DeepSearch
+from common.deep_search import DeepSearch
 from mcp_agent.workflows.deep_orchestrator.config import DeepOrchestratorConfig
 
 output_dir = './tests/output/META'
