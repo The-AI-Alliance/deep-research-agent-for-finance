@@ -47,7 +47,7 @@ class BaseTask():
         model_name: str, 
         prompt_template_path: Path,
         output_dir_path: Path,
-        properties: dict[str,any]):
+        properties: dict[str,Variable]):
         self.name = name
         self.title = title
         self.model_name = model_name
@@ -116,7 +116,7 @@ class BaseTask():
         for key in ['temperature', 'max_iterations', 'max_tokens', 'max_cost_dollars', 'max_time_minutes']:
             value = self.properties.get(key)
             if value:
-                attrs[key] = str(value)
+                attrs[key] = str(value.value)
 
         # Now remove the key-values we don't want to include.
         for ex in exclusions:

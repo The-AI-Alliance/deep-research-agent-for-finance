@@ -12,6 +12,7 @@ from tests.utils import (
     parent_path_text,
 )
 
+from common.string_utils import to_id
 from common.variables import Variable
 
 class TestVariables(unittest.TestCase):
@@ -134,6 +135,18 @@ class TestVariables(unittest.TestCase):
         variable = Variable(string, vstr, formatter=lambda s: s.upper())
         _, _, actual = variable.format()
         self.assertEqual(vstr.upper(), actual)
+
+    @given(no_brace_nonempty_text(max_size=16), no_brace_nonempty_text(max_size=16))
+    def test_Variable___repr__(self, label: str, value: str):
+        key = to_id(label)
+        v1 = Variable(key, value, label=label, formatter=Variable.code_formatter)
+        actual = str(v1)
+        expected = f"Variable(key = {key}, value = {value}, label = {label}, formatter = ...)"
+        self.assertEqual(expected, actual)
+        v2 = Variable(key, value, label=label, formatter=None)
+        actual = str(v2)
+        expected = f"Variable(key = {key}, value = {value}, label = {label}, formatter = None)"
+        self.assertEqual(expected, actual)
 
     @given(st.sampled_from(['rich', 'markdown']))
     def test_Variable_ux_names(self, ux):

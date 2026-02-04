@@ -21,6 +21,10 @@ class Variable():
         self.label = label if label != None else Variable.make_label(key) 
         self.formatter = formatter
 
+    def __repr__(self) -> str:
+        fmt_str = '...' if self.formatter else None
+        return f"Variable(key = {self.key}, value = {self.value}, label = {self.label}, formatter = {fmt_str})"
+
     @staticmethod
     def get(variable: Variable, default: any) -> any:
         """Return the variables value or default if the variable is None or the value is None."""
