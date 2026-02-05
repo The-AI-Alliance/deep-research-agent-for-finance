@@ -126,7 +126,7 @@ def add_arg_max_time_minutes(parser: argparse.ArgumentParser, def_max_time_minut
 
 def add_arg_ux(parser: argparse.ArgumentParser, def_ux: str = 'rich'):
     parser.add_argument(
-        "-u", "--ux",
+        "--ux",
         choices=["rich", "markdown"],
         default=def_ux,
         help=f"The 'UX' to use. Use 'rich' for a rich console UX and 'markdown' for streaming updates in markdown syntax. (Default: {def_ux})"
@@ -141,7 +141,7 @@ def add_arg_short_run(parser: argparse.ArgumentParser):
 
 def add_arg_verbose(parser: argparse.ArgumentParser):
     parser.add_argument(
-        '-v', '--verbose',
+        '--verbose',
         action='store_true',
         help="Print some extra output. Useful for some testing and debugging scenarios."
     )

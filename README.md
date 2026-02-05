@@ -49,12 +49,22 @@ uv sync
 
 ## Usage
 
-The application provides several command-line options to configure the behavior:
+The easiest way to run the application with default values for all optional arguments is `make app-run`. This target does some setup and then runs the command `cd src && uv run main_finance.py ...` where `...` is a lot of arguments. The minimum required arguments are `--ticker` and `--company-name`. So, here is the shortest command you can run to do research on Meta:
 
 ```shell
-$ cd src && uv run main_finance.py --help
-Help on src/finance_deep_search/main_finance.py:
-cd src && uv run main_finance.py --help  
+cd src && uv run main_finance.py --ticker META --company-name "Meta Platforms, Inc."
+
+```
+
+> [!NOTE]
+> While running the application, you may see a browser window pop up asking for permission to authenticate to a financial dataset MCP server. This should only happen one time. There is no cost to do this. You can authenticate using a `gmail` email address, for example. If you decline, the application will still run, but it may run for a longer time while the deep research agent tries to gather the information it needs without this source.
+
+The application provides several command-line options to configure the behavior. Use `make app-help` or `cd src && uv run main_finance.py --help` to see the details. Here is the output for `make app-help`:
+
+```shell
+$ make app-help
+Application help provided by src/finance_deep_search/main_finance.py:
+cd src && uv run main_finance.py --help
 usage: main_finance.py [-h] --ticker TICKER --company-name COMPANY_NAME
                        [--reporting-currency REPORTING_CURRENCY]
                        [--output-dir OUTPUT_DIR]
@@ -67,12 +77,12 @@ usage: main_finance.py [-h] --ticker TICKER --company-name COMPANY_NAME
                        [--research-model RESEARCH_MODEL]
                        [--excel-writer-model EXCEL_WRITER_MODEL]
                        [--provider {openai,anthropic,ollama}]
-                       [-u {rich,markdown}] [--temperature TEMPERATURE]
+                       [--ux {rich,markdown}] [--temperature TEMPERATURE]
                        [--max-iterations MAX_ITERATIONS]
                        [--max-tokens MAX_TOKENS]
                        [--max-cost-dollars MAX_COST_DOLLARS]
                        [--max-time-minutes MAX_TIME_MINUTES] [--short-run]
-                       [-v]
+                       [--verbose]
 
 Finance Deep Research using orchestrated AI agents
 
@@ -129,8 +139,7 @@ options:
   --provider {openai,anthropic,ollama}
                         The inference provider. Where is the model served? See
                         the note at the bottom of this help. (Default: openai)
-  -u {rich,markdown}, --ux {rich,markdown}
-                        The 'UX' to use. Use 'rich' for a rich console UX and
+  --ux {rich,markdown}  The 'UX' to use. Use 'rich' for a rich console UX and
                         'markdown' for streaming updates in markdown syntax.
                         (Default: rich)
   --temperature TEMPERATURE
@@ -143,23 +152,23 @@ options:
                         will be converted to 1)
   --max-tokens MAX_TOKENS
                         The maximum number of tokens for inference passes.
-                        (Default: 100000, but a lower value will be used if
+                        (Default: 500000, but a lower value will be used if
                         --short-run is used. Values <= 0 will be converted to
                         10000)
   --max-cost-dollars MAX_COST_DOLLARS
                         The maximum total cost in USD allowed for inference
-                        calls. (Default: 1.0, but a lower value will be used
+                        calls. (Default: 2.0, but a lower value will be used
                         if --short-run is used. Values <= 0 will be converted
                         to 1.00)
   --max-time-minutes MAX_TIME_MINUTES
                         The maximum number of time in minutes allowed for
-                        inference passes. (Default: 10.0, but a lower value
-                        will be used if --short-run is used. Values <= 0 will
-                        be converted to 10.0)
+                        inference passes. (Default: 15, but a lower value will
+                        be used if --short-run is used. Values <= 0 will be
+                        converted to 10)
   --short-run           Sets some low maximum thresholds to create a shorter
                         run. This is primarily a debugging tool, as lower
                         iterations, for example, means lower quality results.
-  -v, --verbose         Print some extra output. Useful for some testing and
+  --verbose             Print some extra output. Useful for some testing and
                         debugging scenarios.
 
 Due to current limitations, you must use either OpenAI, Anthropic, or local
@@ -169,85 +178,108 @@ must be used for BOTH the orchestrator and excel writer models, so specify
 them accordingly. The default is 'openai', which works for both OpenAI and
 Ollama, but you currently have to edit mcp_agent.config.yaml to use the
 correct settings!
+
+TIPS:
+1. Use 'make print-app-info' to see some make variables you can override.
+2. Use 'make --just-print app-run' to see the arguments passed BY THIS MAKEFILE.
+   Some argument values will be different in the Makefile than the hard-coded defaults
+   in the application itself, which are shown in the help output above!!
+3. To pass additional arguments, use 'make APP_ARGS="..." app-run'. (Note the quotes.)
 ```
 
-The `--ticker` and `--company-name` are required.
+The `--ticker` and `--company-name` are required. All other arguments are optional; they have default values that will be used. The Makefile passes all the arguments with values that are _mostly_ the same as the default values hard-coded in the application, but a few may be different. 
 
-A `Makefile` provides convenient ways to run the application, get help, etc. The `app-run` command runs the following command with the arguments shown:
+Here is the actual command executed by `make app-run`. (Note the use of `-n` to have `make` print the command without running it):
 
 ```shell
+$ make -n app-run 
+(... some setup commands elided ...)
 cd src && uv run main_finance.py \
     --ticker "META" \
     --company-name "Meta Platforms, Inc." \
+    --output-dir "/Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-finance/output/META" \
+    --markdown-report "META_report.md" \
+    --markdown-yaml-header "finance_deep_search/templates/github_pages_header.yaml" \
+    --output-spreadsheet "META_financials.xlsx" \
     --reporting-currency "USD" \
-    --output-dir "./output/META" \
-    --markdown-report "./output/META/META_report.md" \
-    --prompts-path "finance_deep_search/prompts" \
-    --financial-research-prompt-path "./prompts/financial_research_agent.md" \
-    --excel-writer-agent-prompt-path "./prompts/excel_writer_agent.md" \
+    --templates-dir "finance_deep_search/templates" \
+    --financial-research-prompt-path "finance_deep_search/templates/financial_research_agent.md" \
+    --excel-writer-agent-prompt-path "finance_deep_search/templates/excel_writer_agent.md" \
     --research-model "gpt-4o" \
     --excel-writer-model "o4-mini" \
     --provider "openai" \
     --temperature 0.7 \
     --max-iterations 25 \
     --max-tokens 500000 \
-    --max-cost-dollars 1.0 \
-    --max-time-minutes 10.0 \
-    --ux rich \
-    --verbose
-```
+    --max-cost-dollars 2.0 \
+    --max-time-minutes 15 \
+    --verbose \
+    --ux rich 
 
-Some of these arguments are the same as the application's built-in default values. 
+echo "Output files in /Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-finance/output/META:"
+(... listing not shown ...)
+```
 
 > [!TIP]
 > All the values for the arguments shown here are defined near the top of the `Makefile`, in the `## App defaults` section. So, if you want to change any of these values, edit the corresponding variable definitions there.
 
-The make target `app-run` is equivalent to `app-run-rich`, which uses the Python Rich console library as a UX. There is also a target `app-run-markdown`, which uses minimal console output and writes a Markdown report at the end. (NOTE: We plan to merge these!)
+The make target `app-run` is equivalent to `app-run-rich`, which uses the Python Rich console library as a UX. There is also a target `app-run-markdown`, which uses minimal console output and writes a Markdown report at the end. (NOTE: We plan to merge these!) 
+
+> [!NOTE]
+> The `--markdown-report` and `--markdown-yaml-header` arguments are _ignored_ for `--ux rich`. They only apply for `--ux markdown`.
 
 > [!TIP]
 > * Use `make help` to see help on the most important `make` targets.
 > * Use `make app-help` for specific help on running the app.
 
-Let's go through some of the options shown. (We already discussed `--ticker` and `--company-name`.)
+Let's go through some of the options shown. We already discussed `--ticker` and `--company-name`. (We won't follow the exact order shown above.)
 
 ### Output Path
 
 ```shell
     ...
     --output-dir "./output/META"
+    --output-spreadsheet "META_financials.xlsx"
     ...
 ```
 
-Several output files, including an Excel spreadsheet of data, are written to the value passed with `--output-dir`. The application's default value is `./output`. (Actually, the full absolute path to `./output` is used.) However, the `make` target uses `./output/$TICKER`, so you can easily run the job for different companies and not clobber results for other companies.
+Several output files, including an Excel spreadsheet of data, are written to the value passed with `--output-dir`. The application's default value is `./output`. (Actually, the full absolute path to `./output` is used.) However, the `make` target uses `--output-dir ./output/$TICKER`, so you can easily run the job for different companies and not clobber results for other companies.
 
-### Markdown Report
-
-```shell
-    ...
-    --markdown-report "./output/META/META_report.md"
-    ...
-```
-
-Write a Markdown-formatted report at the end. This option is ignored unless `--ux markdown` is used.
+Since the `--output-spreadsheet` argument doesn't specify a directory prefix, `./output/META` will be used.
 
 ### Prompt File Locations
 
 ```shell
     ...
-    --prompts-path "finance_deep_search/prompts"
+    --templates-path "finance_deep_search/templates"
     --financial-research-prompt-path "financial_research_agent.md"
     --excel-writer-agent-prompt-path "excel_writer_agent.md"
     ...
 ```
 
-Two prompt files are by default located in [`./src/finance_deep_search/prompts`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/finance_deep_search/prompts) (Note that the command changes directory to `src` first...):
+Two prompt files are by default located in [`./src/finance_deep_search/templates`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/finance_deep_search/templates) (Note that the command changes directory to `src` first, so the path is relative to `src`):
     
-* `--financial-research-prompt-path "financial_research_agent.md"` - for the research task ([repo](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/finance_deep_search/prompts/financial_research_agent.md))
-* `--excel-writer-agent-prompt-path "excel_writer_agent.md"` - for the Excel file writer task ([repo](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/finance_deep_search/prompts/excel_writer_agent.md))
+* `--financial-research-prompt-path "financial_research_agent.md"` - for the research task ([repo](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/finance_deep_search/templates/financial_research_agent.md))
+* `--excel-writer-agent-prompt-path "excel_writer_agent.md"` - for the Excel file writer task ([repo](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/finance_deep_search/templates/excel_writer_agent.md))
 
-If you specify a value for either argument that includes an absolute or relative directory, then the `--prompts-path` is ignored for it.
+If you specify a value for either prompt that includes an absolute or relative directory path, then the `--templates-path` is ignored for it. In this case, the arguments don't include directories, so the files are expected to be found in the value for `--templates-path`. 
 
-### Models
+### Markdown Report
+
+```shell
+    ...
+    --markdown-report "META_report.md"
+    --markdown-yaml-header "github_pages_header.yaml"
+    ...
+```
+
+Both of these options are ignored unless `--ux markdown` is used.
+
+Write a Markdown-formatted report at the end. Optionally, if a non-empty value is specified `--markdown-yaml-header`, then write a YAML header at the beginning of the file. This is useful if the report will be presented using GitHub Pages. The YAML header should either be a literal string or a path to a template to file read in. We use a file here: [`./src/finance_deep_search/templates/github_pages_header.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/finance_deep_search/templates/github_pages_header.yaml). Either way, variable definitions, e.g., `{{title}}`, will be replaced with values by the application.
+
+Like for the spreadsheet file discussed above, the report file will be written to the output directory specified with `--output-dir` if the file name doesn't include a directory prefix.
+
+### Models and Inference Parameters
 
 ```shell
   ...
@@ -255,20 +287,47 @@ If you specify a value for either argument that includes an absolute or relative
     --excel-writer-model "o4-mini"
     --provider "openai"
     --temperature 0.7 
-    --max-iterations 10 
+    --max-iterations 25 
     --max-tokens 500000
     --max-cost-dollars 2.0
     --max-time-minutes 15
   ...
 ```
 
-By default, `gpt-4o` from OpenAI is used for research _orchestration_ and `o4-mini` is used for creating an Excel spreadsheet with some of the research results. If you would like to use a model from another provider, there are several options. Note that inference from OpenAI and Anthropic, and local-serving with ollama are currently supported. (However, at this time, Anthropic support hasn't been tested - help wanted!)
+By default, `gpt-4o` from OpenAI is used for research _orchestration_ and `o4-mini` is used for creating an Excel spreadsheet with some of the research results. If you would like to use a model from another provider, there are several options. Note that inference from OpenAI and Anthropic, and local-serving with ollama are currently the only supported options. (However, at this time, Anthropic support hasn't been tested - help wanted!)
 
-The `--provider` argument is a temporary implementation limitation to ensure the correct `mcp-agent` code path is followed. Our intention is to infer this automatically based on the models chosen. This also means that _you must specify two models served by the same provider._ You can't mix and match Anthropic, OpenAI, and ollama models, at this time.
+The `--provider` argument is a temporary implementation limitation to ensure the correct `mcp-agent` code path is followed (specifically, `OpenAIAugmentedLLM`). Eventually, we plan to infer this automatically based on the models chosen. This also means that _you must specify both models served by the same provider._ You can't mix and match Anthropic, OpenAI, and ollama models.
 
-In addition, at this time you have to edit [`./mcp_agent.config.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/mcp_agent.config.yaml) to uncomment the correct definition of `openai` settings. 
+In addition, you have to edit [`./mcp_agent.config.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/mcp_agent.config.yaml) to uncomment the correct definition of `openai` settings and comment the other one. By default, this is what you find in that file:
 
-The `--temperature` affects the randomness of responses during inference calls. The value must be between 0.0 and 1.0. Higher temperature values yield more randomness.
+```yaml
+# Since Ollama and OpenAI use the same internal code path, i.e.,
+# mcp-agent's `OpenAIAugmentedLLM`, you MUST uncomment the correct "openai"
+# definition here and comment out the other one!
+# Eliminating this manual step is TBD.
+
+# Use this for OpenAI inference:
+openai:
+  default_model: "gpt-4o-mini"
+  reasoning_effort: "medium"
+  base_url: "https://api.openai.com/v1"
+  
+# Use this for ollama inference. Change the model, too!
+# openai:
+#   default_model: "gpt-oss:20b"
+#   reasoning_effort: "medium"
+#   base_url: "http://localhost:11434/v1"
+#   api_key: "ignored"
+
+anthropic:
+  default_model: "claude-3-5-sonnet-20241022"
+```
+
+No changes are required to this file if you use Anthropic. If you use Ollama for inference, comment out the first `openai:` block and uncommment the second. Also change the default model from `gpt-oss:20b` to whatever you are using. (These default model definitions are sometimes used for certain inference steps by `mcp-agent`, even though we explicitly specify models using command arguments, as shown above.)
+
+See [Configuration](#configuration) below for more details on this file.
+
+The `--temperature` affects the randomness of responses during inference calls. The value must be between 0.0 (no randomness) and 1.0 (generally too much randomness). If a values outside this range is passed, it will be reset to the nearest allowed value.
 
 The `--max-*` arguments fine tune limits on execution:
 
@@ -277,10 +336,10 @@ The `--max-*` arguments fine tune limits on execution:
 * `--max-cost-dollars` limits the money spent on inference services from OpenAI or Anthropic (It has no effect for Ollama inference).
 * `--max-time-minutes` limits how many minutes the app runs.
 
-> [!NOTE]
-> An optional flag is `--short-run`, which overrides `--max-*` values with smaller numbers and it sets other limits more stringently. This is mostly a debugging tool for checking the end-to-end logic of the application, but expect the research process to not complete successfully, as it easily hits those limits and terminates.
+For these arguments, passing values less than zero will be reset to "reasonable" lower bounds.
 
-See [Configuration](#configuration) below for more details.
+> [!NOTE]
+> An optional flag is `--short-run`, which overrides `--max-*` values with smaller numbers and it sets other limits more stringently. This is primarily intended for testing and debugging to check the end-to-end logic of the application. Expect the research process to not complete successfully, as it easily hits those limits and terminates.
 
 ### The "User Experience"
 
@@ -291,11 +350,14 @@ See [Configuration](#configuration) below for more details.
 ...
 ```
 
-The `--verbose` option (used by default in the `make app-run` command), just prints some extra information at the beginning of execution (and in the optional Markdown report).
+The `--verbose` option (used by default in the `make app-run` command), just prints some extra information at the beginning of execution and in a few other places. It doesn't affect logging (which uses `DEBUG` by default).
 
 By default, a [Rich](https://rich.readthedocs.io/en/stable/introduction.html) console-based UI is used to show progress and final results. 
 
-The alternative, `--ux markdown`, produces less console output and generates a Markdown-formatted report at the end, which is written to the value of the `--markdown-report` option discussed above. The repo contains an example from a test run of the above default command with `--ux markdown` (This command is equivalent to what `make app-run-markdown` runs). The example report is [`./output/gpt-oss_20b/META_report.md`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/output/gpt-oss_20b/META_report.md).
+The alternative, `--ux markdown`, produces less console output and generates a Markdown-formatted report at the end, which is written to the file given by the `--markdown-report` argument discussed above. The repo contains an example from a test run of the above default command with `--ux markdown`. The example report is [`./examples/gpt-oss_20b/META_report.md`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/examples/gpt-oss_20b/META_report.md).
+
+> [!TIP]
+> Use the command `make app-run-markdown` to run the command will all the same arguments as above, but substituting `--ux markdown` for the default `--ux rich`.
 
 ## What the Application Does
 
@@ -304,14 +366,12 @@ The application will:
 2. Execute the research agent with predefined instructions
 3. Generate a comprehensive stock report
 
-> [!NOTE]
-> While running the application, you may see a browser window pop up asking for permission to authenticate to a financial dataset MCP server. There is no cost to do this. You can authenticate using a `gmail` email address, for example. If you decline, the application will still run, but it may run for a longer time while the deep research agent tries to gather the information it needs without this source.
-
 ## Architecture
 
 <img src="https://images.prismic.io/ai-alliance/aMCNHWGNHVfTO240_Frame162610%5B18%5D.jpg?auto=format%2Ccompress&fit=max&w=1920" alt="Deep Research Agent Architecture" width="400"/>
 
-The source code for the [Deep Orchestrator](https://github.com/lastmile-ai/mcp-agent/tree/main/src/mcp_agent/workflows/deep_orchestrator). A detailed [AI Alliance blog post](https://thealliance.ai/blog/building-a-deep-research-agent-using-mcp-agent) on the lessons learned creating Deep Orchestrator.
+> [!TIP]
+> See the source code for the [Deep Orchestrator](https://github.com/lastmile-ai/mcp-agent/tree/main/src/mcp_agent/workflows/deep_orchestrator) and [this detailed AI Alliance blog post](https://thealliance.ai/blog/building-a-deep-research-agent-using-mcp-agent) on the lessons learned creating Deep Orchestrator.
 
 High level flow:
 1. **Input Processing** - Input user objective
@@ -334,7 +394,7 @@ Key components:
 
 There are two `mcp-agent` configuration files used:
 
-- `mcp_agent.config.yaml` - Main configuration settings
+- `mcp_agent.config.yaml` - Main configuration settings. (In the GitHub repo: [`./mcp_agent.config.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/mcp_agent.config.yaml))
 - `mcp_agent.secrets.yaml` - API keys and secrets (_**not**_ tracked in git!).
 
 See the [`mcp-agent` configuration docs](https://docs.mcp-agent.com/reference/configuration) for details.
@@ -388,7 +448,7 @@ For more details on configuring different providers that `mcp-agent` supports:
 
 ### Setting Up Secrets
 
-Some settings, like API keys (e.g., `OPENAI_API_KEY`) can be read from your environment or defined in `mcp_agent.secrets.yaml` in the project root directory. _You will need this file if you don't define the required API keys and other secrets in your environment. Do not put these definitions in `mcp_agent.config.yaml`, which is managed with git._
+Some settings, like API keys (e.g., `OPENAI_API_KEY`) can be read from your environment or defined in `mcp_agent.secrets.yaml` in the project root directory. _You will need this file if you don't define the required API keys and other secrets in your environment. Do not put these definitions in [`mcp_agent.config.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/mcp_agent.config.yaml), which is managed with git._
 
 To set up your secrets:
 
@@ -413,7 +473,7 @@ To set up your secrets:
    ```
 
 > [!NOTE]
-> This repo's `.gitignore` ignores `mcp_agent.secrets.yaml`, so your secrets will be **excluded** from version control. _**Do not add API keys** to `./mcp_agent.config.yaml`!_
+> This repo's `.gitignore` ignores `mcp_agent.secrets.yaml`, so your secrets will be **excluded** from version control. _**Do not add API keys** to [`mcp_agent.config.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/mcp_agent.config.yaml)!_
 
 
 ### IBM Context Forge Integration
@@ -431,11 +491,13 @@ See [CONTEXT_FORGE_MIGRATION.md](CONTEXT_FORGE_MIGRATION.md) for details on usin
 
 The Deep Research Agent for Finance integrates into data sources using MCP, which means you can customize which data sources the agent has access to.
 
-### Adding External MCP Services with "Direct" Access
+### Adding External MCP Tools and Services
 
-Use this approach if you don't need to go through a gateway, like IBM Context Forge (mentioned above). There are two steps to adding a service:
+Let's discuss changing the tools and services used. We'll assume you are making direct access to them, versus going through a gateway, like IBM Context Forge (mentioned above). Modify the content as described for Context Forge if you are going through a gateway.
 
-1. In `mcp_agent.config.yaml`, add the details for the MCP server you'd like to use. For example:
+There are four steps to adding (or changing) a service:
+
+1. In [`mcp_agent.config.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/mcp_agent.config.yaml), add the details for the MCP server. For example:
 
 ```yaml
 mcp:
@@ -453,7 +515,9 @@ mcp:
       ]
 ```
 
-2. In `src/main_finance.py`, around line 215, change the configuration of the Deep Orchestrator and add your server as a new available server:
+(These commands run local Python applications with `uvx` that connect to external services.)
+
+2. In [`src/main_finance.py`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/main_finance.py), around line 215, change the configuration of the Deep Orchestrator and add your server as a new server to `available_servers`:
 
 ```python
     # Add your server to the `available_servers`:
@@ -463,32 +527,31 @@ mcp:
         ...
 ```
 
-Remember to add any corresponding secrets, like API keys, to `mcp_agent.secrets.yaml`.
+3. Edit the appropriate `*_agent.md` prompt templates in the [`templates`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/tree/main/src/finance_deep_search/templates) directory to tell the agent how to use this tool, including performance optimization tips. See, for example, how the main finance deep research prompt, [`src/finance_deep_search/templates/financial_research_agent.md`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/tree/main/src/finance_deep_search/templates/financial_research_agent.md), provides instructions for tool use.
 
-> [!TIP]
-> If you'd like to optimize the performance, add specific instructions to the prompt on how the model can better use your MCP data source. You will find the main deep-research prompt in `src/finance_deep_search/prompts/financial_research_agent.md`.
+4. Add any corresponding secrets like API keys to `mcp_agent.secrets.yaml` or use environment variables.
 
-### Adding Local MCP Services
+### Adding Local MCP Tools and Services
 
-To add local MCP services:
+Similar to the instructions above for remote services, add local MCP tools and services similarly:
 
-1. In `mcp_agent.config.yaml`, add the server with direct command execution:
+1. In [`mcp_agent.config.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/mcp_agent.config.yaml), add a tool or server with direct command execution:
 
 ```yaml
 mcp:
   servers:
     your-local-service:
       command: "uvx"  # or "npx" depending on the service
-      args: ["your-mcp-server-package"]
+      args: ["your-mcp-tool"]
 ```
 
-2. Add it to `available_servers` in `src/main_finance.py` as shown above.
+2. Add it to `available_servers` in [`src/main_finance.py`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/main_finance.py) as shown above.
 
-See examples in `mcp_agent.config.yaml` and `src/main_finance.py`, such as the `excel` service definition.
+An example is is the `filesystem` service configured in `mcp_agent.config.yaml` and `src/main_finance.py`, for local file access.
 
 ## Contributing to This Project
 
-This project is maintained by [The AI Alliance](https://aialliance.org). We welcome contributions from developers with finance industry expertise, AI expertise, or those looking to grow their skills in either area. We are also making plans to create similar applications for healthcare, legal, and other domains!
+This project is maintained by [The AI Alliance](https://aialliance.org). We welcome contributions from developers with domain expertise in finance, healthcare, legal, and other domains (suggestions welcome), as well as developers with AI expertise. This project is also a great opportunity for those people who want to grow their skills in either way. 
 
 For contribution guidelines, see the AI Alliance [CONTRIBUTING](https://github.com/The-AI-Alliance/community/blob/main/CONTRIBUTING.md) instructions. Note that we use the "Developer Certificate of Origin" (DCO). In short, all this really requires is that you add the `-s` flag to your `git commit` commands. See [this section](https://github.com/The-AI-Alliance/community/blob/main/CONTRIBUTING.md#developer-certificate-of-origin) for details.
 
@@ -496,9 +559,11 @@ For all Alliance technical projects, see [our GitHub organization](https://the-a
 
 ### Licenses
 
-- Code: [Apache 2.0](LICENSE.Apache-2.0)
-- Documentation: [Creative Commons Attribution 4.0 International](LICENSE.CC-BY-4.0)
-- Data: [Community Data License Agreement - Permissive - Version 2.0](LICENSE.CDLA-2.0)
+| Asset | Licence |
+| :---- | :------ |
+| Code | [Apache 2.0](LICENSE.Apache-2.0) |
+| Documentation | [Creative Commons Attribution 4.0 International](LICENSE.CC-BY-4.0) |
+| Data | [Community Data License Agreement - Permissive - Version 2.0](LICENSE.CDLA-2.0) |
 
 ## About the GitHub Pages Website Published from this Repo
 

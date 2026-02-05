@@ -80,9 +80,9 @@ if __name__ == "__main__":
     def_ux = 'rich'
     def_temperature = 0.7
     def_max_iterations = 25
-    def_max_tokens = 100000
-    def_max_cost_dollars = 1.00
-    def_max_time_minutes = 10.0
+    def_max_tokens = 500000
+    def_max_cost_dollars = 2.0
+    def_max_time_minutes = 15
 
     parser = make_parser("Finance Deep Research using orchestrated AI agents")
     parser.add_argument(

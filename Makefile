@@ -27,9 +27,9 @@ RESEARCH_MODEL             ?= gpt-4o
 EXCEL_WRITER_MODEL         ?= o4-mini
 INFERENCE_PROVIDER         ?= openai
 TEMPLATES_DIR              ?= ${app_dir}/templates
-FIN_RESEARCH_PROMPT_FILE   ?= ${TEMPLATES_DIR}/financial_research_agent.md
-EXCEL_WRITER_PROMPT_FILE   ?= ${TEMPLATES_DIR}/excel_writer_agent.md
-MARKDOWN_YAML_HEADER_FILE  ?= ${TEMPLATES_DIR}/github_pages_header.yaml
+FIN_RESEARCH_PROMPT_FILE   ?= financial_research_agent.md
+EXCEL_WRITER_PROMPT_FILE   ?= excel_writer_agent.md
+MARKDOWN_YAML_HEADER_FILE  ?= github_pages_header.yaml
 OUTPUT_DIR                 ?= ${PWD}/output/${TICKER}
 OUTPUT_REPORT              ?= ${TICKER}_report.md
 OUTPUT_SPREADSHEET         ?= ${TICKER}_financials.xlsx
@@ -88,6 +88,15 @@ make clean_docs         # Deletes these directories: ${clean_docs_dirs}
 make clean              # Deletes these directories: ${clean_dirs}
 endef
 
+define app_help_footer
+TIPS:
+1. Use 'make print-app-info' to see some make variables you can override.
+2. Use 'make --just-print app-run' to see the arguments passed BY THIS MAKEFILE.
+   Some argument values will be different in the Makefile than the hard-coded defaults
+   in the application itself, which are shown in the help output above!!
+3. To pass additional arguments, use 'make APP_ARGS="..." app-run'. (Note the quotes.)
+endef		
+
 define missing_uv_message
 ERROR: The Python dependency manager \'uv\' is used. Please visit https://docs.astral.sh/uv/ to install it.
 endef
@@ -142,7 +151,7 @@ endef
 .PHONY: all view-pages view-local clean clean_code clean_docs help 
 .PHONY: setup-jekyll run-jekyll
 .PHONY: app-run app-run-rich app-run-md app-run-markdown do-app-run app-setup app-check uv-check uv-cmd-check venv-check
-.PHONY: mcp-agent-check app-help test tests
+.PHONY: mcp-agent-check test tests
 .PHONY: print-info print-app-info print-make-info print-docs-info show-output-files
 
 all:: app-run
@@ -157,13 +166,12 @@ do-app-run::
 		--company-name "${COMPANY_NAME}" \
 		--output-dir "${OUTPUT_DIR}" \
 		--markdown-report "${OUTPUT_REPORT}" \
-		--markdown-yaml-header "${MARKDOWN_YAML_HEADER}" \
+		--markdown-yaml-header "${MARKDOWN_YAML_HEADER_FILE}" \
 		--output-spreadsheet "${OUTPUT_SPREADSHEET}" \
 		--reporting-currency "${REPORTING_CURRENCY}" \
 		--templates-dir "${TEMPLATES_DIR}" \
 		--financial-research-prompt-path "${FIN_RESEARCH_PROMPT_FILE}" \
 		--excel-writer-agent-prompt-path "${EXCEL_WRITER_PROMPT_FILE}" \
-		--markdown-yaml-header "${MARKDOWN_YAML_HEADER_FILE}" \
 		--research-model "${RESEARCH_MODEL}" \
 		--excel-writer-model "${EXCEL_WRITER_MODEL}" \
 		--provider "${INFERENCE_PROVIDER}" \
@@ -197,18 +205,16 @@ mcp-agent-check::
 app-setup:: uv-check venv-check
 	uv add mcp-agent
 
-app-help:: 
-	@echo "Help on ${src_dir}/${app_dir}/${MAIN_APP}:"
-	cd ${src_dir} && uv run ${MAIN_APP} --help  
+.PHONY: app-help app-help-prefix app-help-footer
+
+app-help:: app-help-prefix app-help-footer
+app-help-prefix::
+	@echo "Application help provided by ${src_dir}/${app_dir}/${MAIN_APP}:"
+	cd ${src_dir} && uv run ${MAIN_APP} --help
 	@echo
-	@echo "TIP: Use 'make print-app-info' to see some make variables you can override."
-	@echo "TIP: Use 'make --just-print app-run' to see the default arguments used."
-	@echo "     Here is what it prints:"
+app-help-footer::
+	$(info ${app_help_footer})
 	@echo
-	@${MAKE} --just-print do-app-run
-	@echo
-	@echo "TIP: To pass additional arguments, use 'make APP_ARGS=\"...\" app-run'. (Note the quotes!)"
-		
 
 help::
 	$(info ${help_message})
