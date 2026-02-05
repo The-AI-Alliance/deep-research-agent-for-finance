@@ -39,7 +39,7 @@ MAX_ITERATIONS             ?= 25
 MAX_TOKENS                 ?= 500000
 MAX_COST_DOLLARS           ?= 2.0
 MAX_TIME_MINUTES           ?= 15
-UX                         ?= rich
+UX                         ?= both
 APP_ARGS                   ?=
 
 # Override when running `make view-local` using e.g., `JEKYLL_PORT=8000 make view-local`
@@ -58,8 +58,9 @@ Targets for the application:
 
 make all                # Run the application by building "app-run".
 make app-run            # Run the application with default arguments.
-make app-run-rich       # Run the application with the Rich console UI (also the default).
-make app-run-md         # Run the application with the streaming Markdown "UI".
+make app-run-both       # Same as "app-run"; run the application with both the Rich console and Markdown file UIs (also the default).
+make app-run-rich       # Run the application with the Rich console UI.
+make app-run-md         # Run the application with the Markdown "file UI".
 make app-run-markdown   # Same as "make app-run-md".
 make app-help           # Run the application with --help to see the support arguments.
                         # Also prints the default invocation used by "app-run".
@@ -150,15 +151,18 @@ endef
 
 .PHONY: all view-pages view-local clean clean_code clean_docs help 
 .PHONY: setup-jekyll run-jekyll
-.PHONY: app-run app-run-rich app-run-md app-run-markdown do-app-run app-setup app-check uv-check uv-cmd-check venv-check
+.PHONY: app-run app-run-both app-run-rich app-run-md app-run-markdown do-app-run app-setup app-check uv-check uv-cmd-check venv-check
 .PHONY: mcp-agent-check test tests
 .PHONY: print-info print-app-info print-make-info print-docs-info show-output-files
 
 all:: app-run
 
+app-run-both:: app-run
+app-run-rich::
+	$(MAKE) UX=rich app-run
 app-run-md app-run-markdown:: 
 	$(MAKE) UX=markdown app-run
-app-run-rich:: app-run
+
 app-run:: app-check do-app-run show-output-files
 do-app-run::
 	cd ${src_dir} && uv run ${MAIN_APP} \

@@ -77,7 +77,7 @@ if __name__ == "__main__":
     def_provider = 'openai'
     def_research_model = 'gpt-4o'
     def_excel_writer_model = 'o4-mini'
-    def_ux = 'rich'
+    def_ux = 'both'
     def_temperature = 0.7
     def_max_iterations = 25
     def_max_tokens = 500000

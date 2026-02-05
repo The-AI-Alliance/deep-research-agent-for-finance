@@ -279,9 +279,8 @@ class RichDisplay(Display[DeepSearch]):
     def __init__(self, 
         title: str,
         system: DeepSearch,
-        update_iteration_frequency_secs: float = 1.0,
         variables: dict[str, Variable] = {}):
-        super().__init__(title, system, update_iteration_frequency_secs, variables)
+        super().__init__(title, system, variables)
 
         self.start_time = time.time()
         self.execution_time = 0.0
@@ -322,8 +321,8 @@ class RichDisplay(Display[DeepSearch]):
         with Live(self.layout, console=self.console, refresh_per_second=4, screen=True, transient=False) as _live:
             await function()
 
-    def update(self):
-        """Update the display with current state"""
+    def update(self, final: bool = False) -> any:
+        """Update the display with current state. `final` is ignored."""
 
         # Header
         self.layout["header"].update(
@@ -436,7 +435,24 @@ class RichDisplay(Display[DeepSearch]):
             for name in list(self.orchestrator.memory.artifacts.keys())[:5]:
                 self.console.print(f"  • {name}")
 
-    async def final_update(self, final_messages: list[str]):
+
+    def _report_results(self, error_msg: str):
+        border_style = "green"
+        strs = []
+        if error_msg:
+            strs.append(f"** ERROR: ** {error_msg}")
+            border_style="red"
+
+        for task in self.system.tasks:
+            if not task.status == TaskStatus.FINISHED_OK:
+                border_style = "red"            
+            strs.append(truncate(str(task.result), 2000, '...'))
+        
+        self.console.print(
+            Panel('\n'.join(strs), title=task.title, border_style=border_style))
+
+    async def final_update(self, final_messages: list[str], error_msg: str):
+        self._report_results(error_msg)
         self._final_statistics()
         self._budget_summary()
         self._knowledge_summary()
@@ -446,15 +462,6 @@ class RichDisplay(Display[DeepSearch]):
             self.console.print(f"\n[bold]{fm}[/bold]")
             self.system.logger.info(fm)
 
-
-    def report_results(self, error_msg: str):
-        strs = []
-        for task in self.system.tasks:
-            border_style = "green" if task.status == TaskStatus.FINISHED_OK else "red"            
-            str = truncate(str(task.result), 2000, '...')
-            self.console.print(
-                Panel(str, title=task.title, border_style=border_style))
-
     def __repr__(self) -> str:
         return str(self.layout)
 
@@ -462,7 +469,6 @@ class RichDisplay(Display[DeepSearch]):
     def make(
         title: str,
         system: DeepSearch,
-        update_iteration_frequency_secs: float = 1.0,
         variables: dict[str, Variable] = {}) -> RichDisplay:
         """A factory method for creating instances."""
-        return RichDisplay(title, system, update_iteration_frequency_secs, variables)
+        return RichDisplay(title, system, variables)

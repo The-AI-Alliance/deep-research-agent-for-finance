@@ -297,15 +297,14 @@ class MarkdownDeepOrchestratorMonitor():
 
 class MarkdownDisplay(Display[DeepSearch]):
     """
-    A Markdown "display", which primarily produces a markdown-formatted report
-    at the end of execution, but will also stream some markdown content on updates
-    to the console, if the `Variable('print_on_update')` is defined and set to `True`.
+    A Markdown "display", which is used to produce a markdown-formatted report
+    at the end of execution. No output is generated during execution, unlike the RichDisplay,
+    for example.
     """
 
     def __init__(self, 
         title: str,
         system: DeepSearch,
-        update_iteration_frequency_secs: float = 10.0,
         yaml_header_template: Path = None,
         variables: dict[str, Variable] = {}):
         """Construct a MarkdownDisplay object.
@@ -313,7 +312,6 @@ class MarkdownDisplay(Display[DeepSearch]):
         Args:
             title (str): The H1 title at the top of the document.
             system (DeepSearch): The deep research "system". 
-            update_iteration_frequency_secs (float): How frequently to update the display. Multiple seconds is best for this output.
             yaml_header_template (Path): An optional template for a YAML block that will be printed first. Useful for GitHub Pages display.
             variables: (dict[str, Variable]): Application-wide key-values. See Discussion below.
         
@@ -329,10 +327,9 @@ class MarkdownDisplay(Display[DeepSearch]):
             or the resolved block isn't empty, followed by the hierarchical Markdown sections 
             held in `self.layout`.
         """
-        super().__init__(title, system, update_iteration_frequency_secs, variables)
+        super().__init__(title, system, variables)
         self.yaml_header_template = yaml_header_template
 
-        self.print_on_update: bool = self.__get_var_value('print_on_update', False)
         output_dir_path = self.__get_var_value('output_dir_path', Path('./output'))
         self.research_report_path = self.__get_var_value('research_report_path',
             output_dir_path / 'research_report.md')
@@ -383,16 +380,17 @@ class MarkdownDisplay(Display[DeepSearch]):
     async def run_live(self, function: Callable[[], None]):
         await function()
 
-    def update(self) -> MarkdownSection:
+    def update(self, final: bool = False) -> MarkdownSection:
         """
-        Update the display with the current state. For 'behavioral' compatibility
-        with the Rich UX, this method also calls print, if `self.print_on_update`
-        is true.
-        The `results_section` is not updated here. It is only updated at the very end
-        of the run.
+        Update the display with the current state. Because the final Markdown report 
+        is all we care about, we don't do anything unless `final = True`! Even then,
+        the `results_section` is not updated here. It is only updated at the very end
+        of the run when `final_update()` is called.
         """
         self.monitor.update_execution_time()
-        
+        if not final:
+            return self.layout
+
         statistics = self.layout["statistics_section"]
         statistics["queue"].set_intro_content([self.monitor.get_queue_tree()])
         statistics["plan"].set_intro_content([self.monitor.get_plan_table()])
@@ -403,16 +401,10 @@ class MarkdownDisplay(Display[DeepSearch]):
         statistics["policy"].set_intro_content(
             [self.monitor.get_policy_table(), self.monitor.get_agents_table()])
         statistics["status"].set_intro_content([self.monitor.get_status_summary_table()])
-        
-        # TODO: It appears the objective content is initialized once and not changed, but 
-        # isn't available during __make_layout(). Figure out when the following can be 
-        # invoked once, not every call to update().
+
         objective = self.layout["objective_section"]
         objective.set_subsections([self.monitor.get_objective_section()])
 
-        if self.print_on_update:
-            # Only print the statistics, which may have changed.
-            print(self.layout["statistics_section"])
         return self.layout
 
     def add_section(self, title: str, 
@@ -557,11 +549,11 @@ class MarkdownDisplay(Display[DeepSearch]):
 
         return all_content
 
-    def __make_results_section(self, task_number: int, task: BaseTask) -> MarkdownSection:
+    def __make_task_results_section(self, task_number: int, task: BaseTask) -> MarkdownSection:
         task_table = MarkdownTable(
             title=f'**Task {task.title} (`{task.name}`) Properties**',
             columns=['Property', 'Value'])
-        for key, value in task.attributes_as_strs(exclusions={'result', 'task_prompt'}).items():
+        for key, value in task.attributes_as_strs().items():
             task_table.add_row([key, value])
 
         result_section = MarkdownSection(title=f"Task #{task_number}: {task.title} (`{task.name}`)", 
@@ -594,7 +586,7 @@ class MarkdownDisplay(Display[DeepSearch]):
         return result_section
 
 
-    def report_results(self, error_msg: str):
+    def _report_results(self, error_msg: str):
         """
         TODO: The matching of tasks to method calls for formatting is too fragile!
         """
@@ -607,7 +599,7 @@ class MarkdownDisplay(Display[DeepSearch]):
         results_subsections = []
         for i in range(len(self.system.tasks)):
             task = self.system.tasks[i]
-            s = self.__make_results_section(i+1, task)
+            s = self.__make_task_results_section(i+1, task)
             results_subsections.append(s)
 
         results_section.add_subsections(results_subsections)
@@ -690,12 +682,13 @@ class MarkdownDisplay(Display[DeepSearch]):
 
         return self.add_section("📁 Artifacts Created", artifacts_info)
 
-    async def final_update(self, final_messages: list[str]) -> list[MarkdownSection]:
+    async def final_update(self, final_messages: list[str], error_msg: str) -> list[MarkdownSection]:
         """
         Prints and also returns the list of Markdown sections for the final data.
         They are also added to the whole document by the other methods called here
         and the whole document is printed to a markdown file.
         """
+        self._report_results(error_msg)
         self.monitor.update_execution_time()
         sections = [
             self._get_final_statistics(),
@@ -707,7 +700,7 @@ class MarkdownDisplay(Display[DeepSearch]):
         for section in sections:
             print(section)
 
-        all_sections = str(self.layout)
+        all_sections = str(self)
         with self.research_report_path.open('w') as file:
             file.write(all_sections)
 
@@ -727,17 +720,14 @@ class MarkdownDisplay(Display[DeepSearch]):
             if template_str:
                 yaml_header_str = replace_variables(template_str, 
                     title=self.title, 
-                    update_iteration_frequency_secs=self.update_iteration_frequency_secs,
-                    **self.variables) + '\n\n'
-        return f"{yaml_header_str}{self.layout}"
+                    **self.variables)
+        return f"{yaml_header_str}\n{self.layout}"
 
     @staticmethod
     def make(
         title: str,
         system: DeepSearch,
-        update_iteration_frequency_secs: float = 1.0,
         yaml_header_template: str = None,
         variables: dict[str,(str,any)] = {}) -> MarkdownDisplay:
         """A factory method for creating instances. See `MarkdownDisplay.__init__() for details."""
-        return MarkdownDisplay(
-            title, system, update_iteration_frequency_secs, yaml_header_template, variables)
+        return MarkdownDisplay(title, system, yaml_header_template, variables)

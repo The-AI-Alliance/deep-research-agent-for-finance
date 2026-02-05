@@ -12,7 +12,7 @@ from common.deep_search import DeepSearch
 from common.path_utils import resolve_path, resolve_and_require_path
 from common.variables import Variable
 
-from ux import Display
+from ux import Display, Displays
 from ux.markdown import MarkdownDisplay
 from ux.rich import RichDisplay
 
@@ -124,12 +124,12 @@ def add_arg_max_time_minutes(parser: argparse.ArgumentParser, def_max_time_minut
         help=f"The maximum number of time in minutes allowed for inference passes. (Default: {def_max_time_minutes}, but a lower value will be used if --short-run is used. Values <= 0 will be converted to 10)"
     )
 
-def add_arg_ux(parser: argparse.ArgumentParser, def_ux: str = 'rich'):
+def add_arg_ux(parser: argparse.ArgumentParser, def_ux: str = 'both'):
     parser.add_argument(
         "--ux",
-        choices=["rich", "markdown"],
+        choices=["rich", "markdown", "both"],
         default=def_ux,
-        help=f"The 'UX' to use. Use 'rich' for a rich console UX and 'markdown' for streaming updates in markdown syntax. (Default: {def_ux})"
+        help=f"The 'UX' to use. Use 'rich' for a rich console UX, 'markdown' for streaming updates in markdown syntax, or 'both' for both of them. (Default: {def_ux})"
     )
 
 def add_arg_short_run(parser: argparse.ArgumentParser):
@@ -204,26 +204,29 @@ def determine_display(
     ux_title: str,
     **kvs) -> Callable[[DeepSearch, dict[str,(str,any)]], Display]:
     yaml = kvs.get('yaml_header_template_path', None)
-    update_freq = kvs.get('update_iteration_frequency_secs', 0.0)
-    if which_one == "rich":
-        if update_freq <= 0.0:
-            update_freq = 0.5  #default
-        make_display = lambda ds, vs: RichDisplay.make(
-            ux_title, ds,
-            update_iteration_frequency_secs=update_freq,
-            variables=vs)
-    elif which_one == "markdown":
-        if update_freq <= 0.0:
-            update_freq = 10  #default
-        make_display = lambda ds, vs: MarkdownDisplay.make(
-            ux_title, ds,
-            update_iteration_frequency_secs=update_freq,
-            yaml_header_template=yaml,
-            variables=vs)
-    else:
+    rich_make_display = lambda ds, vs: RichDisplay.make(
+        ux_title, ds,
+        variables=vs)
+    markdown_make_display = lambda ds, vs: MarkdownDisplay.make(
+        ux_title, ds,
+        yaml_header_template=yaml,
+        variables=vs)
+    both_make_display = lambda ds, vs: Displays.make(
+        ux_title, ds,
+        make_displays={'rich': rich_make_display, 'markdown': markdown_make_display},
+        variables=vs)
+    makers = {
+        'rich':     rich_make_display,
+        'markdown': markdown_make_display,
+        'both':     both_make_display,
+    }
+
+    make_display = makers.get(which_one)
+    if not make_display:
         # The "ux" argument definition should prevent unexpected values, 
         # but just in case...
-        raise ValueError(f"Unexpected value for 'ux': {args.ux}")
+        raise ValueError(f"Unexpected value for 'ux': {which_one}")
+
     return make_display
 
 def only_verbose(args: argparse.Namespace, formatter: Callable[[any],str] = str) -> Callable[[any],str] | None:
@@ -280,7 +283,5 @@ def only_verbose_common_vars(
         Variable("max_tokens",        processed_args['max_tokens'], label="LLM Max Inference Tokens", formatter=only_verbose(args)),
         Variable("max_cost_dollars",  processed_args['max_cost_dollars'], label="LLM Max Inference cost in USD", formatter=only_verbose(args)),
         Variable("max_time_minutes",  processed_args['max_time_minutes'], label="LLM Max Inference time in minutes", formatter=only_verbose(args)),
-        # Only used for Markdown UX. TODO: make this user configurable.
-        Variable('print_on_update',   False, formatter=only_verbose(args)),
     ]
 

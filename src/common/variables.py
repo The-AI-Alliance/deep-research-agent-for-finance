@@ -71,7 +71,7 @@ class Variable():
                 result.append((tuple[1], tuple[2]))
         return result
 
-    which_ux: str = 'rich'
+    which_ux: str = 'both'
 
     provider_names = {
         'openai':    'OpenAI',
@@ -121,7 +121,7 @@ class Variable():
                 Variable.code_formatter_multiline = Variable.code_formatter_multiline_rich
                 Variable.dict_formatter           = Variable.dict_formatter_rich
                 Variable.callout_formatter        = Variable.callout_formatter_rich
-            case 'markdown':
+            case 'markdown' | 'both':
                 Variable.url_formatter            = Variable.url_formatter_md
                 Variable.file_url_formatter       = Variable.file_url_formatter_md
                 Variable.code_formatter           = Variable.code_formatter_md

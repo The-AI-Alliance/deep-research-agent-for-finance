@@ -57,8 +57,8 @@ class BaseTask():
 
         self.status: TaskStatus = TaskStatus.NOT_STARTED 
         self.result: list[any] = []
-        self.task_prompt = '' # lazy loaded...
-        self.task_prompt_saved_file = self.output_dir_path / f"{self.name}_task_prompt.txt"
+        self.prompt = '' # lazy loaded...
+        self.prompt_saved_file = self.output_dir_path / f"{self.name}_task_prompt.txt"
 
     async def run(self, 
         orchestrator: DeepOrchestrator,
@@ -69,8 +69,8 @@ class BaseTask():
         """
         self.status = TaskStatus.RUNNING 
         try:
-            self.prepare_task_prompt(logger, prompt_variables)
-            self.result = await self._run(self.task_prompt, orchestrator, logger)
+            self.prepare_prompt(logger, prompt_variables)
+            self.result = await self._run(orchestrator, logger)
             if self.result:  # TBD: Probably doesn't catch all error scenarios!
                 self.status = TaskStatus.FINISHED_OK
             else:
@@ -86,7 +86,6 @@ class BaseTask():
 
     @abstractmethod
     async def _run(self, 
-        task_prompt: str, 
         orchestrator: DeepOrchestrator, 
         logger: Logger) -> list[any]:
         raise Exception("Abstract method BaseTask._run() called!")
@@ -99,24 +98,32 @@ class BaseTask():
         # First create a dictionary with the attribute names as keys and formatted values,
         # which we'll then filter for exclusions, then return a new dictionary with the
         # keys converted to nice labels.
+        prompt_str = "No task prompt string!"
+        result_str = "No task results!"
+        if self.prompt:
+            prompt_str = Variable.code_formatter_multiline(truncate(str(self.prompt), 200, '...'))
+        if self.result:
+            result_str = Variable.code_formatter_multiline(truncate(str(self.result), 200, '...')),
+
         attrs = {
-            'name':             Variable.code_formatter(self.name),
-            'title':            self.title,
-            'model_name':       Variable.code_formatter(self.model_name),
-            'prompt_template_path': 
-                                Variable.file_url_formatter(self.prompt_template_path),
-            'task_prompt_saved_file': 
-                                f"Saved prompt: {Variable.file_url_formatter(self.task_prompt_saved_file)}",
-            'output_dir_path':  Variable.file_url_formatter(self.output_dir_path),
-            'status':           Variable.code_formatter(self.status.name),
-            'task_prompt':      Variable.code_formatter_multiline(truncate(str(self.task_prompt), 200, '...')),
-            'result':           Variable.code_formatter_multiline(truncate(str(self.result), 200, '...')),
+            'name':                 Variable.code_formatter(self.name),
+            'title':                self.title,
+            'model_name':           Variable.code_formatter(self.model_name),
+            'prompt_template_path': Variable.file_url_formatter(self.prompt_template_path),
+            'prompt_saved_file':    f"Saved prompt: {Variable.file_url_formatter(self.prompt_saved_file)}",
+            'output_dir_path':      Variable.file_url_formatter(self.output_dir_path),
+            'status':               Variable.code_formatter(self.status.name),
         }
         # TODO: somewhat fragile hard-coding these specific values:
         for key in ['temperature', 'max_iterations', 'max_tokens', 'max_cost_dollars', 'max_time_minutes']:
             value = self.properties.get(key)
             if value:
                 attrs[key] = str(value.value)
+        # Put these two potentially long strings at the end.
+        attrs.extend({
+            'prompt': prompt_str,
+            'result': result_str,
+        })
 
         # Now remove the key-values we don't want to include.
         for ex in exclusions:
@@ -125,18 +132,19 @@ class BaseTask():
         return dict([(Variable.make_label(key), value) for key, value in attrs.items()])
 
     def __repr__(self) -> str: 
-        return f"""name: {self.name}, model name: {self.model_name}, prompt path: {self.prompt_template_path}, saved prompt file: {self.task_prompt_saved_file}, status: {self.status}"""
+        """This method omits the long prompt and results strings. See also attributes_as_strs()."""
+        return f"""name: {self.name}, model name: {self.model_name}, prompt path: {self.prompt_template_path}, saved prompt file: {self.prompt_saved_file}, status: {self.status}, prompt: ..., result: ..."""
 
-    def prepare_task_prompt(self, logger: Logger, prompt_variables: dict[str,str]) -> str:
+    def prepare_prompt(self, logger: Logger, prompt_variables: dict[str,str]) -> str:
         """Load and format a task prompt."""
         prompt_template = load_prompt_markdown(self.prompt_template_path)
-        self.task_prompt = replace_variables(prompt_template, **prompt_variables)
+        self.prompt = replace_variables(prompt_template, **prompt_variables)
         if logger:  # may not be initialized in tests...
-            logger.info(f"Writing the {self.name} task prompt to {self.task_prompt_saved_file}")
-        with self.task_prompt_saved_file.open('w') as file:
+            logger.info(f"Writing the {self.name} task prompt to {self.prompt_saved_file}")
+        with self.prompt_saved_file.open('w') as file:
             file.write(f"This is the prompt that will be used for the {self.name} task:\n")
-            file.write(self.task_prompt)
-        return self.task_prompt
+            file.write(self.prompt)
+        return self.prompt
 
     def __log_result(self, logger: Logger):
         """
@@ -145,14 +153,15 @@ class BaseTask():
         This method is normally not called for other status values, but
         we handle them for "resilience".
         """
+        result_str = 'No result yet...'
+        if self.result:
+            result_str = truncate(str(self.result), 2000, '...')            
+        msg = f"""Task "{self.name}": status = {self.status}), result = {result_str}"""
         match self.status:
-            case TaskStatus.FINISHED_OK:
-                logger.info(truncate(str(self.result), 2000, '...'))
-            case TaskStatus.FINISHED_ERROR:
-                logger.error(truncate(str(self.result), 2000, '...'))
+            case TaskStatus.FINISHED_ERROR | TaskStatus.FINISHED_EXCEPTION:
+                logger.error(f"""ERROR! {msg}""")
             case _:
-                msg = str(self.result) if self.result else 'No result yet...'
-                logger.debug(f"{self.status}: {msg}")
+                logger.info(msg)
 
     def _get_val(self, key: str, default: any) -> any:
         return Variable.get(self.properties.get(key), default)
@@ -170,12 +179,11 @@ class GenerateTask(BaseTask):
             properties)
 
     async def _run(self, 
-        task_prompt: str, 
         orchestrator: DeepOrchestrator, 
         logger: Logger) -> list[any]:
         logger.debug("GenerateTask: calling inference")
         return await orchestrator.generate(
-            message=task_prompt,
+            message=self.prompt,
             request_params=RequestParams(
                 model=self.model_name, 
                 temperature=self._get_val('temperature', 0.7),
@@ -204,12 +212,12 @@ class AgentTask(BaseTask):
         self.generate_prompt = generate_prompt
 
     async def _run(self, 
-        task_prompt: str, 
+        prompt: str, 
         orchestrator: DeepOrchestrator, 
         logger: Logger) -> list[any]:
         agent = Agent(
             name=self.name,
-            instruction=task_prompt,
+            instruction=prompt,
             context=orchestrator.context,
             server_names=[self.name]
         )
@@ -290,39 +298,32 @@ class DeepSearch():
         if verbose.value:
             self.__print_details()
 
-        # Setup the display loop...
-        async def update_loop():
-            while True:
-                try:
-                    self.display.update()
-                    await asyncio.sleep(self.display.update_iteration_frequency_secs)
-                except Exception as e:
-                    self.logger.error(f"Display update error: {e}")
-                    break
+        update_iteration_frequency_secs = variables.get(
+            'update_iteration_frequency_secs', 1.0)
 
         async def do_work():
-            # Start display update loop
-            update_task = asyncio.create_task(update_loop())
+            # Final message at the end...
+            final_messages = [
+                "\n",
+                f"Finished: See output files under {self.output_dir_path}.",
+            ]
 
-            error_msg = ''
+            # Start display update loop
+            update_task = asyncio.create_task(self.display.update_loop())
+
+            error_msg: str = None
             try:
                 error_msg = await self.run_tasks()
             finally:
                 # Final display update...
-                self.display.update()
+                self.display.update(final=True)
                 update_task.cancel()
                 try:
                     await update_task
                 except asyncio.CancelledError:
                     pass
 
-            # Final display of results and misc. app data...
-            final_messages = [
-                "\n",
-                f"Finished: See output files under {self.output_dir_path}.",
-            ]
-            self.display.report_results(error_msg)
-            await self.display.final_update(final_messages)
+            await self.display.final_update(final_messages, error_msg)
 
         await self.display.run_live(do_work)
 
@@ -368,7 +369,7 @@ class DeepSearch():
             status, result = await task.run(self.orchestrator, self.logger, **prompt_variables)            
             previous_tasks_results = f"{previous_tasks_results}\ntask {task.name} result:\n{result}\n"
             prompt_variables['previous_tasks_results'] = previous_tasks_results
-            self.save_raw_result(task.name, result)
+            self.__save_task_raw_result(task.name, result)
             if not status == TaskStatus.FINISHED_OK:
                 error_msg = f"Task sequence aborted due to failure of task {task.name}."
                 self.logger.error(error_msg)
@@ -376,7 +377,7 @@ class DeepSearch():
 
         return ''
         
-    def save_raw_result(self, name: str, result: list[any]):
+    def __save_task_raw_result(self, name: str, result: list[any]):
         result_file = self.output_dir_path / f"{name}_result.txt"
         self.logger.info(f"Writing 'raw' returned result for task {name} to: {result_file}")
         with open(result_file, "w") as file:
