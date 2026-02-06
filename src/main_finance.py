@@ -40,22 +40,13 @@ from common.main_utils import (
     add_arg_max_tokens,
     add_arg_max_cost_dollars,
     add_arg_max_time_minutes,
-    add_arg_ux,
     add_arg_short_run,
     add_arg_verbose,
+    common_variables,
     process_args,
-    determine_display,
+    get_display_maker,
     read_relative_to,
     written_relative_to,
-    var_start_time,
-    var_output_dir_path,
-    var_templates_dir_path,
-    var_research_report_path,
-    var_yaml_header_template_path,
-    var_provider,
-    var_research_model,
-    var_research_model,
-    var_ux,
     only_verbose_common_vars,
     only_verbose,
 )
@@ -77,7 +68,6 @@ if __name__ == "__main__":
     def_provider = 'openai'
     def_research_model = 'gpt-4o'
     def_excel_writer_model = 'o4-mini'
-    def_ux = 'both'
     def_temperature = 0.7
     def_max_iterations = 25
     def_max_tokens = 500000
@@ -126,7 +116,6 @@ if __name__ == "__main__":
         help=f"The model used for writing results to Excel (default: {def_excel_writer_model}); a less powerful model is sufficient."
     )
     add_arg_provider(parser, def_provider)
-    add_arg_ux(parser, def_ux)
     add_arg_temperature(parser, def_temperature)
     add_arg_max_iterations(parser, def_max_iterations)
     add_arg_max_tokens(parser, def_max_tokens)
@@ -150,32 +139,25 @@ if __name__ == "__main__":
 
 
     # The variables dict contains values used by the app components, labels 
-    # for display purposes and a formatter for rendering the value, either a dict, 
-    # a function for rendering, or `None`, for which `str(x)` will be used. 
-    # (For a dict, if the item isn't found, `str(x)` will be used.)
-    # The entries also indicate which of the variables to render (e.g., more
-    # of them when verbose output is desired) and the order of presentation.
+    # for display purposes and a format for knowing how to render the value.
+    # Start with values we want to see at the top:
     variables_list = [
-        var_start_time(processed_args['start_time']),
-        Variable("ticker",                   args.ticker),
-        Variable("company_name",             args.company_name),
-        Variable("reporting_currency",       args.reporting_currency),
-        Variable("units",                    f"{args.reporting_currency} millions"),
-        var_output_dir_path(output_dir_path),
-        var_research_report_path(processed_args['markdown_report_path']),
-        var_yaml_header_template_path(processed_args['yaml_header_template_path']),
-        Variable("output_spreadsheet_path",  output_spreadsheet_path, formatter=Variable.file_url_formatter),
-        var_provider(args.provider),
-        var_research_model(args.research_model),
-        Variable("excel_writer_model",       args.excel_writer_model, formatter=Variable.code_formatter),
-        var_templates_dir_path(templates_dir_path),
-        Variable("financial_research_prompt_path", 
-                                             financial_research_prompt_path, formatter=Variable.file_url_formatter),
-        Variable("excel_writer_agent_prompt_path", 
-                                             excel_writer_agent_prompt_path, formatter=Variable.file_url_formatter),
-        var_ux(args.ux),
+        Variable("start_time",                     processed_args['start_time']),
+        Variable("ticker",                         args.ticker),
+        Variable("company_name",                   args.company_name),
+        Variable("reporting_currency",             args.reporting_currency),
+        Variable("units",                          f"{args.reporting_currency} millions"),
     ]
-
+    # Add common values across apps:
+    variables_list.extend(common_variables(args, processed_args, output_dir_path, templates_dir_path))
+    
+    # Finish with the remaining custom variables for this app and "verbose" variables:
+    variables_list.extend([
+        Variable("excel_writer_model",             args.excel_writer_model, kind='code'),
+        Variable("output_spreadsheet_path",        output_spreadsheet_path, kind='file'),
+        Variable("financial_research_prompt_path", financial_research_prompt_path, kind='file'),
+        Variable("excel_writer_agent_prompt_path", excel_writer_agent_prompt_path, kind='file'),
+    ])
     variables_list.extend(only_verbose_common_vars(args, processed_args))
 
     variables = dict([(v.key, v) for v in variables_list])
@@ -200,7 +182,7 @@ if __name__ == "__main__":
 
     ux_title = "Deep Research Agent for Finance"
 
-    make_display = determine_display(args.ux, ux_title, **processed_args)
+    make_display = get_display_maker(ux_title, **processed_args)
 
     # Create configuration for the Deep Orchestrator
     # To add additional servers, define them in mcp_agent.config.yaml,
@@ -213,7 +195,7 @@ if __name__ == "__main__":
         variables)
 
     variables["config"] = Variable("config", config, label="Configuration", 
-        formatter=only_verbose(args, Variable.callout_formatter))
+        kind=only_verbose(args, 'dict'))
 
     deep_search = DeepSearch(
         app_name=def_app_name,

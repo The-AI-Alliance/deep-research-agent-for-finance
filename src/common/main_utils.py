@@ -52,7 +52,7 @@ def add_arg_markdown_report_path(parser: argparse.ArgumentParser, def_markdown_r
     parser.add_argument(
         "--markdown-report",
         default=def_markdown_report_path,
-        help=f"Path where a Markdown report is written. Ignored unless --ux markdown is used. (Default: {def_markdown_report_path}) {written_relative_to('output-dir')}"
+        help=f"Path where a Markdown report is written. If empty, no report is generated. (Default: {def_markdown_report_path}) {written_relative_to('output-dir')}"
     )
 
 def add_arg_templates_dir(parser: argparse.ArgumentParser, def_templates_dir: str = './templates'):
@@ -66,7 +66,7 @@ def add_arg_markdown_yaml_header_template_path(parser: argparse.ArgumentParser, 
     parser.add_argument(
         "--markdown-yaml-header",
         default=def_markdown_yaml_header_template_path,
-        help=f"Path to an optional template for a YAML header to write at the beginning of the Markdown report. Useful for publishing the report on a GitHub Pages website. Ignored unless --ux markdown is used. (Default: {def_markdown_yaml_header_template_path}) {read_relative_to('template-dir')}"
+        help=f"Path to an optional template for a YAML header to write at the beginning of the Markdown report. Useful for publishing the report on a GitHub Pages website. Ignored if --markdown-report is empty. (Default: {def_markdown_yaml_header_template_path}) {read_relative_to('template-dir')}"
     )
 
 def add_arg_research_model(parser: argparse.ArgumentParser, def_research_model: str = 'gpt-4o'):
@@ -124,14 +124,6 @@ def add_arg_max_time_minutes(parser: argparse.ArgumentParser, def_max_time_minut
         help=f"The maximum number of time in minutes allowed for inference passes. (Default: {def_max_time_minutes}, but a lower value will be used if --short-run is used. Values <= 0 will be converted to 10)"
     )
 
-def add_arg_ux(parser: argparse.ArgumentParser, def_ux: str = 'both'):
-    parser.add_argument(
-        "--ux",
-        choices=["rich", "markdown", "both"],
-        default=def_ux,
-        help=f"The 'UX' to use. Use 'rich' for a rich console UX, 'markdown' for streaming updates in markdown syntax, or 'both' for both of them. (Default: {def_ux})"
-    )
-
 def add_arg_short_run(parser: argparse.ArgumentParser):
     parser.add_argument(
         '--short-run',
@@ -149,9 +141,6 @@ def add_arg_verbose(parser: argparse.ArgumentParser):
 def process_args(parser: argparse.ArgumentParser) -> (argparse.Namespace, dict[str,any]):
     args = parser.parse_args()
     
-    # Configure variable formatting based on the UX:
-    Variable.set_ux(args.ux)
-
     # Ensure output directory exists
     output_dir_path = Path(args.output_dir)
     output_dir_path.mkdir(parents=True, exist_ok=True)
@@ -199,8 +188,7 @@ def process_args(parser: argparse.ArgumentParser) -> (argparse.Namespace, dict[s
         "yaml_header_template_path": markdown_yaml_header_path,
     })
 
-def determine_display(
-    which_one: str,
+def get_display_maker(
     ux_title: str,
     **kvs) -> Callable[[DeepSearch, dict[str,(str,any)]], Display]:
     yaml = kvs.get('yaml_header_template_path', None)
@@ -215,73 +203,37 @@ def determine_display(
         ux_title, ds,
         make_displays={'rich': rich_make_display, 'markdown': markdown_make_display},
         variables=vs)
-    makers = {
-        'rich':     rich_make_display,
-        'markdown': markdown_make_display,
-        'both':     both_make_display,
-    }
 
-    make_display = makers.get(which_one)
-    if not make_display:
-        # The "ux" argument definition should prevent unexpected values, 
-        # but just in case...
-        raise ValueError(f"Unexpected value for 'ux': {which_one}")
+    return both_make_display
 
-    return make_display
-
-def only_verbose(args: argparse.Namespace, formatter: Callable[[any],str] = str) -> Callable[[any],str] | None:
+def only_verbose(args: argparse.Namespace, formatter: str = 'str') -> str | None:
     return formatter if args.verbose else None
 
-def var_with_file_fmt(key: str, value: Path, label: str = None) -> Variable:
-    return Variable(key, value, label=label, formatter=Variable.file_url_formatter)
-
-def var_with_code_fmt(key: str, value: str, label: str = None) -> Variable:
-    return Variable(key, value, label=label, formatter=Variable.code_formatter)
-
-def var_with_dict_fmt(key: str, value: str, label: str = None, map: dict[str,str] = {}) -> Variable:
-    return Variable(key, value, label=label, formatter=map)
-
-# If a corresponding `var_*` function isn't defined for an `add_arg_*` function above,
-# it is because we handle the variable specially in `process_args()` and a value is 
-# added to the variables returned by it for these arguments.
-
-def var_start_time(time: str) -> Variable:
-    return Variable("start_time", time)
-
-def var_output_dir_path(path: Path) -> Variable:
-    return var_with_file_fmt("output_dir_path", path)
-
-def var_templates_dir_path(path: Path) -> Variable:
-    return var_with_file_fmt("templates_dir_path", path)
-
-def var_research_report_path(path: Path) -> Variable:
-    return var_with_file_fmt("research_report_path", path)
-
-def var_yaml_header_template_path(path: Path) -> Variable:
-    return var_with_file_fmt("yaml_header_template_path", path)
-
-def var_provider(provider: str) -> Variable:
-    return var_with_dict_fmt("provider", provider, map=Variable.provider_names)
-
-def var_research_model(model: str) -> Variable:
-    return var_with_code_fmt("var_research_model", model)
-
-def var_research_model(model: str) -> Variable:
-    return var_with_code_fmt("var_research_model", model)
-
-def var_ux(ux: str) -> Variable:
-    return var_with_dict_fmt("ux", ux, label="UX", map=Variable.ux_names)
+def common_variables(
+    args: argparse.Namespace,
+    processed_args: dict[str,any],
+    output_dir_path: Path,
+    templates_dir_path: Path) -> list[Variable]:    
+    return [
+        Variable("provider",                       args.provider, kind='provider'),
+        Variable("research_model",                 args.research_model, kind='code')
+        Variable("templates_dir_path",             templates_dir_path, kind='file'),
+        Variable("output_dir_path",                output_dir_path, kind='file')
+        Variable("research_report_path",           processed_args['markdown_report_path'], kind='file'),
+        Variable("yaml_header_template_path",      processed_args['yaml_header_template_path'], kind='file'),
+    ]
 
 def only_verbose_common_vars(
     args: argparse.Namespace,
     processed_args: dict[str,any]) -> list[Variable]:
+    fmt = only_verbose(args)
     return [
-        Variable("verbose",           args.verbose, formatter=only_verbose(args)),
-        Variable("short_run",         args.short_run, formatter=only_verbose(args)),
-        Variable("temperature",       processed_args['temperature'], label="LLM Temperature", formatter=only_verbose(args)), 
-        Variable("max_iterations",    processed_args['max_iterations'], label="LLM Max Iterations", formatter=only_verbose(args)),
-        Variable("max_tokens",        processed_args['max_tokens'], label="LLM Max Inference Tokens", formatter=only_verbose(args)),
-        Variable("max_cost_dollars",  processed_args['max_cost_dollars'], label="LLM Max Inference cost in USD", formatter=only_verbose(args)),
-        Variable("max_time_minutes",  processed_args['max_time_minutes'], label="LLM Max Inference time in minutes", formatter=only_verbose(args)),
+        Variable("verbose",           args.verbose, kind=fmt),
+        Variable("short_run",         args.short_run, kind=fmt),
+        Variable("temperature",       processed_args['temperature'], label="LLM Temperature", kind=fmt), 
+        Variable("max_iterations",    processed_args['max_iterations'], label="LLM Max Iterations", kind=fmt),
+        Variable("max_tokens",        processed_args['max_tokens'], label="LLM Max Inference Tokens", kind=fmt),
+        Variable("max_cost_dollars",  processed_args['max_cost_dollars'], label="LLM Max Inference cost in USD", kind=fmt),
+        Variable("max_time_minutes",  processed_args['max_time_minutes'], label="LLM Max Inference time in minutes", kind=fmt),
     ]
 

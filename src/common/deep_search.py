@@ -27,7 +27,7 @@ from mcp_agent.workflows.llm.augmented_llm import RequestParams
 
 from common.prompt_utils import load_prompt_markdown
 from common.string_utils import replace_variables, truncate
-from common.variables import Variable
+from common.variables import Variable, VariableFormat
 from ux import Display
 
 class TaskStatus(Enum):
@@ -90,46 +90,52 @@ class BaseTask():
         logger: Logger) -> list[any]:
         raise Exception("Abstract method BaseTask._run() called!")
 
-    def attributes_as_strs(self, exclusions: set[str] = {}) -> dict[str,str]:
+    def attributes_as_strs(self, 
+        which_formatting: VariableFormat = VariableFormat.PLAIN, 
+        exclusions: set[str] = {}) -> dict[str,str]:
         """
         Return a dictionary of nicely-formatted labels and values for the attributes.
+        The which_formatting flag let's you change styles, e.g., 'markdown' or 'plain'
         Optional exclude some attributes.
         """
         # First create a dictionary with the attribute names as keys and formatted values,
         # which we'll then filter for exclusions, then return a new dictionary with the
         # keys converted to nice labels.
-        prompt_str = "No task prompt string!"
-        result_str = "No task results!"
+        prompt = "No task prompt string!"
+        result = "No task results!"
         if self.prompt:
-            prompt_str = Variable.code_formatter_multiline(truncate(str(self.prompt), 200, '...'))
+            prompt = Variable('code', truncate(str(self.prompt), 200, '...'), kind='callout')
         if self.result:
-            result_str = Variable.code_formatter_multiline(truncate(str(self.result), 200, '...')),
+            result = Variable('code', truncate(str(self.result), 200, '...'), kind='callout')
 
-        attrs = {
-            'name':                 Variable.code_formatter(self.name),
-            'title':                self.title,
-            'model_name':           Variable.code_formatter(self.model_name),
-            'prompt_template_path': Variable.file_url_formatter(self.prompt_template_path),
-            'prompt_saved_file':    f"Saved prompt: {Variable.file_url_formatter(self.prompt_saved_file)}",
-            'output_dir_path':      Variable.file_url_formatter(self.output_dir_path),
-            'status':               Variable.code_formatter(self.status.name),
-        }
+        vars = [
+            Variable('name',                 self.name, kind='code'),
+            Variable('title',                self.title),
+            Variable('model_name',           self.model_name, kind='code'),
+            Variable('prompt_template_path', self.prompt_template_path, kind='file'),
+            Variable('prompt_saved_file',    self.prompt_saved_file, kind='file'),
+            Variable('output_dir_path',      self.output_dir_path, kind='file'),
+            Variable('status',               self.status.name, kind='code'),
+        ]
+        
         # TODO: somewhat fragile hard-coding these specific values:
         for key in ['temperature', 'max_iterations', 'max_tokens', 'max_cost_dollars', 'max_time_minutes']:
             value = self.properties.get(key)
             if value:
-                attrs[key] = str(value.value)
+                vars.append = value
+
         # Put these two potentially long strings at the end.
-        attrs.extend({
-            'prompt': prompt_str,
-            'result': result_str,
-        })
+        vars.extend([prompt, result])
 
-        # Now remove the key-values we don't want to include.
+        # Create a dictionary and remove the exclusions
+        attrs1 = dict([(v.key, v) for v in vars])
         for ex in exclusions:
-            attrs.pop(ex)
+            attrs1.pop(ex)
 
-        return dict([(Variable.make_label(key), value) for key, value in attrs.items()])
+        # Create and return a new dictionary, using the labels as keys and formatted
+        # strings as values.
+        attrs = dict([(l,s) for _, l, s in Variable.make_formatted(vars, variable_format=which_formatting)])
+        return attrs
 
     def __repr__(self) -> str: 
         """This method omits the long prompt and results strings. See also attributes_as_strs()."""
@@ -237,10 +243,12 @@ class AgentTask(BaseTask):
                 ),
             )
 
-    def attributes_as_strs(self, exclusions: set[str] = {}) -> dict[str,str]:
+    def attributes_as_strs(self, which_formatting: VariableFormat = VariableFormat.PLAIN, exclusions: set[str] = {}) -> dict[str,str]:
         d = super().attributes_as_strs(exclusions)
         if 'generate_prompt' not in exclusions:
-            d[Variable.make_label('generate_prompt')] = Variable.callout_formatter(self.generate_prompt)
+            var = Variable('generate_prompt', self.generate_prompt)
+            _, label, value_str = var.format()
+            d[label] = value_str
         return d
 
     def __repr__(self) -> str: 
@@ -389,7 +397,7 @@ class DeepSearch():
         message_fmt = "    {0:40s}  {1}"
         pwd = os.path.dirname(os.path.realpath(__file__))
         props_strs = []
-        for l, v in Variable.make_formatted(self.variables.values(), use_basic_formatting=True):
+        for key, l, v in Variable.make_formatted(self.variables.values(), variable_format=VariableFormat.PLAIN):
             props_strs.append(message_fmt.format(f"{l}:", v))
         props_str = "\n".join(props_strs)
         tasks_str = "\n".join([

@@ -63,6 +63,35 @@ The application provides several command-line options to configure the behavior.
 
 ```shell
 $ make app-help
+command -v uv > /dev/null || ( echo ERROR: The Python dependency manager \'uv\' is used. Please visit https://docs.astral.sh/uv/ to install it. && exit 1 )
+[[ -d .venv ]] || uv venv
+uv pip freeze | grep mcp-agent > /dev/null || ( echo ERROR: The Python dependency \'mcp-agent\' is not installed. Either run \'make app-setup\' or \'uv add mcp-agent\'. && exit 1 )
+cd src && uv run main_finance.py \
+    --ticker "META" \
+    --company-name "Meta Platforms, Inc." \
+    --output-dir "/Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-finance/output/META" \
+    --markdown-report "META_report.md" \
+    --markdown-yaml-header "github_pages_header.yaml" \
+    --output-spreadsheet "META_financials.xlsx" \
+    --reporting-currency "USD" \
+    --templates-dir "finance_deep_search/templates" \
+    --financial-research-prompt-path "financial_research_agent.md" \
+    --excel-writer-agent-prompt-path "excel_writer_agent.md" \
+    --research-model "gpt-4o" \
+    --excel-writer-model "o4-mini" \
+    --provider "openai" \
+    --temperature 0.7 \
+    --max-iterations 25 \
+    --max-tokens 500000 \
+    --max-cost-dollars 2.0 \
+    --max-time-minutes 15 \
+    --verbose \
+    --ux both \
+    
+echo
+echo "Output files in /Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-finance/output/META:"
+cd /Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-finance/output/META && find . -type f -exec ls -lh {} \;
+
 Application help provided by src/finance_deep_search/main_finance.py:
 cd src && uv run main_finance.py --help
 usage: main_finance.py [-h] --ticker TICKER --company-name COMPANY_NAME
@@ -199,12 +228,12 @@ cd src && uv run main_finance.py \
     --company-name "Meta Platforms, Inc." \
     --output-dir "/Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-finance/output/META" \
     --markdown-report "META_report.md" \
-    --markdown-yaml-header "finance_deep_search/templates/github_pages_header.yaml" \
+    --markdown-yaml-header "github_pages_header.yaml" \
     --output-spreadsheet "META_financials.xlsx" \
     --reporting-currency "USD" \
     --templates-dir "finance_deep_search/templates" \
-    --financial-research-prompt-path "finance_deep_search/templates/financial_research_agent.md" \
-    --excel-writer-agent-prompt-path "finance_deep_search/templates/excel_writer_agent.md" \
+    --financial-research-prompt-path "financial_research_agent.md" \
+    --excel-writer-agent-prompt-path "excel_writer_agent.md" \
     --research-model "gpt-4o" \
     --excel-writer-model "o4-mini" \
     --provider "openai" \
@@ -213,9 +242,8 @@ cd src && uv run main_finance.py \
     --max-tokens 500000 \
     --max-cost-dollars 2.0 \
     --max-time-minutes 15 \
-    --verbose \
-    --ux rich 
-
+    --verbose 
+        
 echo "Output files in /Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-finance/output/META:"
 (... listing not shown ...)
 ```

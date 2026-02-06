@@ -39,7 +39,6 @@ MAX_ITERATIONS             ?= 25
 MAX_TOKENS                 ?= 500000
 MAX_COST_DOLLARS           ?= 2.0
 MAX_TIME_MINUTES           ?= 15
-UX                         ?= both
 APP_ARGS                   ?=
 
 # Override when running `make view-local` using e.g., `JEKYLL_PORT=8000 make view-local`
@@ -157,12 +156,6 @@ endef
 
 all:: app-run
 
-app-run-both:: app-run
-app-run-rich::
-	$(MAKE) UX=rich app-run
-app-run-md app-run-markdown:: 
-	$(MAKE) UX=markdown app-run
-
 app-run:: app-check do-app-run show-output-files
 do-app-run::
 	cd ${src_dir} && uv run ${MAIN_APP} \
@@ -185,8 +178,8 @@ do-app-run::
 		--max-cost-dollars ${MAX_COST_DOLLARS} \
 		--max-time-minutes ${MAX_TIME_MINUTES} \
 		--verbose \
-		--ux ${UX} \
 		${APP_ARGS}
+		
 show-output-files::
 	@echo
 	@echo "Output files in ${OUTPUT_DIR}:"

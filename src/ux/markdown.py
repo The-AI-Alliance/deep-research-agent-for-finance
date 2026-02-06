@@ -347,7 +347,7 @@ class MarkdownDisplay(Display[DeepSearch]):
         # Make a Markdown table of the runtime properties. First wrap the keys in `...`
         # to render as fixed-width/code font.
         top_table = MarkdownTable("This Run's Properties", ['Property', 'Value'])
-        for label, value in Variable.make_formatted(self.variables.values()):
+        for key, label, value in Variable.make_formatted(self.variables.values()):
             top_table.add_row([label, value])
         layout.add_intro_content([
             "This report begins with some information about this invocation of deep research.",
@@ -553,7 +553,7 @@ class MarkdownDisplay(Display[DeepSearch]):
         task_table = MarkdownTable(
             title=f'**Task {task.title} (`{task.name}`) Properties**',
             columns=['Property', 'Value'])
-        for key, value in task.attributes_as_strs().items():
+        for key, value in task.attributes_as_strs(variable_format = VariableFormat.MARKDOWN).items():
             task_table.add_row([key, value])
 
         result_section = MarkdownSection(title=f"Task #{task_number}: {task.title} (`{task.name}`)", 

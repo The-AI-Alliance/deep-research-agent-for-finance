@@ -1,17 +1,23 @@
 from __future__ import annotations
 from collections.abc import Sequence
+from enum import Enum
 from pathlib import Path
 from typing import Callable
+
+
+class VariableFormat(Enum):
+    MARKDOWN = 0
+    PLAIN = 1
 
 class Variable():
     def __init__(self,
         key: str, 
         value: any,
         label: str = None, 
-        formatter: Callable[[any],str] | dict | None = str):
+        kind: str = 'str'):
         """
         If `label` is `None`, then `make_label(key)` is called to create one.
-        If `formatter` is `None`, then `format()` will return `None`. Specify
+        If `kind` is `None`, then `format()` will return `None`. Specify
         `None` explicitly for cases where a variable shouldn't be rendered,
         e.g., when verbose output is off.
         """
@@ -19,11 +25,11 @@ class Variable():
         self.value = value
         # Note that we are careful to allow '' for a label.
         self.label = label if label != None else Variable.make_label(key) 
-        self.formatter = formatter
+        self.kind = kind
 
     def __repr__(self) -> str:
-        fmt_str = '...' if self.formatter else None
-        return f"Variable(key = {self.key}, value = {self.value}, label = {self.label}, formatter = {fmt_str})"
+        fmt_str = '...' if self.kind else None
+        return f"Variable(key = {self.key}, value = {self.value}, label = {self.label}, kind = {fmt_str})"
 
     @staticmethod
     def get(variable: Variable, default: any) -> any:
@@ -33,23 +39,31 @@ class Variable():
         else:
             return default
 
-    def format(self, use_basic_formatting: bool = False) -> (str, str, str):
+    def format(self, variable_format: VariableFormat = VariableFormat.PLAIN) -> (str, str, str):
         """
-        If formatter is not `None`, then return `(key, label, formatter(value))`.
+        If `self.kind` is not `None`, then return `(key, label, formatted_value)`.
         Otherwise return `None`. 
-        Pass `use_basic_formatting = True` to just print values with `str(value)`,
-        such as when writing to the console on startup, before the display UX is 
-        initialized, for example. Just as for normal formatting, whether or not to
-        print a variable in this case is still decided by whether or not formatter is None.
+        By default, the "plain" format is used, i.e., `str(value)` for most values. 
+        Pass `variable_format = VariableFormat.MARKDOWN` for markdown formatting, e.g.,
+        a 'url' is returned `[key](value)`, for 'file' it is `[value](file://value)`. 
         """
-        if not self.formatter:
+        if not self.kind:
             return None
-        if use_basic_formatting:
-            return (self.key, self.label, str(self.value))
-        elif isinstance(self.formatter, dict):
-            return (self.key, self.label, self.formatter.get(self.value, str(self.key)))
-        else:
-            return (self.key, self.label, self.formatter(self.value))
+        
+        formatter_map = None
+        match variable_format:
+            case VariableFormat.PLAIN:
+                formatter_map = Variable.plain_formats
+            case VariableFormat.MARKDOWN:
+                formatter_map = Variable.markdown_formats
+            case _:
+                raise ValueError(f"Invalid variable_format value: {variable_format}")
+        
+        formatter = formatter_map.get(self.kind)
+        if not formatter:
+            raise ValueError(f"Unrecognized kind specified: {self.kind}")
+
+        return (self.key, self.label, formatter(self))
 
     # Class utilities:
 
@@ -57,77 +71,44 @@ class Variable():
         """Replace '_' with ' ', capitalize words and strip whitespace on the ends."""
         return s.replace('_', ' ').title().strip()
 
-    def make_formatted(variables: Sequence[Variable], use_basic_formatting: bool = False) -> list[(str,str)]:
+    def make_formatted(variables: Sequence[Variable], variable_format: VariableFormat = VariableFormat.PLAIN) -> list[(str,str,str)]:
         """
         A helper method for common uses of Variables; return a list of
-        `(label, formatted(value))` pairs from the input sequence of
+        `(key, label, formatted(value))` pairs from the input sequence of
         Variables, filtering out any were `variable.format() == `None`.
-        The `use_basic_formatting` argument is passed to `format()`.
+        The `variable_format` argument is passed to `format()`.
         """
         result = []
         for variable in variables:
-            tuple = variable.format(use_basic_formatting=use_basic_formatting)
+            tuple = variable.format(variable_format=variable_format)
             if tuple:
-                result.append((tuple[1], tuple[2]))
+                result.append(tuple)
         return result
-
-    which_ux: str = 'both'
 
     provider_names = {
         'openai':    'OpenAI',
         'anthropic': 'Anthropic',
         'ollama':    'Ollama',
     }
-
-    # Keep consistent with set_ux() below!
-    ux_names = {
-        'rich':      'Rich',
-        'markdown':  'Markdown',
-    }
     
-    url_formatter_md              = lambda u: f"[{u}]({u})"
-    file_url_formatter_md         = lambda f: f"[`{f}`](file://{f})"
-    code_formatter_md             = lambda s: f"`{s}`"
-    code_formatter_multiline_md   = lambda s: f"```\n{s}\n```"
-    dict_formatter_md             = lambda d: '\n'.join([f"`{k}`: {v}" for k,v in d.items()])
-    callout_formatter_md          = lambda s: '\n'.join([f"> {line}" for line in str(s).split('\n')])
-
-    url_formatter_rich            = lambda u: str(u)
-    file_url_formatter_rich       = lambda f: str(f)
-    code_formatter_rich           = lambda s: str(s)
-    code_formatter_multiline_rich = lambda s: str(s)
-    dict_formatter_rich           = lambda d: '\n'.join([f"{k}: {v}" for k,v in d.items()])
-    callout_formatter_rich        = lambda s: str(s)
-
-    url_formatter                 = url_formatter_rich
-    file_url_formatter            = file_url_formatter_rich
-    code_formatter                = code_formatter_rich
-    code_formatter_multiline      = code_formatter_multiline_rich
-    dict_formatter                = dict_formatter_rich
-    callout_formatter            = callout_formatter_rich
-
-    # Keep consistent with ux_names above!
-    def set_ux(ux: str):
-        """
-        Specifying the UX allows proper formatting to be returned for
-        URLs, files, code etc.
-        """
-        Variable.which_ux = ux
-        match ux:
-            case 'rich':
-                Variable.url_formatter            = Variable.url_formatter_rich
-                Variable.file_url_formatter       = Variable.file_url_formatter_rich
-                Variable.code_formatter           = Variable.code_formatter_rich
-                Variable.code_formatter_multiline = Variable.code_formatter_multiline_rich
-                Variable.dict_formatter           = Variable.dict_formatter_rich
-                Variable.callout_formatter        = Variable.callout_formatter_rich
-            case 'markdown' | 'both':
-                Variable.url_formatter            = Variable.url_formatter_md
-                Variable.file_url_formatter       = Variable.file_url_formatter_md
-                Variable.code_formatter           = Variable.code_formatter_md
-                Variable.code_formatter_multiline = Variable.code_formatter_multiline_md
-                Variable.dict_formatter           = Variable.dict_formatter_md
-                Variable.callout_formatter        = Variable.callout_formatter_md
-            case _:
-                raise ValueError(f"Unrecognized 'ux' value: {ux}")
+    markdown_formats: dict[str, Callable[[Variable],str]] = {
+        'str':            lambda v: str(v.value),
+        'url':            lambda v: f"[{v.label}]({v.value})",
+        'file':           lambda v: f"[`{v.value}`](file://{v.value})",
+        'code':           lambda v: f"`{v.value}`",
+        'code_multiline': lambda v: f"```\n{v.value}\n```",
+        'dict':           lambda v: '\n'.join([f"`{key}`: {value}" for key,value in v.value.items()]),
+        'callout':        lambda v: '\n'.join([f"> {line}" for line in str(v.value).split('\n')]),
+        'provider':       lambda v: Variable.provider_names.get(v.value),
+    }
+    plain_formats: dict[str, Callable[[Variable],str]] = {
+        'str':            lambda v: str(v.value),
+        'url':            lambda v: str(v.value),
+        'file':           lambda v: str(v.value),
+        'code':           lambda v: str(v.value),
+        'code_multiline': lambda v: str(v.value),
+        'dict':           lambda v: '\n'.join([f"{key}: {value}" for key,value in v.value.items()]),
+        'callout':        lambda v: str(v.value),
+        'provider':       lambda v: Variable.provider_names.get(v.value),
+    }
 
