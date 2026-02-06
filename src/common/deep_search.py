@@ -257,18 +257,19 @@ class DeepSearch():
     """
     Wrapper around mcp_agent for the deep research apps.
     """
+
+    def_ux_title = "Deep Research Agent"
+
     def __init__(self,
             app_name: str,
-            make_display: Callable[[DeepSearch, dict[str, Variable]], Display],
-            config: DeepOrchestratorConfig,
             provider: str,
+            config: DeepOrchestratorConfig,
             tasks: list[BaseTask],
             output_dir_path: Path,
             variables: dict[str, Variable]):
         self.app_name = app_name
-        self.make_display=make_display
-        self.config = config
         self.provider = provider
+        self.config = config
         self.tasks = tasks
         self.output_dir_path = output_dir_path
         self.variables = variables
@@ -293,10 +294,25 @@ class DeepSearch():
 
         # These are lazily initialized in __finish_init!
         self.display: Display | None = None
+        self.observers: Observers | None = None
         self.mcp_app: MCPApp | None = None
         self.orchestrator: DeepOrchestrator | None = None
         self.token_counter: TokenCounter | None = None
         self.logger: Logger | None = None
+
+
+    # A observer loop that will be executed in its own thread.
+    async def update_loop(self, update_iteration_frequency_secs: float = 1.0):
+        while True:
+            try:
+                self.observers.update()
+                await asyncio.sleep(update_iteration_frequency_secs)
+            except Exception as e:
+                err_msg = f"WARNING: Error updating observers: {e}"
+                print(error_msg)
+                if self.logger:
+                    self.logger.warning(err_msg)
+                break
 
     async def run(self):
         await self.__finish_init()
@@ -309,30 +325,27 @@ class DeepSearch():
             'update_iteration_frequency_secs', 1.0)
 
         async def do_work():
-            # Final message at the end...
-            final_messages = [
-                "\n",
-                f"Finished: See output files under {self.output_dir_path}.",
-            ]
 
-            # Start display update loop
+            # Start observer update loop
             update_task = asyncio.create_task(
-                self.display.update_loop(
+                self.update_loop(
                     update_iteration_frequency_secs=update_iteration_frequency_secs))
 
             error_msg: str = None
             try:
                 error_msg = await self.run_tasks()
             finally:
-                # Final display update...
-                self.display.update(final=True)
+                # Final update...
+                final_messages = [
+                    "\n",
+                    f"Finished: See output files under {self.output_dir_path} and log files under ./logs.",
+                ]
+                self.observers.update(final=True, final_messages=final_messages, error_msg=error_msg)
                 update_task.cancel()
                 try:
                     await update_task
                 except asyncio.CancelledError:
                     pass
-
-            await self.display.final_update(final_messages, error_msg)
 
         await self.display.run_live(do_work)
 
@@ -362,8 +375,34 @@ class DeepSearch():
 
             self.token_counter = app.context.token_counter
 
-            self.display = self.make_display(self, self.variables)
-            self.logger.debug(str(self.display))
+            self.display = self.__make_display(self)
+            self.observers = self.__make_observers(self, self.display)
+            self.logger.debug("Finished DeepSearch initialization")
+
+    def __make_display(self) -> Display:
+        ux_title = self.get_value('ux_title', default=def_ux_title)
+        return RichDisplay(ux_title, self, variables=self.variables)
+
+    def __make_observers(self, display: Display) -> list[Observer]:
+        ux_title = self.__get_value('ux_title', default=def_ux_title)
+        yaml_header = self.__get_value('yaml_header_template_path')
+        md = MarkdownDisplay(ux_title, self, yaml_header, variables=self.variables)
+        return Observers('observers', self, observers={'display': display, 'markdown': md}, variable=variables)
+
+
+    def add_observers(self, observers: dict[str, Observer]) -> dict[str, Observer]:
+        """
+        Add more observers and return the new dict of them. It is an error for a new
+        key to match an existing key.
+        """
+        for key in observers.keys():
+            if key in self.observers:
+                raise ValueError("At least one key already exists in self.observers: current observers keys = {list(self.observers.keys())},  new observers keys = {list(observers.keys())}")
+        self.observers.extend(observers)
+        return self.observers
+
+    def __get_value(self, key: str, default: any = None) -> any:
+        return Variable.get_value(self.variables.get(key), default=default)
 
     async def run_tasks(self) -> str:
         """

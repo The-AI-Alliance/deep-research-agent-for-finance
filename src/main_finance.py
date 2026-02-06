@@ -44,7 +44,6 @@ from common.main_utils import (
     add_arg_verbose,
     common_variables,
     process_args,
-    get_display_maker,
     read_relative_to,
     written_relative_to,
     only_verbose_common_vars,
@@ -159,6 +158,7 @@ if __name__ == "__main__":
         Variable("excel_writer_agent_prompt_path", excel_writer_agent_prompt_path, kind='file'),
     ])
     variables_list.extend(only_verbose_common_vars(args, processed_args))
+    variables_list['ux_title'] = "Deep Research Agent for Finance"
 
     variables = dict([(v.key, v) for v in variables_list])
 
@@ -180,10 +180,6 @@ if __name__ == "__main__":
             properties=variables),
     ]
 
-    ux_title = "Deep Research Agent for Finance"
-
-    make_display = get_display_maker(ux_title, **processed_args)
-
     # Create configuration for the Deep Orchestrator
     # To add additional servers, define them in mcp_agent.config.yaml,
     # then add them by name the list passed for `available_servers`.
@@ -198,9 +194,8 @@ if __name__ == "__main__":
 
     deep_search = DeepSearch(
         app_name=def_app_name,
-        make_display=make_display,
-        config=config,
         provider=args.provider,
+        config=config,
         tasks=tasks,
         output_dir_path=output_dir_path,
         variables=variables)

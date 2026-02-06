@@ -31,6 +31,7 @@ from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
 
 class RichDeepOrchestratorMonitor():
     """Rich-based monitor to expose all internal state of the Deep Orchestrator"""
+    # TODO: Merge with RichDisplay
 
     def __init__(self, orchestrator: DeepOrchestrator):
         self.orchestrator = orchestrator
@@ -321,8 +322,12 @@ class RichDisplay(Display[DeepSearch]):
         with Live(self.layout, console=self.console, refresh_per_second=4, screen=True, transient=False) as _live:
             await function()
 
-    def update(self, final: bool = False) -> any:
-        """Update the display with current state. `final` is ignored."""
+    def update(self, final: bool = False, messages: list[str] = [], error_msg: str = None) -> any:
+        """
+        Update the display with current state. `final` is ignored. 
+        If the `messages` and/or `error_msg` are not empty/None, then 
+        format a `list[str]` with them, print it, and return the list.
+        """
 
         # Header
         self.layout["header"].update(
@@ -356,7 +361,32 @@ class RichDisplay(Display[DeepSearch]):
         )
         self.layout["right"].update(right_content)
 
-    def _final_statistics(self):
+        await self.__final_update()
+
+        msg_list1 = [
+            "\n",
+            f"Finished: See output files under {self.output_dir_path} and log files under ./logs.",
+            "\n",
+        ]
+        if messages:
+            msg_list1.extend(messages)
+        msg_list = [[f"[bold black]{line}[/bold black]" for line in msg_list1]]
+        if error_msg:
+            msg_list.extend(['\n', f"[bold red]ERROR: {error_msg}[/bold red]"])
+        for line in msg_list:
+            self.console.print(line)
+            self.system.logger.info(line)
+        return msg_list
+
+    async def __final_update(self):
+        self.__update_final_statistics()
+        self.__update_budget_summary()
+        self.__update_knowledge_summary()
+        await self.__update_token_usage()
+        self.__update_workspace_artifacts()
+        self.__update_report_results()
+
+    def __update_final_statistics(self):
         # Display final statistics
         self.console.print("\n[bold cyan]📊 Final Statistics[/bold cyan]")
         self.execution_time = time.time() - self.start_time
@@ -389,12 +419,12 @@ class RichDisplay(Display[DeepSearch]):
 
         self.console.print(summary_table)
 
-    def _budget_summary(self):
+    def __update_budget_summary(self):
         # Display budget summary
         summary = self.orchestrator.budget.get_status_summary()
         self.console.print(f"\n[yellow]{summary}[/yellow]")
 
-    def _knowledge_summary(self):
+    def __update_knowledge_summary(self):
         # Display knowledge learned
         if self.orchestrator.memory.knowledge:
             self.console.print("\n[bold cyan]🧠 Knowledge Extracted[/bold cyan]")
@@ -417,7 +447,7 @@ class RichDisplay(Display[DeepSearch]):
 
             self.console.print(knowledge_table)
 
-    async def _token_usage(self):
+    async def __update_token_usage(self):
         """Display the token usage, if available."""
         if self.orchestrator.context.token_counter:
             summary = await self.orchestrator.context.token_counter.get_summary()
@@ -428,7 +458,7 @@ class RichDisplay(Display[DeepSearch]):
                 if hasattr(summary, "cost"):
                     self.console.print(f"[bold]Total Cost:[/bold] ${summary.cost:.4f}")
 
-    def _workspace_artifacts(self):
+    def __update_workspace_artifacts(self):
         """Display workspace artifacts if any were created."""
         if self.orchestrator.memory.artifacts:
             self.console.print("\n[bold cyan]📁 Artifacts Created[/bold cyan]")
@@ -436,13 +466,9 @@ class RichDisplay(Display[DeepSearch]):
                 self.console.print(f"  • {name}")
 
 
-    def _report_results(self, error_msg: str):
+    def __update_report_results(self):
         border_style = "green"
         strs = []
-        if error_msg:
-            strs.append(f"** ERROR: ** {error_msg}")
-            border_style="red"
-
         for task in self.system.tasks:
             if not task.status == TaskStatus.FINISHED_OK:
                 border_style = "red"            
@@ -450,17 +476,6 @@ class RichDisplay(Display[DeepSearch]):
         
         self.console.print(
             Panel('\n'.join(strs), title=task.title, border_style=border_style))
-
-    async def final_update(self, final_messages: list[str], error_msg: str):
-        self._report_results(error_msg)
-        self._final_statistics()
-        self._budget_summary()
-        self._knowledge_summary()
-        await self._token_usage()
-        self._workspace_artifacts()
-        for fm in final_messages:
-            self.console.print(f"\n[bold]{fm}[/bold]")
-            self.system.logger.info(fm)
 
     def __repr__(self) -> str:
         return str(self.layout)

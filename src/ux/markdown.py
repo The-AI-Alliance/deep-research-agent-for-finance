@@ -18,8 +18,9 @@ from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
 from openai.types.chat import ChatCompletionMessage
 from anthropic.types import Message
 
-from common.string_utils import MarkdownUtil, clean_json_string, replace_variables
+from common.observer import Observer
 from common.deep_search import DeepSearch, BaseTask, GenerateTask, AgentTask, TaskStatus
+from common.string_utils import MarkdownUtil, clean_json_string, replace_variables
 from common.variables import Variable
 
 from ux import Display
@@ -32,6 +33,7 @@ from ux.markdown_elements import (
 
 class MarkdownDeepOrchestratorMonitor():
     """Markdown-based monitor to expose all internal state of the Deep Orchestrator."""
+    # TODO: Merge with MarkdownObserver
 
     def __init__(self, orchestrator: DeepOrchestrator):
         self.orchestrator = orchestrator
@@ -298,8 +300,8 @@ class MarkdownDeepOrchestratorMonitor():
 class MarkdownDisplay(Display[DeepSearch]):
     """
     A Markdown "display", which is used to produce a markdown-formatted report
-    at the end of execution. No output is generated during execution, unlike the RichDisplay,
-    for example.
+    at the end of execution. No output is generated during execution, unlike 
+    RichDisplay, for example. Hence, this could just be an Observer.
     """
 
     def __init__(self, 
@@ -380,16 +382,23 @@ class MarkdownDisplay(Display[DeepSearch]):
     async def run_live(self, function: Callable[[], None]):
         await function()
 
-    def update(self, final: bool = False) -> MarkdownSection:
+    def add_section(self, title: str, 
+        content: list[MarkdownElement | str] = [], 
+        subsections: dict[str, MarkdownElement] = {}) -> MarkdownSection:
+        section = MarkdownSection(title=title, content=content, subsections=subsections)
+        self.layout.add_subsections([section])
+        return section
+
+    def update(self, final: bool = False, messages: list[str] = [], error_msg: str = None) -> MarkdownSection:
         """
         Update the display with the current state. Because the final Markdown report 
-        is all we care about, we don't do anything unless `final = True`! Even then,
-        the `results_section` is not updated here. It is only updated at the very end
-        of the run when `final_update()` is called.
+        is all we care about, we don't do anything unless `final = True`! 
         """
         self.monitor.update_execution_time()
         if not final:
             return self.layout
+
+        self.__report_results(messages=messages, error_msg=error_msg)
 
         statistics = self.layout["statistics_section"]
         statistics["queue"].set_intro_content([self.monitor.get_queue_tree()])
@@ -404,15 +413,28 @@ class MarkdownDisplay(Display[DeepSearch]):
 
         objective = self.layout["objective_section"]
         objective.set_subsections([self.monitor.get_objective_section()])
+        
+        await self.__final_update()
 
         return self.layout
 
-    def add_section(self, title: str, 
-        content: list[MarkdownElement | str] = [], 
-        subsections: dict[str, MarkdownElement] = {}) -> MarkdownSection:
-        section = MarkdownSection(title=title, content=content, subsections=subsections)
-        self.layout.add_subsections([section])
-        return section
+    async def __final_update(self):
+        """
+        Updates many of the Markdown sections in the document with the final data.
+        """
+        sections = [
+            self.__update_final_statistics(),
+            self.__update_budget_summary(),
+            self.__update_knowledge_summary(),
+            await self.__update_token_usage(),
+            self.__update_workspace_artifacts(),
+        ]
+        # for section in sections:
+        #     print(section)
+
+        all_sections = str(self)
+        with self.research_report_path.open('w') as file:
+            file.write(all_sections)
 
     def __parse_json(self, s: str, context: str = '', log_failure: bool = False) -> (str, list[str]):
         try:
@@ -585,14 +607,21 @@ class MarkdownDisplay(Display[DeepSearch]):
         result_section.add_subsections(subsections)
         return result_section
 
-
-    def _report_results(self, error_msg: str):
-        """
-        TODO: The matching of tasks to method calls for formatting is too fragile!
-        """
-        content = [f"See also the directory `{self.system.output_dir_path}` for results files."]
+    def __report_results(self, messages: list[str] = [], error_msg: str = None):
+        content = [
+            "> **NOTE:**", 
+            "> \n",
+            f"> Finished! See output files under `{self.output_dir_path}` and log files under `./logs`.",
+        ]
+        if messages:
+            content.append("> \n")
+            content.extend([f"> {line}" for line in messages])
+            content.append("\n")
         if error_msg:
-            content.append(f"> **ERROR:** {error_msg}")
+            content.extend(["> **ERROR:**", "\n"])
+            content.append(f"> {error_msg}")
+            content.append("\n")
+        
         results_section = self.layout["results_section"]
         results_section.set_intro_content(content=content)
         
@@ -604,7 +633,7 @@ class MarkdownDisplay(Display[DeepSearch]):
 
         results_section.add_subsections(results_subsections)
 
-    def _get_final_statistics(self) -> MarkdownSection:
+    def __update_final_statistics(self) -> MarkdownSection:
         """Get final statistics for display"""
 
         # Create summary table
@@ -635,11 +664,11 @@ class MarkdownDisplay(Display[DeepSearch]):
         )
         return self.add_section("📊 Final Statistics", [summary_table])
 
-    def _get_budget_summary(self) -> MarkdownSection:
+    def __update_budget_summary(self) -> MarkdownSection:
         budget_summary = self.orchestrator.budget.get_status_summary()
         return self.add_section("💶 Budget Summary", [budget_summary])
 
-    def _get_knowledge_summary(self) -> MarkdownSection:
+    def __update_knowledge_summary(self) -> MarkdownSection:
         knowledge_table = 'None available...'
         # Display knowledge learned
         if self.orchestrator.memory.knowledge:
@@ -661,7 +690,7 @@ class MarkdownDisplay(Display[DeepSearch]):
 
         return self.add_section("🧠 Knowledge Extracted", [knowledge_table])
 
-    async def _get_token_usage(self) -> MarkdownSection:
+    async def __update_token_usage(self) -> MarkdownSection:
         """Display the token usage, if available."""
         summary_info = ["Token usage not available"]
         if self.system.token_counter:
@@ -672,7 +701,7 @@ class MarkdownDisplay(Display[DeepSearch]):
                     summary_info.append(f"* Total Cost: ${summary.cost:.4f}")
         return self.add_section("🪙 Total Tokens", summary_info)
 
-    def _get_workspace_artifacts(self) -> MarkdownSection:
+    def __update_workspace_artifacts(self) -> MarkdownSection:
         """Display workspace artifacts if any were created."""
         artifacts_info = ["Workspace artifacts usage not available"]
         if self.orchestrator.memory.artifacts:
@@ -681,36 +710,6 @@ class MarkdownDisplay(Display[DeepSearch]):
                 artifacts_info.append(f"* {name}")
 
         return self.add_section("📁 Artifacts Created", artifacts_info)
-
-    async def final_update(self, final_messages: list[str], error_msg: str) -> list[MarkdownSection]:
-        """
-        Prints and also returns the list of Markdown sections for the final data.
-        They are also added to the whole document by the other methods called here
-        and the whole document is printed to a markdown file.
-        """
-        self._report_results(error_msg)
-        self.monitor.update_execution_time()
-        sections = [
-            self._get_final_statistics(),
-            self._get_budget_summary(),
-            self._get_knowledge_summary(),
-            await self._get_token_usage(),
-            self._get_workspace_artifacts(),
-        ]
-        for section in sections:
-            print(section)
-
-        all_sections = str(self)
-        with self.research_report_path.open('w') as file:
-            file.write(all_sections)
-
-        final_messages.append(
-            f"Research results and application status data written to {self.research_report_path}.")
-        for fm in final_messages:
-            print(fm)
-            self.system.logger.info(fm)
-
-        return sections
 
     def __repr__(self) -> str:
         yaml_header_str = ''
