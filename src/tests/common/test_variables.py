@@ -181,11 +181,16 @@ class TestVariables(unittest.TestCase):
             variable = Variable(s, None, kind=s)
             self.assertEqual((s, Variable.make_label(s), 'None'), variable.format())
 
-    def test_Variable_get_returns_None_if_variable_arg_None_or_value_None(self):
+    def test_Variable_get_value_returns_default_if_variable_arg_None_or_value_None(self):
         s = 'key'
+        # default is None:
         self.assertEqual(None, Variable.get_value(None))
         self.assertEqual(None, Variable.get_value(Variable(s, None)))
         self.assertEqual("Not None", Variable.get_value(Variable(s, "Not None")))
+        # default is something else...
+        self.assertEqual("hello", Variable.get_value(None, default="hello"))
+        self.assertEqual("hello", Variable.get_value(Variable(s, None), default="hello"))
+        self.assertEqual("Not None", Variable.get_value(Variable(s, "Not None"), default="hello"))
 
     @given(no_brace_nonempty_text(max_size=16), no_brace_nonempty_text(max_size=16))
     def test_Variable___repr__(self, label: str, value: str):

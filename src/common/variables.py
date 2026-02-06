@@ -91,8 +91,11 @@ class Variable():
         'ollama':    'Ollama',
     }
 
-    def get_value(variable: Variable) -> any | None:
-        return variable.value if variable else None
+    def get_value(variable: Variable, default: any = None) -> any | None:
+        if variable:
+            return variable.value if variable.value else default
+        else:
+            return default
     
     markdown_formats: dict[str, Callable[[Variable],str]] = {
         'str':            lambda v: str(v.value),
