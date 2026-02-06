@@ -40,7 +40,7 @@ class Display(Generic[SYSTEM]):
                 self.display.update()
                 await asyncio.sleep(update_iteration_frequency_secs)
             except Exception as e:
-                self.logger.error(f"Display update error: {e}")
+                print(f"WARNING: Display update error: {e}")
                 break
     
 class Displays(Display):

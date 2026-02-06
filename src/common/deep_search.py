@@ -218,12 +218,11 @@ class AgentTask(BaseTask):
         self.generate_prompt = generate_prompt
 
     async def _run(self, 
-        prompt: str, 
         orchestrator: DeepOrchestrator, 
         logger: Logger) -> list[any]:
         agent = Agent(
             name=self.name,
-            instruction=prompt,
+            instruction=self.prompt,
             context=orchestrator.context,
             server_names=[self.name]
         )
@@ -318,7 +317,8 @@ class DeepSearch():
 
             # Start display update loop
             update_task = asyncio.create_task(
-                self.display.update_loop(update_iteration_frequency_secs=update_iteration_frequency_secs))
+                self.display.update_loop(
+                    update_iteration_frequency_secs=update_iteration_frequency_secs))
 
             error_msg: str = None
             try:

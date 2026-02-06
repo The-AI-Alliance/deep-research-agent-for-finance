@@ -194,15 +194,10 @@ def get_display_maker(
     ux_title: str,
     **kvs) -> Callable[[DeepSearch, dict[str,(str,any)]], Display]:
     yaml = kvs.get('yaml_header_template_path', None)
-    rich_make_display = lambda ds, vs: RichDisplay.make(
-        ux_title, ds,
-        variables=vs)
-    markdown_make_display = lambda ds, vs: MarkdownDisplay.make(
-        ux_title, ds,
-        yaml_header_template=yaml,
-        variables=vs)
+    rich_make_display = lambda ds, vs: RichDisplay.make(ux_title, ds, variables=vs)
+    markdown_make_display = lambda ds, vs: MarkdownDisplay.make(ux_title, ds, yaml_header_template=yaml, variables=vs)
     both_make_display = lambda ds, vs: Displays.make(
-        ux_title, ds,
+        ux_title, ds, 
         make_displays={'rich': rich_make_display, 'markdown': markdown_make_display},
         variables=vs)
 
