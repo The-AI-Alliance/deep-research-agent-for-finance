@@ -186,7 +186,7 @@ def process_args(
     observers_d = {'display': display}
 
     if markdown_yaml_header_path:
-        mo = MarkdownObserver(ux_title, self, markdown_yaml_header_path, variables=self.variables)
+        mo = MarkdownObserver(ux_title, markdown_yaml_header_path)
         observers_d['markdown'] = mo
     
     observers = Observers(observers=observers_d)

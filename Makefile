@@ -21,6 +21,7 @@ ARCHITECTURE        ?= $(shell uname -m)
 APP                        ?= finance
 REL_APP_DIR                ?= dra/apps/${APP}
 REL_APP_PATH               ?= ${REL_APP_DIR}/main.py
+APP_MODULE                 ?= dra.apps.${APP}.main
 TICKER                     ?= META
 COMPANY_NAME               ?= Meta Platforms, Inc.
 REPORTING_CURRENCY         ?= USD
@@ -155,7 +156,7 @@ all:: app-run
 
 app-run:: app-check do-app-run show-output-files
 do-app-run::
-	cd ${SRC_DIR} && uv run ${REL_APP_PATH} \
+	cd ${SRC_DIR} && uv run -m ${APP_MODULE} \
 		--ticker "${TICKER}" \
 		--company-name "${COMPANY_NAME}" \
 		--output-dir "${OUTPUT_DIR}" \
@@ -199,14 +200,12 @@ mcp-agent-check::
 app-setup:: uv-check venv-check
 	uv add mcp-agent
 
-.PHONY: app-help app-help-prefix app-help-footer
+.PHONY: app-help app-help-header app-help-footer
 
-app-help:: app-help-prefix app-help-footer
-app-help-prefix::
+app-help:: app-help-header app-help-footer
+app-help-header::
 	@echo "Application help provided by ${SRC_DIR}/${REL_APP_PATH}:"
-	cd ${SRC_DIR} && uv run -m dra.apps.${APP}.main --help
-		dra/apps/${APP}
-	echo cd ${SRC_DIR} && uv run ${REL_APP_PATH} --help
+	cd ${SRC_DIR} && uv run -m ${APP_MODULE} --help
 	@echo
 app-help-footer::
 	$(info ${app_help_footer})
@@ -220,6 +219,7 @@ help::
 
 print-info: print-app-info print-make-info print-docs-info
 print-app-info:
+	@echo "APP_MODULE                 ${APP_MODULE}"
 	@echo "Company:"
 	@echo "  TICKER                   ${TICKER}"
 	@echo "  COMPANY_NAME             ${COMPANY_NAME}"

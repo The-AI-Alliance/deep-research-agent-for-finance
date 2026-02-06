@@ -22,7 +22,8 @@ from rich.layout import Layout
 from rich.columns import Columns
 from rich import box
 
-from dra.common.deep_search import DeepSearch, BaseTask, GenerateTask, AgentTask, TaskStatus
+from dra.common.deep_search import DeepSearch
+from dra.common.tasks import BaseTask, GenerateTask, AgentTask, TaskStatus
 from dra.common.utils.strings import truncate
 from dra.ux.display import Display
 
@@ -276,16 +277,14 @@ class RichDeepOrchestratorMonitor():
 
 
 class RichDisplay(Display):
-    def __init__(self, 
-        title: str,
-        system: DeepSearch = None):
+    def __init__(self, title: str):
         self.orchestrator: DeepOrchestrator = None
         self.monitor: RichDeepOrchestratorMonitor = None
         self.console: Console = None
         self.layout: Layout = None
 
         # The following will initialize the previous four attributes, if system != None
-        super().__init__(title, system)
+        super().__init__(title)
 
         self.start_time = time.time()
         self.execution_time = 0.0
