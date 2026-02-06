@@ -194,8 +194,7 @@ if __name__ == "__main__":
         ["excel_writer", "fetch", "filesystem", "financial-datasets", "yfmcp"],
         variables)
 
-    variables["config"] = Variable("config", config, label="Configuration", 
-        kind=only_verbose(args, 'dict'))
+    variables["config"] = Variable("config", config, label="Configuration", kind=only_verbose(args))
 
     deep_search = DeepSearch(
         app_name=def_app_name,

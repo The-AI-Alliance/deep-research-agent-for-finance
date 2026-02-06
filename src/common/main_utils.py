@@ -237,5 +237,7 @@ def only_verbose_common_vars(
         Variable("max_tokens",        processed_args['max_tokens'], label="LLM Max Inference Tokens", kind=fmt),
         Variable("max_cost_dollars",  processed_args['max_cost_dollars'], label="LLM Max Inference cost in USD", kind=fmt),
         Variable("max_time_minutes",  processed_args['max_time_minutes'], label="LLM Max Inference time in minutes", kind=fmt),
+        Variable("update_iteration_frequency_secs", # TODO: make user configurable??
+                                      1.0, label="Frequency in Seconds for Updating the Display", kind=fmt)
     ]
 

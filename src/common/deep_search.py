@@ -306,7 +306,7 @@ class DeepSearch():
         if verbose.value:
             self.__print_details()
 
-        update_iteration_frequency_secs = variables.get(
+        update_iteration_frequency_secs = self.variables.get(
             'update_iteration_frequency_secs', 1.0)
 
         async def do_work():
@@ -317,7 +317,8 @@ class DeepSearch():
             ]
 
             # Start display update loop
-            update_task = asyncio.create_task(self.display.update_loop())
+            update_task = asyncio.create_task(
+                self.display.update_loop(update_iteration_frequency_secs=update_iteration_frequency_secs))
 
             error_msg: str = None
             try:
