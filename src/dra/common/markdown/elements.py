@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-The Markdown-formatted streaming output version of Deep Orchestrator Finance Research Example
+"MarkdownElements" represent major sections of a markdown document, like sections, tables, etc.
 """
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ from typing import Callable
 from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
 from mcp_agent.workflows.deep_orchestrator.config import DeepOrchestratorConfig
 
-from common.string_utils import to_id
+from dra.common.utils.strings import to_id
 
 class MarkdownElement():
     """Super type of the other markdown-related types.

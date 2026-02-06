@@ -6,14 +6,14 @@ import unittest
 from pathlib import Path
 import os, re, sys
 
-from tests.utils import (
+from tests.dra.utils import (
     no_brace_text,
     no_brace_nonempty_text,
     parent_path_text,
 )
 
-from common.string_utils import to_id
-from common.variables import Variable, VariableFormat
+from dra.common.utils.strings import to_id
+from dra.common.variables import Variable, VariableFormat
 
 class TestVariables(unittest.TestCase):
     """

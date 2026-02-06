@@ -6,11 +6,11 @@ import unittest
 from pathlib import Path
 import os, re, sys
 
-from ux.markdown_elements import MarkdownElement, MarkdownSection
+from dra.common.markdown.elements import MarkdownElement, MarkdownSection
 
-from common.string_utils import to_id
+from dra.common.utils.strings import to_id
 
-from tests.utils import no_linefeeds_text, no_linefeeds_nonempty_text
+from tests.dra.utils import no_linefeeds_text, no_linefeeds_nonempty_text
 
 class TestMarkdownSection(unittest.TestCase):
     """

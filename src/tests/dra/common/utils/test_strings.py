@@ -6,12 +6,12 @@ import unittest
 from pathlib import Path
 import os, re, sys
 
-from tests.utils import (
+from tests.dra.utils import (
     no_brace_text,
     no_brace_nonempty_text,
 )
 
-from common.string_utils import (
+from dra.common.utils.strings import (
     replace_variables, 
     clean_json_string, 
     to_id,

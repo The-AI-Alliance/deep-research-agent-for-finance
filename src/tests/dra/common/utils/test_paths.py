@@ -6,12 +6,12 @@ import unittest
 from pathlib import Path, PosixPath
 import os
 
-from tests.utils import (
+from tests.dra.utils import (
     parent_path_text,
     no_slash_nonempty_text,
     no_leading_dots,
 )
-from common.path_utils import cwd, this_files_directory, resolve_path, resolve_and_require_path
+from dra.common.utils.paths import cwd, this_files_directory, resolve_path, resolve_and_require_path
 
 class TestPathUtils(unittest.TestCase):
     """
@@ -24,7 +24,7 @@ class TestPathUtils(unittest.TestCase):
     def test_this_files_directory_returns_the_directory_for_a_file(self):
         actual = this_files_directory()
         # `cwd()` resolves to `src`, the parent of the `common` directory where this file exists.
-        expected = cwd() / 'common'
+        expected = cwd() / 'dra/common/utils'
         self.assertEqual(str(expected), str(actual), f"expected: {expected}, actual: {actual}")
 
     @given(parent_path_text(), no_leading_dots())

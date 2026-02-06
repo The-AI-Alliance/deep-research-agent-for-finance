@@ -2,11 +2,10 @@
 pages_url       := https://the-ai-alliance.github.io/deep-research-agent-for-finance/
 docs_dir        := docs
 site_dir        := ${docs_dir}/_site
-clean_code_dirs := logs output src/output ${src_dir}/.hypothesis
+clean_code_dirs := logs output src/output ${SRC_DIR}/.hypothesis
 clean_doc_dirs  := ${site_dir} ${docs_dir}/.sass-cache
 clean_dirs      := ${clean_code_dirs} ${clean_doc_dirs}
-src_dir         := src
-app_dir         := finance_deep_search
+SRC_DIR         := src
 
 ## Environment variables
 MAKEFLAGS           ?= # -w --warn-undefined-variables
@@ -19,18 +18,20 @@ ARCHITECTURE        ?= $(shell uname -m)
 # command-line arguments, e.g., '--help', to commands executed when building targets
 # that run the app command.
 
-MAIN_APP                   ?= main_finance.py
+APP                        ?= finance
+REL_APP_DIR                ?= dra/apps/${APP}
+REL_APP_PATH               ?= ${REL_APP_DIR}/main.py
 TICKER                     ?= META
 COMPANY_NAME               ?= Meta Platforms, Inc.
 REPORTING_CURRENCY         ?= USD
 RESEARCH_MODEL             ?= gpt-4o
 EXCEL_WRITER_MODEL         ?= o4-mini
 INFERENCE_PROVIDER         ?= openai
-TEMPLATES_DIR              ?= ${app_dir}/templates
+TEMPLATES_DIR              ?= ${REL_APP_DIR}/templates
 FIN_RESEARCH_PROMPT_FILE   ?= financial_research_agent.md
 EXCEL_WRITER_PROMPT_FILE   ?= excel_writer_agent.md
 MARKDOWN_YAML_HEADER_FILE  ?= github_pages_header.yaml
-OUTPUT_DIR                 ?= ${PWD}/output/${TICKER}
+OUTPUT_DIR                 ?= ${PWD}/output/${APP}/${TICKER}
 OUTPUT_REPORT              ?= ${TICKER}_report.md
 OUTPUT_SPREADSHEET         ?= ${TICKER}_financials.xlsx
 TEMPERATURE                ?= 0.7
@@ -154,7 +155,7 @@ all:: app-run
 
 app-run:: app-check do-app-run show-output-files
 do-app-run::
-	cd ${src_dir} && uv run ${MAIN_APP} \
+	cd ${SRC_DIR} && uv run ${REL_APP_PATH} \
 		--ticker "${TICKER}" \
 		--company-name "${COMPANY_NAME}" \
 		--output-dir "${OUTPUT_DIR}" \
@@ -182,7 +183,7 @@ show-output-files::
 	@cd ${OUTPUT_DIR} && find . -type f -exec ls -lh {} \;
 
 test tests:: uv-check
-	cd ${src_dir} && uv run python -m unittest discover
+	cd ${SRC_DIR} && uv run python -m unittest discover
 
 app-check:: uv-check mcp-agent-check
 
@@ -202,8 +203,10 @@ app-setup:: uv-check venv-check
 
 app-help:: app-help-prefix app-help-footer
 app-help-prefix::
-	@echo "Application help provided by ${src_dir}/${app_dir}/${MAIN_APP}:"
-	cd ${src_dir} && uv run ${MAIN_APP} --help
+	@echo "Application help provided by ${SRC_DIR}/${REL_APP_PATH}:"
+	cd ${SRC_DIR} && uv run -m dra.apps.${APP}.main --help
+		dra/apps/${APP}
+	echo cd ${SRC_DIR} && uv run ${REL_APP_PATH} --help
 	@echo
 app-help-footer::
 	$(info ${app_help_footer})

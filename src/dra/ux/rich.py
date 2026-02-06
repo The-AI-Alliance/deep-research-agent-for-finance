@@ -11,7 +11,7 @@ import re
 import sys
 import time
 from datetime import datetime
-from typing import Callable, Generic
+from typing import Callable
 
 from rich.console import Console
 from rich.table import Table
@@ -22,10 +22,10 @@ from rich.layout import Layout
 from rich.columns import Columns
 from rich import box
 
-from common.deep_search import DeepSearch, BaseTask, GenerateTask, AgentTask, TaskStatus
-from common.string_utils import truncate
-from common.variables import Variable
-from ux import Display
+from dra.common.deep_search import DeepSearch, BaseTask, GenerateTask, AgentTask, TaskStatus
+from dra.common.utils.strings import truncate
+from dra.common.variables import Variable
+from dra.ux.display import Display
 
 from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
 
@@ -276,7 +276,7 @@ class RichDeepOrchestratorMonitor():
         return Panel("\n".join(lines), title="📊 Status", border_style="green")
 
 
-class RichDisplay(Display[DeepSearch]):
+class RichDisplay(Display):
     def __init__(self, 
         title: str,
         system: DeepSearch,
@@ -322,7 +322,7 @@ class RichDisplay(Display[DeepSearch]):
         with Live(self.layout, console=self.console, refresh_per_second=4, screen=True, transient=False) as _live:
             await function()
 
-    def update(self, final: bool = False, messages: list[str] = [], error_msg: str = None) -> any:
+    async def update(self, final: bool = False, messages: list[str] = [], error_msg: str = None) -> any:
         """
         Update the display with current state. `final` is ignored. 
         If the `messages` and/or `error_msg` are not empty/None, then 

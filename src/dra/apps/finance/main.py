@@ -26,8 +26,11 @@ from mcp_agent.workflows.deep_orchestrator.config import (
     BudgetConfig,
 )
 
-from common.deep_search import DeepSearch, BaseTask, GenerateTask, AgentTask
-from common.main_utils import (
+print(f"path: {Path(__file__).resolve().parent}")
+
+from dra.common.deep_search import DeepSearch
+from dra.common.tasks import BaseTask, GenerateTask, AgentTask
+from dra.common.utils.main import (
     make_parser,
     add_arg_output_dir,
     add_arg_markdown_report_path,
@@ -49,9 +52,9 @@ from common.main_utils import (
     only_verbose_common_vars,
     only_verbose,
 )
-from common.path_utils import resolve_path, resolve_and_require_path
-from common.variables import Variable
-from ux import Display
+from dra.common.utils.paths import resolve_path, resolve_and_require_path
+from dra.common.variables import Variable
+from dra.ux.display import Display
 
 if __name__ == "__main__":
 
@@ -126,7 +129,7 @@ if __name__ == "__main__":
     args, processed_args = process_args(parser)
     
     # Change to app directory
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    # os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
     output_dir_path = Path(args.output_dir)
     output_spreadsheet_path = resolve_path(args.output_spreadsheet, output_dir_path)

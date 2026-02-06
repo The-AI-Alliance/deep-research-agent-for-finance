@@ -1,5 +1,5 @@
 from typing import Callable, Generic, TypeVar
-from common.variables import Variable
+from dra.common.variables import Variable
 
 SYSTEM = TypeVar("SYSTEM")
 
@@ -12,7 +12,7 @@ class Observer(Generic[SYSTEM]):
         self.system = system
         self.variables = variables
 
-    def update(self, final: bool = False, messages: list[str] = [], error_msg: str = None) -> any:
+    async def update(self, final: bool = False, messages: list[str] = [], error_msg: str = None) -> any:
         """Pass `final=True` for the last call to update the observer before exiting the application."""
         pass
 
@@ -39,7 +39,7 @@ class Observers(Observer):
         self.observers = observers
         self.first_observer = list(self.observers.values())[0]
 
-    def update(self, final: bool = False, messages: list[str] = [], error_msg: str = None) -> any:
+    async def update(self, final: bool = False, messages: list[str] = [], error_msg: str = None) -> any:
         """Returns a dict of the results returned from each `observer.update()` call."""
         d = {}
         for key, observer in self.observers.items():

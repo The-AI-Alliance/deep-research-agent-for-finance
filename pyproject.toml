@@ -1,7 +1,7 @@
 [project]
-name = "deep-research-agent-for-finance"
-version = "0.3.0"
-description = "An MCP-based application for doing deep financial research on publicly listed companies."
+name = "deep-research-agent"
+version = "0.4.0"
+description = "An MCP-based application for doing deep research in several domains, starting with finance research on publicly listed companies."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [

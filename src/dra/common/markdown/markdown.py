@@ -18,13 +18,13 @@ from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
 from openai.types.chat import ChatCompletionMessage
 from anthropic.types import Message
 
-from common.observer import Observer
-from common.deep_search import DeepSearch, BaseTask, GenerateTask, AgentTask, TaskStatus
-from common.string_utils import MarkdownUtil, clean_json_string, replace_variables
-from common.variables import Variable
+from dra.common.observer import Observer
+from dra.common.deep_search import DeepSearch, BaseTask, GenerateTask, AgentTask, TaskStatus
+from dra.common.utils.strings import MarkdownUtil, clean_json_string, replace_variables
+from dra.common.variables import Variable
 
-from ux import Display
-from ux.markdown_elements import (
+from dra.ux.display import Display
+from dra.common.markdown.elements import (
     MarkdownElement,
     MarkdownSection,
     MarkdownTable,
@@ -297,7 +297,7 @@ class MarkdownDeepOrchestratorMonitor():
         self.execution_time = self.end_time - self.start_time
         return self.execution_time
 
-class MarkdownDisplay(Display[DeepSearch]):
+class MarkdownObserver(Display[DeepSearch]):
     """
     A Markdown "display", which is used to produce a markdown-formatted report
     at the end of execution. No output is generated during execution, unlike 
@@ -309,7 +309,7 @@ class MarkdownDisplay(Display[DeepSearch]):
         system: DeepSearch,
         yaml_header_template: Path = None,
         variables: dict[str, Variable] = {}):
-        """Construct a MarkdownDisplay object.
+        """Construct a MarkdownObserver object.
 
         Args:
             title (str): The H1 title at the top of the document.
@@ -318,7 +318,7 @@ class MarkdownDisplay(Display[DeepSearch]):
             variables: (dict[str, Variable]): Application-wide key-values. See Discussion below.
         
         Returns:
-            MarkdownDisplay: A display object for rendering Markdown.
+            MarkdownObserver: A display object for rendering Markdown.
         
         Discussion:
             When printing the final report, the following call, the `yaml_header_template`
@@ -389,7 +389,7 @@ class MarkdownDisplay(Display[DeepSearch]):
         self.layout.add_subsections([section])
         return section
 
-    def update(self, final: bool = False, messages: list[str] = [], error_msg: str = None) -> MarkdownSection:
+    async def update(self, final: bool = False, messages: list[str] = [], error_msg: str = None) -> MarkdownSection:
         """
         Update the display with the current state. Because the final Markdown report 
         is all we care about, we don't do anything unless `final = True`! 
@@ -727,6 +727,6 @@ class MarkdownDisplay(Display[DeepSearch]):
         title: str,
         system: DeepSearch,
         yaml_header_template: str = None,
-        variables: dict[str,(str,any)] = {}) -> MarkdownDisplay:
-        """A factory method for creating instances. See `MarkdownDisplay.__init__() for details."""
-        return MarkdownDisplay(title, system, yaml_header_template, variables)
+        variables: dict[str,(str,any)] = {}) -> MarkdownObserver:
+        """A factory method for creating instances. See `MarkdownObserver.__init__() for details."""
+        return MarkdownObserver(title, system, yaml_header_template, variables)

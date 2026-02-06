@@ -1,8 +1,11 @@
-from typing import Callable
-from common.observer  import Observer
-from common.variables import Variable
+from typing import Callable, TypeVar
 
-class Display(Observer):
+from dra.common.observer  import Observer
+from dra.common.variables import Variable
+
+SYSTEM = TypeVar("SYSTEM")
+
+class Display(Observer[SYSTEM]):
     def __init__(self,
         title: str,
         system: SYSTEM,

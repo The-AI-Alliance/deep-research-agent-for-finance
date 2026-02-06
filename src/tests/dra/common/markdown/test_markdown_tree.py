@@ -7,9 +7,9 @@ from pathlib import Path
 import os, re, sys
 from random import sample
 
-from ux.markdown_elements import MarkdownTree
+from dra.common.markdown.elements import MarkdownTree
 
-from tests.utils import (
+from tests.dra.utils import (
     no_linefeeds_text,
 )
 

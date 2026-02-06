@@ -24,11 +24,11 @@ from mcp_agent.workflows.deep_orchestrator.config import (
 from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
 from mcp_agent.workflows.llm.augmented_llm import RequestParams
 
-
-from common.prompt_utils import load_prompt_markdown
-from common.string_utils import replace_variables, truncate
-from common.variables import Variable, VariableFormat
-from ux import Display
+from dra.common.tasks import BaseTask, GenerateTask, AgentTask
+from dra.common.utils.prompts import load_prompt_markdown
+from dra.common.utils.strings import replace_variables, truncate
+from dra.common.variables import Variable, VariableFormat
+from dra.ux.display import Display
 
 class TaskStatus(Enum):
     NOT_STARTED = 0
@@ -305,7 +305,7 @@ class DeepSearch():
     async def update_loop(self, update_iteration_frequency_secs: float = 1.0):
         while True:
             try:
-                self.observers.update()
+                await self.observers.update()
                 await asyncio.sleep(update_iteration_frequency_secs)
             except Exception as e:
                 err_msg = f"WARNING: Error updating observers: {e}"
@@ -340,7 +340,7 @@ class DeepSearch():
                     "\n",
                     f"Finished: See output files under {self.output_dir_path} and log files under ./logs.",
                 ]
-                self.observers.update(final=True, final_messages=final_messages, error_msg=error_msg)
+                await self.observers.update(final=True, final_messages=final_messages, error_msg=error_msg)
                 update_task.cancel()
                 try:
                     await update_task
@@ -386,7 +386,7 @@ class DeepSearch():
     def __make_observers(self, display: Display) -> list[Observer]:
         ux_title = self.__get_value('ux_title', default=def_ux_title)
         yaml_header = self.__get_value('yaml_header_template_path')
-        md = MarkdownDisplay(ux_title, self, yaml_header, variables=self.variables)
+        md = MarkdownObserver(ux_title, self, yaml_header, variables=self.variables)
         return Observers('observers', self, observers={'display': display, 'markdown': md}, variable=variables)
 
 

@@ -8,13 +8,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import Callable
 
-from common.deep_search import DeepSearch
-from common.path_utils import resolve_path, resolve_and_require_path
-from common.variables import Variable
+from dra.common.deep_search import DeepSearch
+from dra.common.utils.paths import resolve_path, resolve_and_require_path
+from dra.common.variables import Variable
 
-from ux import Display, Displays
-from ux.markdown import MarkdownDisplay
-from ux.rich import RichDisplay
+from dra.ux.display import Display
+from dra.ux.rich import RichDisplay
+from dra.ux.markdown import MarkdownObserver
 
 def make_parser(description: str) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(

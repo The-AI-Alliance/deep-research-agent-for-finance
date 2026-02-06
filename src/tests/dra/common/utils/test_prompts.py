@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 import os, re, sys
 
-from common.prompt_utils import (
+from dra.common.utils.prompts import (
     split_frontmatter_and_content,
     load_prompt_markdown,
 )
