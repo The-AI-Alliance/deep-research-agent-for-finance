@@ -176,6 +176,11 @@ class TestVariables(unittest.TestCase):
         _, _, actual = variable.format()
         self.assertEqual(vstr, actual)
 
+    def test_Variable_format_returns_None_str_if_value_None(self):
+        for s in ['str', 'url', 'file', 'dict', 'callout']:
+            variable = Variable(s, None, kind=s)
+            self.assertEqual((s, Variable.make_label(s), 'None'), variable.format())
+
     @given(no_brace_nonempty_text(max_size=16), no_brace_nonempty_text(max_size=16))
     def test_Variable___repr__(self, label: str, value: str):
         key = to_id(label)

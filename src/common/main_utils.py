@@ -145,8 +145,10 @@ def process_args(parser: argparse.ArgumentParser) -> (argparse.Namespace, dict[s
     output_dir_path = Path(args.output_dir)
     output_dir_path.mkdir(parents=True, exist_ok=True)
 
-    markdown_report_path = resolve_path(args.markdown_report, output_dir_path)
-
+    markdown_report_path = None
+    if args.markdown_report:
+        markdown_report_path = resolve_path(args.markdown_report, output_dir_path)
+        
     templates_dir_path = Path(args.templates_dir)
     if not templates_dir_path.exists():
         raise ValueError(f"Prompt directory '{templates_dir_path}' doesn't exist!")

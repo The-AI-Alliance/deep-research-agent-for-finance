@@ -93,12 +93,12 @@ class Variable():
     
     markdown_formats: dict[str, Callable[[Variable],str]] = {
         'str':            lambda v: str(v.value),
-        'url':            lambda v: f"[{v.label}]({v.value})",
-        'file':           lambda v: f"[`{v.value}`](file://{v.value})",
+        'url':            lambda v: f"[{v.label}]({v.value})" if v.value else "None",
+        'file':           lambda v: f"[`{v.value}`](file://{v.value})" if v.value else "None",
         'code':           lambda v: f"`{v.value}`",
         'code_multiline': lambda v: f"```\n{v.value}\n```",
-        'dict':           lambda v: '\n'.join([f"`{key}`: {value}" for key,value in v.value.items()]),
-        'callout':        lambda v: '\n'.join([f"> {line}" for line in str(v.value).split('\n')]),
+        'dict':           lambda v: '\n'.join([f"`{key}`: {value}" for key,value in v.value.items()]) if v.value else "None",
+        'callout':        lambda v: '\n'.join([f"> {line}" for line in str(v.value).split('\n')]) if v.value else "None",
         'provider':       lambda v: Variable.provider_names.get(v.value),
     }
     plain_formats: dict[str, Callable[[Variable],str]] = {
@@ -107,7 +107,7 @@ class Variable():
         'file':           lambda v: str(v.value),
         'code':           lambda v: str(v.value),
         'code_multiline': lambda v: str(v.value),
-        'dict':           lambda v: '\n'.join([f"{key}: {value}" for key,value in v.value.items()]),
+        'dict':           lambda v: '\n'.join([f"{key}: {value}" for key,value in v.value.items()]) if v.value else "None",
         'callout':        lambda v: str(v.value),
         'provider':       lambda v: Variable.provider_names.get(v.value),
     }
