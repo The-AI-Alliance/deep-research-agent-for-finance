@@ -63,35 +63,6 @@ The application provides several command-line options to configure the behavior.
 
 ```shell
 $ make app-help
-command -v uv > /dev/null || ( echo ERROR: The Python dependency manager \'uv\' is used. Please visit https://docs.astral.sh/uv/ to install it. && exit 1 )
-[[ -d .venv ]] || uv venv
-uv pip freeze | grep mcp-agent > /dev/null || ( echo ERROR: The Python dependency \'mcp-agent\' is not installed. Either run \'make app-setup\' or \'uv add mcp-agent\'. && exit 1 )
-cd src && uv run main_finance.py \
-    --ticker "META" \
-    --company-name "Meta Platforms, Inc." \
-    --output-dir "/Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-finance/output/META" \
-    --markdown-report "META_report.md" \
-    --markdown-yaml-header "github_pages_header.yaml" \
-    --output-spreadsheet "META_financials.xlsx" \
-    --reporting-currency "USD" \
-    --templates-dir "finance_deep_search/templates" \
-    --financial-research-prompt-path "financial_research_agent.md" \
-    --excel-writer-agent-prompt-path "excel_writer_agent.md" \
-    --research-model "gpt-4o" \
-    --excel-writer-model "o4-mini" \
-    --provider "openai" \
-    --temperature 0.7 \
-    --max-iterations 25 \
-    --max-tokens 500000 \
-    --max-cost-dollars 2.0 \
-    --max-time-minutes 15 \
-    --verbose \
-    --ux both \
-    
-echo
-echo "Output files in /Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-finance/output/META:"
-cd /Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-finance/output/META && find . -type f -exec ls -lh {} \;
-
 Application help provided by src/finance_deep_search/main_finance.py:
 cd src && uv run main_finance.py --help
 usage: main_finance.py [-h] --ticker TICKER --company-name COMPANY_NAME
@@ -106,7 +77,7 @@ usage: main_finance.py [-h] --ticker TICKER --company-name COMPANY_NAME
                        [--research-model RESEARCH_MODEL]
                        [--excel-writer-model EXCEL_WRITER_MODEL]
                        [--provider {openai,anthropic,ollama}]
-                       [--ux {rich,markdown}] [--temperature TEMPERATURE]
+                       [--temperature TEMPERATURE]
                        [--max-iterations MAX_ITERATIONS]
                        [--max-tokens MAX_TOKENS]
                        [--max-cost-dollars MAX_COST_DOLLARS]
@@ -127,11 +98,11 @@ options:
                         Path where Excel and other output files will be saved.
                         (Default: ./output)
   --markdown-report MARKDOWN_REPORT
-                        Path where a Markdown report is written. Ignored
-                        unless --ux markdown is used. (Default:
-                        research_report.md) If the path doesn't contain a
-                        directory prefix, then the file will be written in the
-                        directory given by '--output-dir'.
+                        Path where a Markdown report is written. If empty, no
+                        report is generated. (Default: research_report.md) If
+                        the path doesn't contain a directory prefix, then the
+                        file will be written in the directory given by '--
+                        output-dir'.
   --output-spreadsheet OUTPUT_SPREADSHEET
                         Path where the Excel spreadsheet is written. (Default:
                         financials.xlsx) If the path doesn't contain a
@@ -155,7 +126,7 @@ options:
                         Path to an optional template for a YAML header to
                         write at the beginning of the Markdown report. Useful
                         for publishing the report on a GitHub Pages website.
-                        Ignored unless --ux markdown is used. (Default: None)
+                        Ignored if --markdown-report is empty. (Default: None)
                         If the path doesn't contain a directory prefix, then
                         the file will be read in the directory given by '--
                         template-dir'.
@@ -168,9 +139,6 @@ options:
   --provider {openai,anthropic,ollama}
                         The inference provider. Where is the model served? See
                         the note at the bottom of this help. (Default: openai)
-  --ux {rich,markdown}  The 'UX' to use. Use 'rich' for a rich console UX and
-                        'markdown' for streaming updates in markdown syntax.
-                        (Default: rich)
   --temperature TEMPERATURE
                         The 'temperature' used during inference calls to
                         models, between 0.0 and 1.0. (Default: 0.7)
@@ -242,21 +210,14 @@ cd src && uv run main_finance.py \
     --max-tokens 500000 \
     --max-cost-dollars 2.0 \
     --max-time-minutes 15 \
-    --verbose 
-        
+    --verbose \
+
 echo "Output files in /Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-finance/output/META:"
 (... listing not shown ...)
 ```
 
 > [!TIP]
-> All the values for the arguments shown here are defined near the top of the `Makefile`, in the `## App defaults` section. So, if you want to change any of these values, edit the corresponding variable definitions there.
-
-The make target `app-run` is equivalent to `app-run-rich`, which uses the Python Rich console library as a UX. There is also a target `app-run-markdown`, which uses minimal console output and writes a Markdown report at the end. (NOTE: We plan to merge these!) 
-
-> [!NOTE]
-> The `--markdown-report` and `--markdown-yaml-header` arguments are _ignored_ for `--ux rich`. They only apply for `--ux markdown`.
-
-> [!TIP]
+> * All the values for the arguments shown here are defined near the top of the `Makefile`, in the `## App defaults` section. So, if you want to change any of these values, edit the corresponding variable definitions there.
 > * Use `make help` to see help on the most important `make` targets.
 > * Use `make app-help` for specific help on running the app.
 
@@ -292,6 +253,8 @@ Two prompt files are by default located in [`./src/finance_deep_search/templates
 
 If you specify a value for either prompt that includes an absolute or relative directory path, then the `--templates-path` is ignored for it. In this case, the arguments don't include directories, so the files are expected to be found in the value for `--templates-path`. 
 
+<a id="markdown-report"></a>
+
 ### Markdown Report
 
 ```shell
@@ -301,11 +264,11 @@ If you specify a value for either prompt that includes an absolute or relative d
     ...
 ```
 
-Both of these options are ignored unless `--ux markdown` is used.
+Write a Markdown-formatted report at the end. If you don't want this report generated, then use `--markdown-report ''` (empty string) or `--markdown-report None`.
 
-Write a Markdown-formatted report at the end. Optionally, if a non-empty value is specified `--markdown-yaml-header`, then write a YAML header at the beginning of the file. This is useful if the report will be presented using GitHub Pages. The YAML header should either be a literal string or a path to a template to file read in. We use a file here: [`./src/finance_deep_search/templates/github_pages_header.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/finance_deep_search/templates/github_pages_header.yaml). Either way, variable definitions, e.g., `{{title}}`, will be replaced with values by the application.
+Optionally, if a non-empty value is specified `--markdown-yaml-header`, then write a YAML header at the beginning of the file. This is useful if the report will be presented using GitHub Pages. The YAML header should either be a literal string or a path to a template to file read in. We use a file here: [`./src/finance_deep_search/templates/github_pages_header.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/finance_deep_search/templates/github_pages_header.yaml). Either way, variable definitions, e.g., `{{title}}`, will be replaced with values by the application.
 
-Like for the spreadsheet file discussed above, the report file will be written to the output directory specified with `--output-dir` if the file name doesn't include a directory prefix.
+Like for the spreadsheet file discussed above, the report file will be written to the output directory specified with `--output-dir`, if the file name doesn't include a directory prefix. Similarly, if the YAML header value doesn't have a directory prefix, it will be searched for in the directory specified with `--templates-dir`.
 
 ### Models and Inference Parameters
 
@@ -374,18 +337,14 @@ For these arguments, passing values less than zero will be reset to "reasonable"
 ```shell
 ...
     --verbose
-    --ux rich
 ...
 ```
 
 The `--verbose` option (used by default in the `make app-run` command), just prints some extra information at the beginning of execution and in a few other places. It doesn't affect logging (which uses `DEBUG` by default).
 
-By default, a [Rich](https://rich.readthedocs.io/en/stable/introduction.html) console-based UI is used to show progress and final results. 
+A [Rich console UI](https://rich.readthedocs.io/en/stable/introduction.html) is used to show progress and final results. 
 
-The alternative, `--ux markdown`, produces less console output and generates a Markdown-formatted report at the end, which is written to the file given by the `--markdown-report` argument discussed above. The repo contains an example from a test run of the above default command with `--ux markdown`. The example report is [`./examples/gpt-oss_20b/META_report.md`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/examples/gpt-oss_20b/META_report.md).
-
-> [!TIP]
-> Use the command `make app-run-markdown` to run the command will all the same arguments as above, but substituting `--ux markdown` for the default `--ux rich`.
+A Markdown final report is written as discussed above in [Markdown Report](#markdown-report). The repo contains an example from a test run for Meta: [`./examples/gpt-oss_20b/META_report.md`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/examples/gpt-oss_20b/META_report.md). there is also an example Excel spreadsheet in that directory, [`./examples/gpt-oss_20b/META_financials.xlsx`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/examples/gpt-oss_20b/META_financials.xlsx).
 
 ## What the Application Does
 
@@ -502,7 +461,6 @@ To set up your secrets:
 
 > [!NOTE]
 > This repo's `.gitignore` ignores `mcp_agent.secrets.yaml`, so your secrets will be **excluded** from version control. _**Do not add API keys** to [`mcp_agent.config.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/mcp_agent.config.yaml)!_
-
 
 ### IBM Context Forge Integration
 

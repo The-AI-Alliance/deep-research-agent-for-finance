@@ -57,10 +57,6 @@ Targets for the application:
 
 make all                # Run the application by building "app-run".
 make app-run            # Run the application with default arguments.
-make app-run-both       # Same as "app-run"; run the application with both the Rich console and Markdown file UIs (also the default).
-make app-run-rich       # Run the application with the Rich console UI.
-make app-run-md         # Run the application with the Markdown "file UI".
-make app-run-markdown   # Same as "make app-run-md".
 make app-help           # Run the application with --help to see the support arguments.
                         # Also prints the default invocation used by "app-run".
 make app-setup          # One-time setup of the application dependences.
@@ -150,7 +146,7 @@ endef
 
 .PHONY: all view-pages view-local clean clean_code clean_docs help 
 .PHONY: setup-jekyll run-jekyll
-.PHONY: app-run app-run-both app-run-rich app-run-md app-run-markdown do-app-run app-setup app-check uv-check uv-cmd-check venv-check
+.PHONY: app-run do-app-run app-setup app-check uv-check uv-cmd-check venv-check
 .PHONY: mcp-agent-check test tests
 .PHONY: print-info print-app-info print-make-info print-docs-info show-output-files
 

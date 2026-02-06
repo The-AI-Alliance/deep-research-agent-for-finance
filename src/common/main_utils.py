@@ -148,7 +148,7 @@ def process_args(parser: argparse.ArgumentParser) -> (argparse.Namespace, dict[s
     markdown_report_path = None
     if args.markdown_report:
         markdown_report_path = resolve_path(args.markdown_report, output_dir_path)
-        
+
     templates_dir_path = Path(args.templates_dir)
     if not templates_dir_path.exists():
         raise ValueError(f"Prompt directory '{templates_dir_path}' doesn't exist!")
@@ -218,9 +218,9 @@ def common_variables(
     templates_dir_path: Path) -> list[Variable]:    
     return [
         Variable("provider",                       args.provider, kind='provider'),
-        Variable("research_model",                 args.research_model, kind='code')
+        Variable("research_model",                 args.research_model, kind='code'),
         Variable("templates_dir_path",             templates_dir_path, kind='file'),
-        Variable("output_dir_path",                output_dir_path, kind='file')
+        Variable("output_dir_path",                output_dir_path, kind='file'),
         Variable("research_report_path",           processed_args['markdown_report_path'], kind='file'),
         Variable("yaml_header_template_path",      processed_args['yaml_header_template_path'], kind='file'),
     ]
