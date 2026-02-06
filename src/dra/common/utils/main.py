@@ -9,12 +9,12 @@ from pathlib import Path
 from typing import Callable
 
 from dra.common.deep_search import DeepSearch
+from dra.common.markdown import MarkdownObserver
 from dra.common.utils.paths import resolve_path, resolve_and_require_path
 from dra.common.variables import Variable
 
 from dra.ux.display import Display
 from dra.ux.rich import RichDisplay
-from dra.ux.markdown import MarkdownObserver
 
 def make_parser(description: str) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -138,7 +138,9 @@ def add_arg_verbose(parser: argparse.ArgumentParser):
         help="Print some extra output. Useful for some testing and debugging scenarios."
     )
     
-def process_args(parser: argparse.ArgumentParser) -> (argparse.Namespace, dict[str,any]):
+def process_args(
+    parser: argparse.ArgumentParser,
+    ux_title: str = "Deep Research Agent") -> (argparse.Namespace, dict[str,any]):
     args = parser.parse_args()
     
     # Ensure output directory exists
@@ -179,13 +181,27 @@ def process_args(parser: argparse.ArgumentParser) -> (argparse.Namespace, dict[s
     if max_time_minutes < 1:
         max_time_minutes = 10
 
+    # Initialize the display and observers.
+    display = RichDisplay(ux_title)
+    observers_d = {'display': display}
+
+    if markdown_yaml_header_path:
+        mo = MarkdownObserver(ux_title, self, markdown_yaml_header_path, variables=self.variables)
+        observers_d['markdown'] = mo
+    
+    observers = Observers(observers=observers_d)
+
     return (args, {
         'start_time': datetime.now().strftime('%Y-%m-%d %H:%M%:%S'),
+        'display': display,
+        'observers': observers,
         "temperature": temperature, 
         "max_iterations": max_iterations,
         "max_tokens": max_tokens,
         "max_cost_dollars": max_cost_dollars,
         "max_time_minutes": max_time_minutes,
+        "output_dir_path": output_dir_path,
+        "templates_dir_path": templates_dir_path,
         "markdown_report_path": markdown_report_path,
         "yaml_header_template_path": markdown_yaml_header_path,
     })
@@ -213,6 +229,7 @@ def only_verbose_common_vars(
     fmt = only_verbose(args)
     return [
         Variable("verbose",           args.verbose, kind=fmt),
+        Variable("observers",         processed_args['observers'], kind=fmt),
         Variable("short_run",         args.short_run, kind=fmt),
         Variable("temperature",       processed_args['temperature'], label="LLM Temperature", kind=fmt), 
         Variable("max_iterations",    processed_args['max_iterations'], label="LLM Max Iterations", kind=fmt),

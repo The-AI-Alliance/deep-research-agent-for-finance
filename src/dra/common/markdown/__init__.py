@@ -19,17 +19,16 @@ from openai.types.chat import ChatCompletionMessage
 from anthropic.types import Message
 
 from dra.common.observer import Observer
-from dra.common.deep_search import DeepSearch, BaseTask, GenerateTask, AgentTask, TaskStatus
+from dra.common.deep_search import DeepSearch
+from dra.common.tasks import BaseTask, GenerateTask, AgentTask, TaskStatus
 from dra.common.utils.strings import MarkdownUtil, clean_json_string, replace_variables
 from dra.common.variables import Variable
 
-from dra.ux.display import Display
 from dra.common.markdown.elements import (
     MarkdownElement,
     MarkdownSection,
     MarkdownTable,
     MarkdownTree)
-
 
 class MarkdownDeepOrchestratorMonitor():
     """Markdown-based monitor to expose all internal state of the Deep Orchestrator."""
@@ -297,51 +296,135 @@ class MarkdownDeepOrchestratorMonitor():
         self.execution_time = self.end_time - self.start_time
         return self.execution_time
 
-class MarkdownObserver(Display[DeepSearch]):
+class MarkdownObserver(Observer[DeepSearch]):
     """
     A Markdown "display", which is used to produce a markdown-formatted report
     at the end of execution. No output is generated during execution, unlike 
     RichDisplay, for example. Hence, this could just be an Observer.
+
+    If the user doesn't want a report, don't instantiate this object, as it will use
+    a default output path to write the file, if none is defined!
     """
 
     def __init__(self, 
         title: str,
-        system: DeepSearch,
-        yaml_header_template: Path = None,
-        variables: dict[str, Variable] = {}):
+        yaml_header_template: Path = None):
         """Construct a MarkdownObserver object.
 
         Args:
             title (str): The H1 title at the top of the document.
-            system (DeepSearch): The deep research "system". 
             yaml_header_template (Path): An optional template for a YAML block that will be printed first. Useful for GitHub Pages display.
-            variables: (dict[str, Variable]): Application-wide key-values. See Discussion below.
         
         Returns:
-            MarkdownObserver: A display object for rendering Markdown.
+            MarkdownObserver: An observer of DeepSearch state for rendering Markdown.
         
         Discussion:
             When printing the final report, the following call, the `yaml_header_template`
-            file will be read into a `string` and `replace_variables(string, ..., **self.variables)`
+            file will be read into a `string` and `replace_variables(string, ..., **self.system.variables)`
             will be called to substitute any variables indicated with `{{key}}` entries. The ...
             are for other attributes not in `variables` that will be passed, too.
             See `__repr__()`. This YAML block will be printed first, if the template isn't None
             or the resolved block isn't empty, followed by the hierarchical Markdown sections 
             held in `self.layout`.
         """
-        super().__init__(title, system, variables)
+        super().__init__()
+        self.title = title
         self.yaml_header_template = yaml_header_template
+        # Lazy initialize these in `_after_set_system()`.
+        self.monitor: MarkdownDeepOrchestratorMonitor = None
+        self.orchestrator: DeepOrchestrator = None
+
+    def _before_set_system(self):
+        """
+        While not recommended, this hook will finish the existing Markdown report.
+        The subsequent call to `_after_set_system()` below will start a new one, but
+        the new report will be written _to the same file location_ as the old one.
+        The expectation is that `_before_set_system()` will never actually be called,
+        but `_after_set_system()` will be called once and only once during an app run.
+        """
+        super()._before_set_system()
+        if self.system:
+            self._do_update(is_final=True)
+
+    def _after_set_system(self):
+        """See comments in `_before_set_system()`.""" 
+        self.orchestrator = self.system.orchestrator
+        self.monitor = MarkdownDeepOrchestratorMonitor(self.orchestrator)
 
         output_dir_path = self.__get_var_value('output_dir_path', Path('./output'))
         self.research_report_path = self.__get_var_value('research_report_path',
             output_dir_path / 'research_report.md')
-        self.orchestrator = self.system.orchestrator
-        self.monitor = MarkdownDeepOrchestratorMonitor(self.orchestrator)
-        self.layout = self.__make_layout(title)
+
+        self.layout = self.__make_layout(self.title)
+        
+        super()._after_set_system()
+
+    def _do_update(self, 
+        other: dict[str,any] = {},
+        is_final: bool = False) -> any:
+        """
+        Update the display with the current state. Because the final Markdown report 
+        is all we care about, we don't do anything unless `is_final == True`! 
+        """
+        if not is_final:
+            return self.layout
+
+        self.monitor.update_execution_time()
+        
+        messages  = other.get('messages')
+        error_msg = other.get('error_msg')
+        self.__report_results(messages=messages, error_msg=error_msg)
+
+        statistics = self.layout["statistics_section"]
+        statistics["queue"].set_intro_content([self.monitor.get_queue_tree()])
+        statistics["plan"].set_intro_content([self.monitor.get_plan_table()])
+        statistics["memory"].set_intro_content([
+            self.monitor.get_memory_table(),
+            self.monitor.get_knowledge_table()])
+        statistics["budget"].set_intro_content([self.monitor.get_budget_table()])
+        statistics["policy"].set_intro_content(
+            [self.monitor.get_policy_table(), self.monitor.get_agents_table()])
+        statistics["status"].set_intro_content([self.monitor.get_status_summary_table()])
+
+        objective = self.layout["objective_section"]
+        objective.set_subsections([self.monitor.get_objective_section()])
+        
+        self.__update_final_statistics(),
+        self.__update_budget_summary(),
+        self.__update_knowledge_summary(),
+        self.__update_workspace_artifacts(),
+
+        # Save to the report file.
+        all_sections = str(self)
+        with self.research_report_path.open('w') as file:
+            file.write(all_sections)
+
+        return self.layout
+
+    async def async_update(self):
+        await self.__update_token_usage()
 
     def __get_var_value(self, key: str, default: any = None) -> any:
-        variable = self.variables.get(key)
+        if not self.system:
+            raise ValueError("Logic error: self.system not yet initialized!")
+        variable = self.system.variables.get(key)
         return variable.value if variable else default
+
+    def __parse_json(self, s: str, context: str = '', log_failure: bool = False) -> (str, list[str]):
+        try:
+            # Handle an observed problem with returned results; '\\' that will cause json
+            # parsing to fail.
+            s2 = clean_json_string(s, '')
+            obj = json.loads(s2)
+            # format as nested bullets:
+            mu = MarkdownUtil
+            md_str = mu.to_markdown(obj, bullet='*', indent='\t', key_format='**%s:**')
+            return ('', md_str)
+        except (JSONDecodeError, TypeError) as err:
+            err_msg = f"{err} raised while parsing attempting to parse {context} results."
+            if log_failure:
+                self.system.logger.warning(f"{err_msg}: input = {s}")
+            return (err_msg, None)
 
     def __make_layout(self, title: str) -> MarkdownSection:
         layout = MarkdownSection(title=title)
@@ -349,8 +432,12 @@ class MarkdownObserver(Display[DeepSearch]):
         # Make a Markdown table of the runtime properties. First wrap the keys in `...`
         # to render as fixed-width/code font.
         top_table = MarkdownTable("This Run's Properties", ['Property', 'Value'])
-        for key, label, value in Variable.make_formatted(self.variables.values()):
+        formatted = Variable.make_formatted(
+                self.system.variables.values(),
+                variable_format = VariableFormat.MARKDOWN)
+        for key, label, value in formatted:
             top_table.add_row([label, value])
+        
         layout.add_intro_content([
             "This report begins with some information about this invocation of deep research.",
             "To skip to the results, go to the [**📊 📈 Results**](#results_section) section.",
@@ -379,78 +466,12 @@ class MarkdownObserver(Display[DeepSearch]):
 
         return layout 
 
-    async def run_live(self, function: Callable[[], None]):
-        await function()
-
     def add_section(self, title: str, 
         content: list[MarkdownElement | str] = [], 
         subsections: dict[str, MarkdownElement] = {}) -> MarkdownSection:
         section = MarkdownSection(title=title, content=content, subsections=subsections)
         self.layout.add_subsections([section])
         return section
-
-    async def update(self, final: bool = False, messages: list[str] = [], error_msg: str = None) -> MarkdownSection:
-        """
-        Update the display with the current state. Because the final Markdown report 
-        is all we care about, we don't do anything unless `final = True`! 
-        """
-        self.monitor.update_execution_time()
-        if not final:
-            return self.layout
-
-        self.__report_results(messages=messages, error_msg=error_msg)
-
-        statistics = self.layout["statistics_section"]
-        statistics["queue"].set_intro_content([self.monitor.get_queue_tree()])
-        statistics["plan"].set_intro_content([self.monitor.get_plan_table()])
-        statistics["memory"].set_intro_content([
-            self.monitor.get_memory_table(),
-            self.monitor.get_knowledge_table()])
-        statistics["budget"].set_intro_content([self.monitor.get_budget_table()])
-        statistics["policy"].set_intro_content(
-            [self.monitor.get_policy_table(), self.monitor.get_agents_table()])
-        statistics["status"].set_intro_content([self.monitor.get_status_summary_table()])
-
-        objective = self.layout["objective_section"]
-        objective.set_subsections([self.monitor.get_objective_section()])
-        
-        await self.__final_update()
-
-        return self.layout
-
-    async def __final_update(self):
-        """
-        Updates many of the Markdown sections in the document with the final data.
-        """
-        sections = [
-            self.__update_final_statistics(),
-            self.__update_budget_summary(),
-            self.__update_knowledge_summary(),
-            await self.__update_token_usage(),
-            self.__update_workspace_artifacts(),
-        ]
-        # for section in sections:
-        #     print(section)
-
-        all_sections = str(self)
-        with self.research_report_path.open('w') as file:
-            file.write(all_sections)
-
-    def __parse_json(self, s: str, context: str = '', log_failure: bool = False) -> (str, list[str]):
-        try:
-            # Handle an observed problem with returned results; '\\' that will cause json
-            # parsing to fail.
-            s2 = clean_json_string(s, '')
-            obj = json.loads(s2)
-            # format as nested bullets:
-            mu = MarkdownUtil
-            md_str = mu.to_markdown(obj, bullet='*', indent='\t', key_format='**%s:**')
-            return ('', md_str)
-        except (JSONDecodeError, TypeError) as err:
-            err_msg = f"{err} raised while parsing attempting to parse {context} results."
-            if log_failure:
-                self.system.logger.warning(f"{err_msg}: input = {s}")
-            return (err_msg, None)
 
     def __parse_openai_message(self, message_index: int, obj: any) -> list[any]:
         # For inference with OpenAI, the results will be a ChatCompletionMessage:
@@ -616,11 +637,11 @@ class MarkdownObserver(Display[DeepSearch]):
         if messages:
             content.append("> \n")
             content.extend([f"> {line}" for line in messages])
-            content.append("\n")
+        content.append("\n")
         if error_msg:
             content.extend(["> **ERROR:**", "\n"])
             content.append(f"> {error_msg}")
-            content.append("\n")
+        content.append("\n")
         
         results_section = self.layout["results_section"]
         results_section.set_intro_content(content=content)
@@ -634,7 +655,7 @@ class MarkdownObserver(Display[DeepSearch]):
         results_section.add_subsections(results_subsections)
 
     def __update_final_statistics(self) -> MarkdownSection:
-        """Get final statistics for display"""
+        """Update the final statistics for display"""
 
         # Create summary table
         summary_table = MarkdownTable(title="Execution Summary", 
@@ -665,12 +686,13 @@ class MarkdownObserver(Display[DeepSearch]):
         return self.add_section("📊 Final Statistics", [summary_table])
 
     def __update_budget_summary(self) -> MarkdownSection:
+        """Update the budget summary (where applicable)."""
         budget_summary = self.orchestrator.budget.get_status_summary()
         return self.add_section("💶 Budget Summary", [budget_summary])
 
     def __update_knowledge_summary(self) -> MarkdownSection:
+        """Update knowledge learned."""
         knowledge_table = 'None available...'
-        # Display knowledge learned
         if self.orchestrator.memory.knowledge:
             knowledge_table = MarkdownTable(title='', columns = [
                 "Category",
@@ -691,7 +713,7 @@ class MarkdownObserver(Display[DeepSearch]):
         return self.add_section("🧠 Knowledge Extracted", [knowledge_table])
 
     async def __update_token_usage(self) -> MarkdownSection:
-        """Display the token usage, if available."""
+        """Update the token usage, if available."""
         summary_info = ["Token usage not available"]
         if self.system.token_counter:
             summary = await self.system.token_counter.get_summary()
@@ -702,7 +724,7 @@ class MarkdownObserver(Display[DeepSearch]):
         return self.add_section("🪙 Total Tokens", summary_info)
 
     def __update_workspace_artifacts(self) -> MarkdownSection:
-        """Display workspace artifacts if any were created."""
+        """Update workspace artifacts if any were created."""
         artifacts_info = ["Workspace artifacts usage not available"]
         if self.orchestrator.memory.artifacts:
             artifacts_info = []
@@ -719,14 +741,5 @@ class MarkdownObserver(Display[DeepSearch]):
             if template_str:
                 yaml_header_str = replace_variables(template_str, 
                     title=self.title, 
-                    **self.variables)
+                    **self.system.variables)
         return f"{yaml_header_str}\n{self.layout}"
-
-    @staticmethod
-    def make(
-        title: str,
-        system: DeepSearch,
-        yaml_header_template: str = None,
-        variables: dict[str,(str,any)] = {}) -> MarkdownObserver:
-        """A factory method for creating instances. See `MarkdownObserver.__init__() for details."""
-        return MarkdownObserver(title, system, yaml_header_template, variables)

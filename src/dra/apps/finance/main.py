@@ -131,14 +131,13 @@ if __name__ == "__main__":
     # Change to app directory
     # os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-    output_dir_path = Path(args.output_dir)
+    output_dir_path = process_args['output_dir_path']
     output_spreadsheet_path = resolve_path(args.output_spreadsheet, output_dir_path)
     
-    templates_dir_path = Path(args.templates_dir)
+    templates_dir_path = process_args['templates_dir_path']
     # These must exist:
     financial_research_prompt_path = resolve_and_require_path(args.financial_research_prompt_path, templates_dir_path)
     excel_writer_agent_prompt_path = resolve_and_require_path(args.excel_writer_agent_prompt_path, templates_dir_path)
-
 
     # The variables dict contains values used by the app components, labels 
     # for display purposes and a format for knowing how to render the value.
@@ -195,11 +194,17 @@ if __name__ == "__main__":
 
     variables["config"] = Variable("config", config, label="Configuration", kind=only_verbose(args))
 
+    observers = process_args['observers']    
+    display = process_args['display']
+    
     deep_search = DeepSearch(
         app_name=def_app_name,
         provider=args.provider,
         config=config,
         tasks=tasks,
         output_dir_path=output_dir_path,
+        display=display,
+        observers=observers,
         variables=variables)
+
     asyncio.run(deep_search.run())

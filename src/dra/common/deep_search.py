@@ -24,234 +24,12 @@ from mcp_agent.workflows.deep_orchestrator.config import (
 from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
 from mcp_agent.workflows.llm.augmented_llm import RequestParams
 
+from dra.common.observer import Observer, Observers 
 from dra.common.tasks import BaseTask, GenerateTask, AgentTask
 from dra.common.utils.prompts import load_prompt_markdown
 from dra.common.utils.strings import replace_variables, truncate
 from dra.common.variables import Variable, VariableFormat
 from dra.ux.display import Display
-
-class TaskStatus(Enum):
-    NOT_STARTED = 0
-    RUNNING = 1
-    """Returned normally (as best we can tell...)"""
-    FINISHED_OK = 2
-    """An error occurred, including an empty result from running the task."""
-    FINISHED_ERROR = 3
-    """An error occurred due to a thrown exception."""
-    FINISHED_EXCEPTION = 4
-
-class BaseTask():
-    def __init__(self, 
-        name: str, 
-        title: str, 
-        model_name: str, 
-        prompt_template_path: Path,
-        output_dir_path: Path,
-        properties: dict[str,Variable]):
-        self.name = name
-        self.title = title
-        self.model_name = model_name
-        self.prompt_template_path = prompt_template_path
-        self.output_dir_path = output_dir_path
-        self.properties = properties
-
-        self.status: TaskStatus = TaskStatus.NOT_STARTED 
-        self.result: list[any] = []
-        self.prompt = '' # lazy loaded...
-        self.prompt_saved_file = self.output_dir_path / f"{self.name}_task_prompt.txt"
-
-    async def run(self, 
-        orchestrator: DeepOrchestrator,
-        logger: Logger,
-        **prompt_variables: dict[str,any]) -> (TaskStatus, list[any]):
-        """
-        Return the final status and the result, which are also attributes of the task object.
-        """
-        self.status = TaskStatus.RUNNING 
-        try:
-            self.prepare_prompt(logger, prompt_variables)
-            self.result = await self._run(orchestrator, logger)
-            if self.result:  # TBD: Probably doesn't catch all error scenarios!
-                self.status = TaskStatus.FINISHED_OK
-            else:
-                self.status = TaskStatus.FINISHED_ERROR
-                self.result = [f"No result for task {self.name}!"]
-            self.__log_result(logger)
-        except Exception as ex:
-            self.status = TaskStatus.FINISHED_EXCEPTION
-            self.result = [f"Exception {ex} thrown in task {self.name}!"]
-            logger.error(str(self.result))
-            raise ex
-        return (self.status, self.result)
-
-    @abstractmethod
-    async def _run(self, 
-        orchestrator: DeepOrchestrator, 
-        logger: Logger) -> list[any]:
-        raise Exception("Abstract method BaseTask._run() called!")
-
-    def attributes_as_strs(self, 
-        which_formatting: VariableFormat = VariableFormat.PLAIN, 
-        exclusions: set[str] = {}) -> dict[str,str]:
-        """
-        Return a dictionary of nicely-formatted labels and values for the attributes.
-        The which_formatting flag let's you change styles, e.g., 'markdown' or 'plain'
-        Optional exclude some attributes.
-        """
-        # First create a dictionary with the attribute names as keys and formatted values,
-        # which we'll then filter for exclusions, then return a new dictionary with the
-        # keys converted to nice labels.
-        prompt = "No task prompt string!"
-        result = "No task results!"
-        if self.prompt:
-            prompt = Variable('code', truncate(str(self.prompt), 200, '...'), kind='callout')
-        if self.result:
-            result = Variable('code', truncate(str(self.result), 200, '...'), kind='callout')
-
-        vars = [
-            Variable('name',                 self.name, kind='code'),
-            Variable('title',                self.title),
-            Variable('model_name',           self.model_name, kind='code'),
-            Variable('prompt_template_path', self.prompt_template_path, kind='file'),
-            Variable('prompt_saved_file',    self.prompt_saved_file, kind='file'),
-            Variable('output_dir_path',      self.output_dir_path, kind='file'),
-            Variable('status',               self.status.name, kind='code'),
-        ]
-        
-        # TODO: somewhat fragile hard-coding these specific values:
-        for key in ['temperature', 'max_iterations', 'max_tokens', 'max_cost_dollars', 'max_time_minutes']:
-            value = self.properties.get(key)
-            if value:
-                vars.append = value
-
-        # Put these two potentially long strings at the end.
-        vars.extend([prompt, result])
-
-        # Create a dictionary and remove the exclusions
-        attrs1 = dict([(v.key, v) for v in vars])
-        for ex in exclusions:
-            attrs1.pop(ex)
-
-        # Create and return a new dictionary, using the labels as keys and formatted
-        # strings as values.
-        attrs = dict([(l,s) for _, l, s in Variable.make_formatted(vars, variable_format=which_formatting)])
-        return attrs
-
-    def __repr__(self) -> str: 
-        """This method omits the long prompt and results strings. See also attributes_as_strs()."""
-        return f"""name: {self.name}, model name: {self.model_name}, prompt path: {self.prompt_template_path}, saved prompt file: {self.prompt_saved_file}, status: {self.status}, prompt: ..., result: ..."""
-
-    def prepare_prompt(self, logger: Logger, prompt_variables: dict[str,str]) -> str:
-        """Load and format a task prompt."""
-        prompt_template = load_prompt_markdown(self.prompt_template_path)
-        self.prompt = replace_variables(prompt_template, **prompt_variables)
-        if logger:  # may not be initialized in tests...
-            logger.info(f"Writing the {self.name} task prompt to {self.prompt_saved_file}")
-        with self.prompt_saved_file.open('w') as file:
-            file.write(f"This is the prompt that will be used for the {self.name} task:\n")
-            file.write(self.prompt)
-        return self.prompt
-
-    def __log_result(self, logger: Logger):
-        """
-        Exceptions are handled in the except clause above, per
-        the requirements for `Logger.exception(...)` invocation!
-        This method is normally not called for other status values, but
-        we handle them for "resilience".
-        """
-        result_str = 'No result yet...'
-        if self.result:
-            result_str = truncate(str(self.result), 2000, '...')            
-        msg = f"""Task "{self.name}": status = {self.status}), result = {result_str}"""
-        match self.status:
-            case TaskStatus.FINISHED_ERROR | TaskStatus.FINISHED_EXCEPTION:
-                logger.error(f"""ERROR! {msg}""")
-            case _:
-                logger.info(msg)
-
-    def _get_val(self, key: str, default: any) -> any:
-        return Variable.get(self.properties.get(key), default)
-
-class GenerateTask(BaseTask):
-    def __init__(self, 
-        name: str, 
-        title: str, 
-        model_name: str, 
-        prompt_template_path: Path,
-        output_dir_path: Path,
-        properties: dict[str,any]):
-        super().__init__(name, title, model_name, 
-            prompt_template_path, output_dir_path, 
-            properties)
-
-    async def _run(self, 
-        orchestrator: DeepOrchestrator, 
-        logger: Logger) -> list[any]:
-        logger.debug("GenerateTask: calling inference")
-        return await orchestrator.generate(
-            message=self.prompt,
-            request_params=RequestParams(
-                model=self.model_name, 
-                temperature=self._get_val('temperature', 0.7),
-                max_iterations=self._get_val('max_iterations', 10),
-                max_tokens=self._get_val('max_tokens', 100000),
-                max_cost=self._get_val('max_cost_dollars', 2.0),
-                max_time_minutes=self._get_val('max_time_minutes', 10),
-            ),
-        )
-
-    def __repr__(self) -> str: 
-        return f"""GenerateTask({super().__repr__()})"""
-        
-class AgentTask(BaseTask):
-    def __init__(self, 
-        name: str, 
-        title: str, 
-        model_name: str, 
-        prompt_template_path: Path,
-        output_dir_path: Path,
-        generate_prompt: str,
-        properties: dict[str,any]):
-        super().__init__(name, title, model_name, 
-            prompt_template_path, output_dir_path, 
-            properties)
-        self.generate_prompt = generate_prompt
-
-    async def _run(self, 
-        orchestrator: DeepOrchestrator, 
-        logger: Logger) -> list[any]:
-        agent = Agent(
-            name=self.name,
-            instruction=self.prompt,
-            context=orchestrator.context,
-            server_names=[self.name]
-        )
-
-        async with agent:
-            logger.debug("AgentTask: calling inference")
-            llm = await agent.attach_llm(orchestrator.llm_factory)
-            return await llm.generate(
-                message=self.generate_prompt,
-                request_params=RequestParams(
-                    model=self.model_name, 
-                    temperature=self._get_val('temperature', 0.7),
-                    max_iterations=self._get_val('max_iterations', 10),
-                    max_tokens=self._get_val('max_tokens', 100000),
-                    max_cost=self._get_val('max_cost_dollars', 2.0),
-                    max_time_minutes=self._get_val('max_time_minutes', 10),
-                ),
-            )
-
-    def attributes_as_strs(self, which_formatting: VariableFormat = VariableFormat.PLAIN, exclusions: set[str] = {}) -> dict[str,str]:
-        d = super().attributes_as_strs(exclusions)
-        if 'generate_prompt' not in exclusions:
-            var = Variable('generate_prompt', self.generate_prompt)
-            _, label, value_str = var.format()
-            d[label] = value_str
-        return d
-
-    def __repr__(self) -> str: 
-        return f"""AgentTask({super().__repr__()}, generate prompt: {self.generate_prompt})"""
 
 class DeepSearch():
     """
@@ -266,12 +44,16 @@ class DeepSearch():
             config: DeepOrchestratorConfig,
             tasks: list[BaseTask],
             output_dir_path: Path,
+            display: Display,
+            observers: Observers,
             variables: dict[str, Variable]):
         self.app_name = app_name
         self.provider = provider
         self.config = config
         self.tasks = tasks
         self.output_dir_path = output_dir_path
+        self.display = display
+        self.observers = observers
         self.variables = variables
 
         # from mcp_agent.workflows.llm.augmented_llm_openai import OpenAIAugmentedLLM
@@ -293,19 +75,17 @@ class DeepSearch():
                 raise ValueError(f"Unrecognized provider: {self.provider}")
 
         # These are lazily initialized in __finish_init!
-        self.display: Display | None = None
-        self.observers: Observers | None = None
         self.mcp_app: MCPApp | None = None
         self.orchestrator: DeepOrchestrator | None = None
         self.token_counter: TokenCounter | None = None
         self.logger: Logger | None = None
 
-
     # A observer loop that will be executed in its own thread.
     async def update_loop(self, update_iteration_frequency_secs: float = 1.0):
         while True:
             try:
-                await self.observers.update()
+                await self.observers.async_update()
+                self.observers.update()
                 await asyncio.sleep(update_iteration_frequency_secs)
             except Exception as e:
                 err_msg = f"WARNING: Error updating observers: {e}"
@@ -336,11 +116,10 @@ class DeepSearch():
                 error_msg = await self.run_tasks()
             finally:
                 # Final update...
-                final_messages = [
-                    "\n",
-                    f"Finished: See output files under {self.output_dir_path} and log files under ./logs.",
-                ]
-                await self.observers.update(final=True, final_messages=final_messages, error_msg=error_msg)
+                await self.observers.async_update()
+                self.observers.update(
+                    is_final=True,
+                    other={'messages': [], 'error_msg': error_msg})
                 update_task.cancel()
                 try:
                     await update_task
@@ -375,20 +154,10 @@ class DeepSearch():
 
             self.token_counter = app.context.token_counter
 
-            self.display = self.__make_display(self)
-            self.observers = self.__make_observers(self, self.display)
+            # Now let the observers know
+            self.observers.update(self)
+
             self.logger.debug("Finished DeepSearch initialization")
-
-    def __make_display(self) -> Display:
-        ux_title = self.get_value('ux_title', default=def_ux_title)
-        return RichDisplay(ux_title, self, variables=self.variables)
-
-    def __make_observers(self, display: Display) -> list[Observer]:
-        ux_title = self.__get_value('ux_title', default=def_ux_title)
-        yaml_header = self.__get_value('yaml_header_template_path')
-        md = MarkdownObserver(ux_title, self, yaml_header, variables=self.variables)
-        return Observers('observers', self, observers={'display': display, 'markdown': md}, variable=variables)
-
 
     def add_observers(self, observers: dict[str, Observer]) -> dict[str, Observer]:
         """

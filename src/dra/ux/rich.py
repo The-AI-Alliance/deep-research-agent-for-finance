@@ -24,7 +24,6 @@ from rich import box
 
 from dra.common.deep_search import DeepSearch, BaseTask, GenerateTask, AgentTask, TaskStatus
 from dra.common.utils.strings import truncate
-from dra.common.variables import Variable
 from dra.ux.display import Display
 
 from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
@@ -279,17 +278,25 @@ class RichDeepOrchestratorMonitor():
 class RichDisplay(Display):
     def __init__(self, 
         title: str,
-        system: DeepSearch,
-        variables: dict[str, Variable] = {}):
-        super().__init__(title, system, variables)
+        system: DeepSearch = None):
+        self.orchestrator: DeepOrchestrator = None
+        self.monitor: RichDeepOrchestratorMonitor = None
+        self.console: Console = None
+        self.layout: Layout = None
+
+        # The following will initialize the previous four attributes, if system != None
+        super().__init__(title, system)
 
         self.start_time = time.time()
         self.execution_time = 0.0
 
-        self.orchestrator = self.system.orchestrator
-        self.monitor = RichDeepOrchestratorMonitor(self.orchestrator)
-        self.console = Console(highlight=False, soft_wrap=False, emoji=False)
-        self.layout  = self.__create_layout()
+    def set_system(self, system: System):
+        super().set_system(system)
+        if self.system:
+            self.orchestrator = self.system.orchestrator
+            self.monitor = RichDeepOrchestratorMonitor(self.orchestrator)
+            self.console = Console(highlight=False, soft_wrap=False, emoji=False)
+            self.layout  = self.__create_layout()
 
     def __create_layout(self) -> Layout:
         """Create the display Rich Layout"""
@@ -322,10 +329,12 @@ class RichDisplay(Display):
         with Live(self.layout, console=self.console, refresh_per_second=4, screen=True, transient=False) as _live:
             await function()
 
-    async def update(self, final: bool = False, messages: list[str] = [], error_msg: str = None) -> any:
+    def _do_update(self, 
+        other: dict[str,any] = {},
+        is_final: bool = False) -> any:
         """
-        Update the display with current state. `final` is ignored. 
-        If the `messages` and/or `error_msg` are not empty/None, then 
+        Update the display with the current state. 
+        If `other['messages']` and/or `other['error_msg']` are not empty/None, then 
         format a `list[str]` with them, print it, and return the list.
         """
 
@@ -361,30 +370,32 @@ class RichDisplay(Display):
         )
         self.layout["right"].update(right_content)
 
-        await self.__final_update()
+        if not is_final:
+            return None
+
+        self.__update_final_statistics()
+        self.__update_budget_summary()
+        self.__update_knowledge_summary()
+        self.__update_workspace_artifacts()
+        self.__update_report_results()
 
         msg_list1 = [
             "\n",
             f"Finished: See output files under {self.output_dir_path} and log files under ./logs.",
             "\n",
         ]
-        if messages:
-            msg_list1.extend(messages)
+        if other.get('messages'):
+            msg_list1.extend(other.get('messages'))
         msg_list = [[f"[bold black]{line}[/bold black]" for line in msg_list1]]
-        if error_msg:
-            msg_list.extend(['\n', f"[bold red]ERROR: {error_msg}[/bold red]"])
+        if other.get('error_msg'):
+            msg_list.extend(['\n', f"[bold red]ERROR: {other.get('error_msg')}[/bold red]"])
         for line in msg_list:
             self.console.print(line)
             self.system.logger.info(line)
         return msg_list
 
-    async def __final_update(self):
-        self.__update_final_statistics()
-        self.__update_budget_summary()
-        self.__update_knowledge_summary()
+    async def async_update(self):
         await self.__update_token_usage()
-        self.__update_workspace_artifacts()
-        self.__update_report_results()
 
     def __update_final_statistics(self):
         # Display final statistics
@@ -479,11 +490,3 @@ class RichDisplay(Display):
 
     def __repr__(self) -> str:
         return str(self.layout)
-
-    @staticmethod
-    def make(
-        title: str,
-        system: DeepSearch,
-        variables: dict[str, Variable] = {}) -> RichDisplay:
-        """A factory method for creating instances."""
-        return RichDisplay(title, system, variables)

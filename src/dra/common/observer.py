@@ -44,6 +44,10 @@ class Observer(Generic[SYSTEM]):
         else:
             return None
 
+    async def async_update(self):
+        """A hack to support cases where updates have to be asynchronous."""
+        pass
+
     def _do_update(self, 
         other: dict[str,any] = {},
         is_final: bool = False) -> any:
@@ -114,6 +118,11 @@ class Observers(Observer):
         if not observers:
             raise ValueError("Observers() called with an empty list of observers!")
         self.observers = observers
+
+    async def async_update(self):
+        """A hack to support cases where updates have to be asynchronous."""
+        for observer in self.observers.values():
+            await observer.async_update()
 
     def _do_update(self, 
         other: dict[str,any] = {},

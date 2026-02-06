@@ -1,16 +1,13 @@
 from typing import Callable, TypeVar
 
 from dra.common.observer  import Observer
-from dra.common.variables import Variable
 
 SYSTEM = TypeVar("SYSTEM")
 
 class Display(Observer[SYSTEM]):
-    def __init__(self,
-        title: str,
-        system: SYSTEM,
-        variables: dict[str, Variable] = {}):
-        super().__init__(title, system, variables)
+    def __init__(self, title: str):
+        super().__init__()
+        self.title = title        
 
     async def run_live(self, function: Callable[[], None]):
         """Some displays need to wrap the main system logic, but this should only be done by ONE display."""
