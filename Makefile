@@ -12,36 +12,62 @@ MAKEFLAGS           ?= # -w --warn-undefined-variables
 MAKEFLAGS_RECURSIVE ?= # --print-directory (only useful for recursive makes...)
 UNAME               ?= $(shell uname)
 ARCHITECTURE        ?= $(shell uname -m)
+TIMESTAMP           ?=$(shell date "+%Y-%m-%d_%H-%M-%S")
 
 ## App defaults
+# Call make 
 # Hack: on the command line, use `make APP_ARGS='--foo bar' target` to pass other 
 # command-line arguments, e.g., '--help', to commands executed when building targets
 # that run the app command.
 
-APP                        ?= finance
-REL_APP_DIR                ?= dra/apps/${APP}
-REL_APP_PATH               ?= ${REL_APP_DIR}/main.py
-APP_MODULE                 ?= dra.apps.${APP}.main
-TICKER                     ?= META
-COMPANY_NAME               ?= Meta Platforms, Inc.
-REPORTING_CURRENCY         ?= USD
-RESEARCH_MODEL             ?= gpt-4o
-EXCEL_WRITER_MODEL         ?= o4-mini
-INFERENCE_PROVIDER         ?= openai
-TEMPLATES_DIR              ?= ${REL_APP_DIR}/templates
-FIN_RESEARCH_PROMPT_FILE   ?= financial_research_agent.md
-EXCEL_WRITER_PROMPT_FILE   ?= excel_writer_agent.md
-MARKDOWN_YAML_HEADER_FILE  ?= github_pages_header.yaml
-OUTPUT_DIR                 ?= ${PWD}/output/${APP}/${TICKER}
-OUTPUT_REPORT              ?= ${TICKER}_report.md
-OUTPUT_SPREADSHEET         ?= ${TICKER}_financials.xlsx
-TEMPERATURE                ?= 0.7
-MAX_ITERATIONS             ?= 25
+FINANCE_APP                ?= finance
+MEDICAL_APP                ?= medical
+APPS                       ?= ${FINANCE_APP} ${MEDICAL_APP}
+
+# Default:
+APP                        ?= ${FINANCE_APP}
+
 # Might be expensive on some inference services!
 MAX_TOKENS                 ?= 500000
 MAX_COST_DOLLARS           ?= 2.0
 MAX_TIME_MINUTES           ?= 15
 APP_ARGS                   ?=
+
+# For the medical app:
+# Pass in a quoted string for the query.
+QUERY                      ?=
+MEDICAL_RESEARCH_PROMPT_FILE ?= medical_research_agent.md
+
+# For the Finance app:
+TICKER                     ?= META
+COMPANY_NAME               ?= Meta Platforms, Inc.
+REPORTING_CURRENCY         ?= USD
+EXCEL_WRITER_MODEL         ?= o4-mini
+FIN_RESEARCH_PROMPT_FILE   ?= financial_research_agent.md
+EXCEL_WRITER_PROMPT_FILE   ?= excel_writer_agent.md
+OUTPUT_SPREADSHEET         ?= ${TICKER}_financials.xlsx
+
+# For all apps:
+ifeq (finance,${APP})
+	OUTPUT_DIR              ?= ../output/${APP}/${TIMESTAMP}/${TICKER}
+	OUTPUT_REPORT           ?= ${TICKER}_report.md
+else
+	OUTPUT_DIR              ?= ../output/${APP}/${TIMESTAMP}
+	OUTPUT_REPORT           ?= report.md
+endif
+
+REL_APP_DIR                ?= dra/apps/${APP}
+REL_APP_PATH               ?= ${REL_APP_DIR}/main.py
+APP_MODULE                 ?= dra.apps.${APP}.main
+RESEARCH_MODEL             ?= gpt-4o
+INFERENCE_PROVIDER         ?= openai
+TEMPLATES_DIR              ?= ${REL_APP_DIR}/templates
+MARKDOWN_YAML_HEADER_FILE  ?= github_pages_header.yaml
+MCP_AGENT_CONFIG_FILE      ?= ${REL_APP_DIR}/config/mcp_agent.config.${INFERENCE_PROVIDER}.yaml
+TEMPERATURE                ?= 0.7
+MAX_ITERATIONS             ?= 25
+
+# GitHub Pages...
 
 # Override when running `make view-local` using e.g., `JEKYLL_PORT=8000 make view-local`
 JEKYLL_PORT         ?= 4000
@@ -57,10 +83,14 @@ Quick help for this make process
 
 Targets for the application:
 
-make all                # Run the application by building "app-run".
-make app-run            # Run the application with default arguments.
-make app-help           # Run the application with --help to see the support arguments.
+make all                # Run the ${APP} application by building "app-run".
+make all-apps           # Run all the applications: ${APPS}.
+make all-apps-help      # Show help for all the apps: ${APPS}.
+make app-run            # Run the ${APP} application with default arguments.
+make app-run-<foo>      # Run the <foo> application with default arguments.
+make app-help           # Run the ${APP} application with --help to see the support arguments.
                         # Also prints the default invocation used by "app-run".
+make app-help-<foo>     # Show help for the <foo> application.
 make app-setup          # One-time setup of the application dependences.
 make test               # Run the automated tests. ("make tests" is a synonym...)
 
@@ -102,8 +132,6 @@ endef
 define missing_mcp_agent_message
 ERROR: The Python dependency \'mcp-agent\' is not installed. Either run \'make app-setup\' or \'uv add mcp-agent\'.
 endef
-foo:
-	@echo ${missing_mcp_agent_message}
 
 ifndef docs_dir
 $(error ERROR: There is no ${docs_dir} directory!)
@@ -146,16 +174,25 @@ endef
 
 ## Define targets
 
-.PHONY: all view-pages view-local clean clean_code clean_docs help 
+# Because of "colliding" variable definitions, if more than one app is run,
+# make is invoked separately for each app.
+
+.PHONY: all list-apps view-pages view-local clean clean_code clean_docs help 
 .PHONY: setup-jekyll run-jekyll
-.PHONY: app-run do-app-run app-setup app-check uv-check uv-cmd-check venv-check
+.PHONY: all-apps all-apps-help app-run do-app-run-${APP} app-setup app-check 
+
+.PHONY: uv-check uv-cmd-check venv-check
 .PHONY: mcp-agent-check test tests
 .PHONY: print-info print-app-info print-make-info print-docs-info show-output-files
 
-all:: app-run
+all:: list-apps
+list-apps::
+	@echo "Available Apps: ${APPS}"
+	@echo "To run a particular app, use 'make APP=foo run-app'. See also 'make app-help'."
 
-app-run:: app-check do-app-run show-output-files
-do-app-run::
+app-run:: app-check do-app-run-${APP} show-output-files
+
+do-app-run-finance::
 	cd ${SRC_DIR} && uv run -m ${APP_MODULE} \
 		--ticker "${TICKER}" \
 		--company-name "${COMPANY_NAME}" \
@@ -170,6 +207,26 @@ do-app-run::
 		--research-model "${RESEARCH_MODEL}" \
 		--excel-writer-model "${EXCEL_WRITER_MODEL}" \
 		--provider "${INFERENCE_PROVIDER}" \
+		--mcp-agent-config "${MCP_AGENT_CONFIG_FILE}" \
+		--temperature ${TEMPERATURE} \
+		--max-iterations ${MAX_ITERATIONS} \
+		--max-tokens ${MAX_TOKENS} \
+		--max-cost-dollars ${MAX_COST_DOLLARS} \
+		--max-time-minutes ${MAX_TIME_MINUTES} \
+		--verbose \
+		${APP_ARGS}
+		
+do-app-run-medical::
+	cd ${SRC_DIR} && uv run -m ${APP_MODULE} \
+		--query "${QUERY}" \
+		--output-dir "${OUTPUT_DIR}" \
+		--markdown-report "${OUTPUT_REPORT}" \
+		--markdown-yaml-header "${MARKDOWN_YAML_HEADER_FILE}" \
+		--templates-dir "${TEMPLATES_DIR}" \
+		--medical-research-prompt-path "${MEDICAL_RESEARCH_PROMPT_FILE}" \
+		--research-model "${RESEARCH_MODEL}" \
+		--provider "${INFERENCE_PROVIDER}" \
+		--mcp-agent-config "${MCP_AGENT_CONFIG_FILE}" \
 		--temperature ${TEMPERATURE} \
 		--max-iterations ${MAX_ITERATIONS} \
 		--max-tokens ${MAX_TOKENS} \
@@ -181,7 +238,7 @@ do-app-run::
 show-output-files::
 	@echo
 	@echo "Output files in ${OUTPUT_DIR}:"
-	@cd ${OUTPUT_DIR} && find . -type f -exec ls -lh {} \;
+	@cd ${SRC_DIR}/${OUTPUT_DIR} && find . -type f -exec ls -lh {} \;
 
 test tests:: uv-check
 	cd ${SRC_DIR} && uv run python -m unittest discover
@@ -200,9 +257,9 @@ mcp-agent-check::
 app-setup:: uv-check venv-check
 	uv add mcp-agent
 
-.PHONY: app-help app-help-header app-help-footer
+.PHONY: app-help app-run-help app-help-header app-help-footer
 
-app-help:: app-help-header app-help-footer
+app-help app-run-help:: app-help-header app-help-footer
 app-help-header::
 	@echo "Application help provided by ${SRC_DIR}/${REL_APP_PATH}:"
 	cd ${SRC_DIR} && uv run -m ${APP_MODULE} --help
@@ -219,42 +276,56 @@ help::
 
 print-info: print-app-info print-make-info print-docs-info
 print-app-info:
-	@echo "APP_MODULE                 ${APP_MODULE}"
-	@echo "Company:"
-	@echo "  TICKER                   ${TICKER}"
-	@echo "  COMPANY_NAME             ${COMPANY_NAME}"
-	@echo "  REPORTING_CURRENCY       ${REPORTING_CURRENCY}"
-	@echo "Models:"
-	@echo "  RESEARCH_MODEL           ${RESEARCH_MODEL}"
-	@echo "  EXCEL_WRITER_MODEL       ${EXCEL_WRITER_MODEL}"
+	@echo "For settings for the non-default apps, run with make APP=app print-info:"
+	@echo "Relative paths shown are relative to ${SRC_DIR}."
+	@echo
+	@echo "APP                          '${APP}'"
+	@echo "APP_MODULE                   '${APP_MODULE}'"
+	@echo
+	@echo "Inference:"
+	@echo "  INFERENCE_PROVIDER         '${INFERENCE_PROVIDER}'"
+	@echo "  MCP_AGENT_CONFIG_FILE      '${MCP_AGENT_CONFIG_FILE}'"
+	@echo "  RESEARCH_MODEL             '${RESEARCH_MODEL}'"
+	@echo
 	@echo "Templates (for prompts, etc.):"
-	@echo "  TEMPLATES_DIR            ${TEMPLATES_DIR}"
-	@echo "  FIN_RESEARCH_PROMPT_FILE ${FIN_RESEARCH_PROMPT_FILE}"
-	@echo "  EXCEL_WRITER_PROMPT_FILE ${EXCEL_WRITER_PROMPT_FILE}"
-	@echo "OUTPUT_DIR                ${OUTPUT_DIR}"
-	@echo "  OUTPUT_REPORT            ${OUTPUT_REPORT} (under OUTPUT_DIR)"
-	@echo "  OUTPUT_SPREADSHEET       ${OUTPUT_SPREADSHEET} (under OUTPUT_DIR)"
-	@echo "APP_ARGS                   ${APP_ARGS}"
+	@echo "  TEMPLATES_DIR              '${TEMPLATES_DIR}'"
+	@echo
+	@echo "OUTPUT_DIR                   '${OUTPUT_DIR}'"
+	@echo "  OUTPUT_REPORT              '${OUTPUT_REPORT}' (under OUTPUT_DIR)"
+	@echo
+	@echo "For the Finance App:"
+	@echo "  TICKER                     '${TICKER}'"
+	@echo "  COMPANY_NAME               '${COMPANY_NAME}'"
+	@echo "  REPORTING_CURRENCY         '${REPORTING_CURRENCY}'"
+	@echo "  OUTPUT_SPREADSHEET         '${OUTPUT_SPREADSHEET}' (under OUTPUT_DIR)"
+	@echo "  EXCEL_WRITER_MODEL         '${EXCEL_WRITER_MODEL}'"
+	@echo "  FIN_RESEARCH_PROMPT_FILE   '${FIN_RESEARCH_PROMPT_FILE}'"
+	@echo "  EXCEL_WRITER_PROMPT_FILE   '${EXCEL_WRITER_PROMPT_FILE}'"
+	@echo
+	@echo "For the Medical App:"
+	@echo "  MEDICAL_RESEARCH_PROMPT_FILE '${MEDICAL_RESEARCH_PROMPT_FILE}'"
+	@echo
+	@echo "APP_ARGS                     '${APP_ARGS}'"
 	@echo
 
 print-make-info:
-	@echo "MAKEFLAGS:                 ${MAKEFLAGS}"
-	@echo "MAKEFLAGS_RECURSIVE:       ${MAKEFLAGS_RECURSIVE}"
-	@echo "JEKYLL_PORT:               ${JEKYLL_PORT}"
-	@echo "UNAME:                     ${UNAME}"
-	@echo "ARCHITECTURE:              ${ARCHITECTURE}"
-	@echo "GIT_HASH:                  ${GIT_HASH}"
-	@echo "NOW:                       ${NOW}"
-	@echo "clean code directories:    ${clean_code_dirs} (deleted by 'make clean_code')"
-	@echo "clean docs directories:    ${clean_docs_dirs} (deleted by 'make clean_docs')"
-	@echo "clean directories:         ${clean_dirs} (deleted by 'make clean')"
+	@echo "MAKEFLAGS:                   '${MAKEFLAGS}'"
+	@echo "MAKEFLAGS_RECURSIVE:         '${MAKEFLAGS_RECURSIVE}'"
+	@echo "JEKYLL_PORT:                 '${JEKYLL_PORT}'"
+	@echo "UNAME:                       '${UNAME}'"
+	@echo "ARCHITECTURE:                '${ARCHITECTURE}'"
+	@echo "GIT_HASH:                    '${GIT_HASH}'"
+	@echo "NOW:                         '${NOW}'"
+	@echo "clean code directories:      '${clean_code_dirs}' (deleted by 'make clean_code')"
+	@echo "clean docs directories:      '${clean_docs_dirs}' (deleted by 'make clean_docs')"
+	@echo "clean directories:           '${clean_dirs}' (deleted by 'make clean')"
 	@echo
 
 print-docs-info:
 	@echo "For the GitHub Pages website:"
-	@echo "  GitHub Pages URL:        ${pages_url}"
-	@echo "  docs dir:                ${docs_dir}"
-	@echo "  site dir:                ${site_dir}"
+	@echo "  GitHub Pages URL:          '${pages_url}'"
+	@echo "  docs dir:                  '${docs_dir}'"
+	@echo "  site dir:                  '${site_dir}'"
 	@echo
 
 

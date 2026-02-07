@@ -1,18 +1,7 @@
-# see https://docs.mcp-agent.com/reference/configuration
-$schema: ../../../schema/mcp-agent.config.schema.json
-
-name: deep_research_agent
-execution_engine: asyncio
-
-logger:
-  transports: [file]
-  level: debug
-  progress_display: true
-  path_settings:
-    # Logs rel
-    path_pattern: "../logs/deep-research-agent-{unique_id}.jsonl"
-    unique_id: "timestamp" # Options: "timestamp" or "session_id"
-    timestamp_format: "%Y%m%d_%H%M%S"
+# This is part of an mcp_agent.config.yaml file example for using 
+# IBM Context Forge as a service gateway. Only the `mcp: servers:`
+# part is shown. See the other mcp_agent.config.yaml files in this
+# project for the full contents.
 
 mcp:
   servers:
@@ -40,24 +29,3 @@ mcp:
     excel_writer:
       command: "uvx"
       args: ["excel-mcp-server", "stdio"]
-      
-# Since Ollama and OpenAI use the same internal code path, i.e.,
-# mcp-agent's `OpenAIAugmentedLLM`, you MUST uncomment the correct "openai"
-# definition here and comment out the other one!
-# Eliminating this manual step is TBD.
-
-# Use this for OpenAI inference:
-openai:
-  default_model: "gpt-4o-mini"
-  reasoning_effort: "medium"
-  base_url: "https://api.openai.com/v1"
-  
-# Use this for ollama inference. Change the model, too!
-# openai:
-#   default_model: "gpt-oss:20b"
-#   reasoning_effort: "medium"
-#   base_url: "http://localhost:11434/v1"
-#   api_key: "ignored"
-
-anthropic:
-  default_model: "claude-3-5-sonnet-20241022"

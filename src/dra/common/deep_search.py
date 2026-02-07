@@ -135,7 +135,10 @@ class DeepSearch():
         particular order, so we can do this step asynchronously...
         """ 
 
-        self.mcp_app = MCPApp(name=self.app_name)
+        settings = self.__get_var_value('mcp_agent_config_path', None)
+        if settings:
+            settings = str(settings) # convert from Path to str.
+        self.mcp_app = MCPApp(name=self.app_name, settings=settings)
         self.logger = self.mcp_app.logger
 
         async with self.mcp_app.run() as app:
@@ -274,3 +277,9 @@ class DeepSearch():
             budget=budget_config,
         )
         return config
+
+    def __get_var_value(self, key: str, default: any = None) -> any:
+        if not self.variables:
+            raise ValueError("Logic error: self.variables not yet initialized!")
+        variable = self.variables.get(key)
+        return variable.value if variable else default

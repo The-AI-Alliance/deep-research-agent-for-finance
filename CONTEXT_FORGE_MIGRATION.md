@@ -48,7 +48,7 @@ Then see [API Endpoints](https://ibm.github.io/mcp-context-forge/#api-endpoints)
 
 ### 2. Update the Deep Research Application Configuration File
 
-Edit `mcp_agent.config.yaml` to route external services through Context Forge. Here is how the three external services are currently configured:
+Edit `mcp_agent.config.PROVIDER.yaml` in the corresponding `src/dra/APP/config/` directory to route external services through Context Forge, e.g., where `APP` is `finance` and `PROVIDER` is `openai`.  Here is how the three external services are currently configured:
 
 ```yaml
 mcp:
@@ -86,7 +86,7 @@ mcp:
 
 (_MCP Gateway_ was the original name for the IBM Context Forge project.)
 
-See `mcp_agent.config-context_forge.yaml` for an example configuration for a local Context Forge test deployment.
+This example is also in `examples/mcp_agent.config-context_forge.yaml`.
 
 ### 3. Verify Your Setup
 

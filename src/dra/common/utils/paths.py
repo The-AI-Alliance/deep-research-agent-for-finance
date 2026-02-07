@@ -18,14 +18,15 @@ def resolve_path(path_str: str, possible_parent: Path) -> Path:
 
     Args:
         path_str (str): A path that may or may not contain a directory prefix.
-        possible_parent (Path): Use this parent path is `path_str` doesn't contain a directory prefix.
+        possible_parent (Path): If not None, use this parent path if `path_str` doesn't contain a directory prefix.
 
     Returns:
         The resolved path, whether or not it a actualy exists!
     """
     path = Path(path_str)
     if not len(path.parents) or path.parents[0] == PosixPath('.'):
-        path = possible_parent / path
+        if possible_parent:
+            path = possible_parent / path
     return path
 
 def resolve_and_require_path(path_str: str, possible_parent: Path, raise_on_missing: bool = True) -> Path:
@@ -36,7 +37,7 @@ def resolve_and_require_path(path_str: str, possible_parent: Path, raise_on_miss
 
     Args:
         path_str (str): A path that may or may not contain a directory prefix.
-        possible_parent (Path): Use this parent path is `path_str` doesn't contain a directory prefix.
+        possible_parent (Path): If not None, use this parent path is `path_str` doesn't contain a directory prefix.
         raise_on_missing (bool): If `True` and the resolved path doesn't exist, raise a `ValueError`. If `False`, return `None`.
 
     Returns:
