@@ -10,13 +10,17 @@ class Observer(Generic[SYSTEM]):
     case nothing will happen until `update(system = ...)` is called with
     a non-None sysetm.
     """
-    def __init__(self):
+    def __init__(self, disallow_system_change: bool=False):
         """
         Initialize the observer. Note that the system observed is not specified here,
         but rather in the first call to `update()`. This makes order of initialization,
         especially in class hierarchies, more robust.
+
+        ARGS:
+            disallow_system_change (bool): An optional setting for observers that only want to allow one system to be set, the first time `update(system)` is called with a non-`None` system.
         """
         self.system: SYSTEM = None
+        self.disallow_system_change = disallow_system_change
         self.resume()
 
     def update(self, 
@@ -37,6 +41,7 @@ class Observer(Generic[SYSTEM]):
 
         Discussion:
             Derived classes should only override _do_update(), which is called only if `self.system != None` and we aren't paused.
+            if `self.disallow_system_change` is `False` and `self.system not None`, an exception is raised.
         """
         self.__update_system(system)
         if self.system and not self.paused:
@@ -44,7 +49,9 @@ class Observer(Generic[SYSTEM]):
         else:
             return None
 
-    async def async_update(self):
+    async def async_update(self,
+        other: dict[str,any] = {},
+        is_final: bool = False) -> any:
         """A hack to support cases where updates have to be asynchronous."""
         pass
 
@@ -64,9 +71,31 @@ class Observer(Generic[SYSTEM]):
         pass
 
     def __update_system(self, new_system: SYSTEM):
+        """
+        Update `self.system` to `new_system`. 
+        If `self.disallow_system_change`, then `new_system` must be non-`None` and 
+        `self.system` must be `None`. Otherwise, an exception is raised. However, repeated
+        invocations with `new_system == None` are allowed, just effectively "no-ops".
+        Before and after setting the new system, callback hooks `_before_set_system()`
+        and `_after_set_system()` are called, respectively, so the observer can take
+        appropriate action.
+        """
+        if new_system != self.system and self.disallow_system_change:
+            msgs = []
+            if self.system:
+                msgs.append("self.system is already set and changes are disallowed!")
+            if not new_system:
+                msgs.append("new_system can't be None when system changes are disallowed, since it can only be changed once!")
+
+            if len(msgs):
+                msg = ' '.join(msgs)
+                if self.system and hasattr(self.system, "logger"):
+                    self.system.logger.error(f"Observer.update(new_system, ...): {msg}")
+                raise ValueError(msg)
+
         if new_system and new_system != self.system:
-            if self.system: # old system not None?
-                self._before_set_system()
+            if self.system:                # Old system not None?
+                self._before_set_system()  # Then notify observers change is coming!
             self.system = new_system
             self._after_set_system()
 
@@ -114,15 +143,20 @@ class Observers(Observer):
         """
         Create a collection of observers to manage as one. 
         The dictionary of observers can't be empty.
+        This method doesn't have the `disallow_system_change` flag available
+        for `Observer.__init__()`. Instead, set the flag on each observer passed to
+        this method.
         """
         if not observers:
             raise ValueError("Observers() called with an empty list of observers!")
         self.observers = observers
 
-    async def async_update(self):
+    async def async_update(self,
+        other: dict[str,any] = {},
+        is_final: bool = False) -> any:
         """A hack to support cases where updates have to be asynchronous."""
         for observer in self.observers.values():
-            await observer.async_update()
+            await observer.async_update(is_final=is_final, other=other)
 
     def _do_update(self, 
         other: dict[str,any] = {},
