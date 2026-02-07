@@ -386,24 +386,30 @@ class RichDisplay(Display):
         if not is_final:
             return None
 
-        output_dir_path_msg = ''
-        if self.system and hasattr(self.system, 'output_dir_path'):
-            output_dir_path_msg = f"output files under {self.system.output_dir_path} and "
+        # Don't allow problems here to stop execution!
+        try:
+            output_dir_path_msg = ''
+            if self.system and hasattr(self.system, 'variables'):
+                odp = self.system.variables.get('output_dir_path')
+                if odp:
+                    output_dir_path_msg = f"output files under {odp.value} and "
 
-        msg_list1 = [
-            "\n",
-            f"Finished: See {output_dir_path_msg}log files under ./logs.",
-            "\n",
-        ]
-        if other.get('messages'):
-            msg_list1.extend(other.get('messages'))
-        msg_list = [[f"[bold black]{line}[/bold black]" for line in msg_list1]]
-        if other.get('error_msg'):
-            msg_list.extend(['\n', f"[bold red]ERROR: {other.get('error_msg')}[/bold red]"])
-        for line in msg_list:
-            self.console.print(line)
-            self.system.logger.info(line)
-        return msg_list
+            msg_list1 = [
+                "\n",
+                f"Finished: See {output_dir_path_msg}log files under ./logs.",
+                "\n",
+            ]
+            if other.get('messages'):
+                msg_list1.extend(other.get('messages'))
+            msg_list = [[f"[bold black]{line}[/bold black]" for line in msg_list1]]
+            if other.get('error_msg'):
+                msg_list.extend(['\n', f"[bold red]ERROR: {other.get('error_msg')}[/bold red]"])
+            for line in msg_list:
+                self.console.print(line)
+                self.system.logger.info(line)
+            return msg_list
+        except Exception as ex:
+            print(f"Exception {ex} was raised during last output messages. Continuing...")
 
     async def async_update(self,
         other: dict[str,any] = {},

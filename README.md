@@ -49,23 +49,26 @@ uv sync
 
 ## Usage
 
-The easiest way to run the application with default values for all optional arguments is `make app-run`. This target does some setup and then runs the command `cd src && uv run main_finance.py ...` where `...` is a lot of arguments. The minimum required arguments are `--ticker` and `--company-name`. So, here is the shortest command you can run to do research on Meta:
+> [!TIP]
+> The commands shown below should be up-to-date with the code, but if a command shown doesn't work, check what's done in the `Makefile`! Please file an [issue](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/issues) or post a [discussion topic](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/discussions) if you find a mistake. Thanks...
+
+The easiest way to run the application with default values for all optional arguments is `make app-run`. This target does some setup and then runs the command `cd src && uv run -m dra.apps.finance.main ...` where `...` is a lot of arguments. The minimum required arguments are `--ticker` and `--company-name`. So, here is the shortest command you can run to do research on Meta:
 
 ```shell
-cd src && uv run main_finance.py --ticker META --company-name "Meta Platforms, Inc."
+cd src && uv run -m dra.apps.finance.main --ticker META --company-name "Meta Platforms, Inc."
 
 ```
 
 > [!NOTE]
 > While running the application, you may see a browser window pop up asking for permission to authenticate to a financial dataset MCP server. This should only happen one time. There is no cost to do this. You can authenticate using a `gmail` email address, for example. If you decline, the application will still run, but it may run for a longer time while the deep research agent tries to gather the information it needs without this source.
 
-The application provides several command-line options to configure the behavior. Use `make app-help` or `cd src && uv run main_finance.py --help` to see the details. Here is the output for `make app-help`:
+The application provides several command-line options to configure the behavior. Use `make app-help` or `cd src && uv run -m dra.apps.finance.main --help` to see the details. Here is the output for `make app-help`:
 
 ```shell
 $ make app-help
-Application help provided by src/finance_deep_search/main_finance.py:
-cd src && uv run main_finance.py --help
-usage: main_finance.py [-h] --ticker TICKER --company-name COMPANY_NAME
+Application help provided by src/dra/apps/finance/main.py:
+cd src && uv run -m dra.apps.finance.main --help
+usage: main.py [-h] --ticker TICKER --company-name COMPANY_NAME
                        [--reporting-currency REPORTING_CURRENCY]
                        [--output-dir OUTPUT_DIR]
                        [--markdown-report MARKDOWN_REPORT]
@@ -191,15 +194,15 @@ Here is the actual command executed by `make app-run`. (Note the use of `-n` to 
 ```shell
 $ make -n app-run 
 (... some setup commands elided ...)
-cd src && uv run main_finance.py \
+cd src && uv run -m dra.apps.finance.main \
     --ticker "META" \
     --company-name "Meta Platforms, Inc." \
-    --output-dir "/Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-finance/output/META" \
+    --output-dir ".../output/finance/META" \
     --markdown-report "META_report.md" \
     --markdown-yaml-header "github_pages_header.yaml" \
     --output-spreadsheet "META_financials.xlsx" \
     --reporting-currency "USD" \
-    --templates-dir "finance_deep_search/templates" \
+    --templates-dir "dra/apps/finance/templates" \
     --financial-research-prompt-path "financial_research_agent.md" \
     --excel-writer-agent-prompt-path "excel_writer_agent.md" \
     --research-model "gpt-4o" \
@@ -212,7 +215,7 @@ cd src && uv run main_finance.py \
     --max-time-minutes 15 \
     --verbose \
 
-echo "Output files in /Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-finance/output/META:"
+echo "Output files in .../output/finance/META:"
 (... listing not shown ...)
 ```
 
@@ -227,29 +230,29 @@ Let's go through some of the options shown. We already discussed `--ticker` and 
 
 ```shell
     ...
-    --output-dir "./output/META"
+    --output-dir ".../output/finance/META"
     --output-spreadsheet "META_financials.xlsx"
     ...
 ```
 
-Several output files, including an Excel spreadsheet of data, are written to the value passed with `--output-dir`. The application's default value is `./output`. (Actually, the full absolute path to `./output` is used.) However, the `make` target uses `--output-dir ./output/$TICKER`, so you can easily run the job for different companies and not clobber results for other companies.
+Several output files, including an Excel spreadsheet of data, are written to the value passed with `--output-dir`. The application's default value for this argument is `./output`, but the `make` target passes the absolute path to `./output/finance/$TICKER`, which makes it easier to run this job for different companies and not clobber results for other companies.
 
-Since the `--output-spreadsheet` argument doesn't specify a directory prefix, `./output/META` will be used.
+Since the `--output-spreadsheet` argument doesn't specify a directory prefix, the value for `--output-dir` will be used.
 
 ### Prompt File Locations
 
 ```shell
     ...
-    --templates-path "finance_deep_search/templates"
+    --templates-path "dra/apps/finance/templates"
     --financial-research-prompt-path "financial_research_agent.md"
     --excel-writer-agent-prompt-path "excel_writer_agent.md"
     ...
 ```
 
-Two prompt files are by default located in [`./src/finance_deep_search/templates`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/finance_deep_search/templates) (Note that the command changes directory to `src` first, so the path is relative to `src`):
+Two prompt files are by default located in [`./src/dra/apps/finance/templates`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/dra/apps/finance/templates) (Note that the command changes directory to `src` first, so the path is relative to `src`):
     
-* `--financial-research-prompt-path "financial_research_agent.md"` - for the research task ([repo](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/finance_deep_search/templates/financial_research_agent.md))
-* `--excel-writer-agent-prompt-path "excel_writer_agent.md"` - for the Excel file writer task ([repo](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/finance_deep_search/templates/excel_writer_agent.md))
+* `--financial-research-prompt-path "financial_research_agent.md"` - for the research task ([repo](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/dra/apps/finance/templates/financial_research_agent.md))
+* `--excel-writer-agent-prompt-path "excel_writer_agent.md"` - for the Excel file writer task ([repo](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/dra/apps/finance/templates/excel_writer_agent.md))
 
 If you specify a value for either prompt that includes an absolute or relative directory path, then the `--templates-path` is ignored for it. In this case, the arguments don't include directories, so the files are expected to be found in the value for `--templates-path`. 
 
@@ -266,7 +269,7 @@ If you specify a value for either prompt that includes an absolute or relative d
 
 Write a Markdown-formatted report at the end. If you don't want this report generated, then use `--markdown-report ''` (empty string) or `--markdown-report None`.
 
-Optionally, if a non-empty value is specified `--markdown-yaml-header`, then write a YAML header at the beginning of the file. This is useful if the report will be presented using GitHub Pages. The YAML header should either be a literal string or a path to a template to file read in. We use a file here: [`./src/finance_deep_search/templates/github_pages_header.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/finance_deep_search/templates/github_pages_header.yaml). Either way, variable definitions, e.g., `{{title}}`, will be replaced with values by the application.
+Optionally, if a non-empty value is specified `--markdown-yaml-header`, then write a YAML header at the beginning of the file. This is useful if the report will be presented using GitHub Pages. The YAML header should either be a literal string or a path to a template to file read in. We use a file here: [`./src/dra/apps/finance/templates/github_pages_header.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/dra/apps/finance/templates/github_pages_header.yaml). Either way, variable definitions, e.g., `{{title}}`, will be replaced with values by the application.
 
 Like for the spreadsheet file discussed above, the report file will be written to the output directory specified with `--output-dir`, if the file name doesn't include a directory prefix. Similarly, if the YAML header value doesn't have a directory prefix, it will be searched for in the directory specified with `--templates-dir`.
 
@@ -503,7 +506,7 @@ mcp:
 
 (These commands run local Python applications with `uvx` that connect to external services.)
 
-2. In [`src/main_finance.py`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/main_finance.py), around line 215, change the configuration of the Deep Orchestrator and add your server as a new server to `available_servers`:
+2. In [`src/main.py`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/main.py), around line 215, change the configuration of the Deep Orchestrator and add your server as a new server to `available_servers`:
 
 ```python
     # Add your server to the `available_servers`:
@@ -513,7 +516,7 @@ mcp:
         ...
 ```
 
-3. Edit the appropriate `*_agent.md` prompt templates in the [`templates`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/tree/main/src/finance_deep_search/templates) directory to tell the agent how to use this tool, including performance optimization tips. See, for example, how the main finance deep research prompt, [`src/finance_deep_search/templates/financial_research_agent.md`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/tree/main/src/finance_deep_search/templates/financial_research_agent.md), provides instructions for tool use.
+3. Edit the appropriate `*_agent.md` prompt templates in the [`templates`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/tree/main/src/dra/apps/finance/templates) directory to tell the agent how to use this tool, including performance optimization tips. See, for example, how the main finance deep research prompt, [`src/dra/apps/finance/templates/financial_research_agent.md`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/tree/main/src/dra/apps/finance/templates/financial_research_agent.md), provides instructions for tool use.
 
 4. Add any corresponding secrets like API keys to `mcp_agent.secrets.yaml` or use environment variables.
 
@@ -531,9 +534,9 @@ mcp:
       args: ["your-mcp-tool"]
 ```
 
-2. Add it to `available_servers` in [`src/main_finance.py`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/main_finance.py) as shown above.
+2. Add it to `available_servers` in [`src/main.py`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/main.py) as shown above.
 
-An example is is the `filesystem` service configured in `mcp_agent.config.yaml` and `src/main_finance.py`, for local file access.
+An example is is the `filesystem` service configured in `mcp_agent.config.yaml` and `src/main.py`, for local file access.
 
 ## Contributing to This Project
 

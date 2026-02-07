@@ -629,10 +629,15 @@ class MarkdownObserver(Observer[DeepSearch]):
         return result_section
 
     def __report_results(self, messages: list[str] = [], error_msg: str = None):
+        output_dir_path_msg = ''
+        odp = self.__get_var_value('output_dir_path', None)
+        if odp:
+            output_dir_path_msg = f"output files under `{odp}` and "
+
         content = [
             "> **NOTE:**", 
             "> \n",
-            f"> Finished! See output files under `{self.output_dir_path}` and log files under `./logs`.",
+            f"> Finished! See {output_dir_path_msg}log files under `./logs`.",
         ]
         if messages:
             content.append("> \n")
