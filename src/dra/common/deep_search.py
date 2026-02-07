@@ -25,7 +25,7 @@ from mcp_agent.workflows.deep_orchestrator.orchestrator import DeepOrchestrator
 from mcp_agent.workflows.llm.augmented_llm import RequestParams
 
 from dra.common.observer import Observer, Observers 
-from dra.common.tasks import BaseTask, GenerateTask, AgentTask
+from dra.common.tasks import BaseTask, GenerateTask, AgentTask, TaskStatus
 from dra.common.utils.prompts import load_prompt_markdown
 from dra.common.utils.strings import replace_variables, truncate
 from dra.common.variables import Variable, VariableFormat
