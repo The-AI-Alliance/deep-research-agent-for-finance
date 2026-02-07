@@ -48,9 +48,12 @@ class ParserUtil():
             description=self.description,
             epilog="""
     Due to current limitations, you must use either OpenAI, Anthropic, or local models
-    served by ollama, and you have to tell us which one using the `--provider` argument.
-    It defaults to 'openai'. The value will be used to select the correct "mcp_agent_config.yaml"
-    file for configuring settings.
+    served by ollama, and you have to tell us which one using the '--provider' argument.
+    It defaults to 'openai'. The value will be used to select the correct 'mcp_agent_config.yaml'
+    file for configuring settings. 
+    The mcp_agent library can also search for a 'mcp_agent.config.yaml' in the project root directory, 
+    "./.mcp-agent", and "~/.mcp-agent/", as described in mcp-agent's documentation. 
+    Pass '' or None as the '--mcp-agent-config' to trigger this process.
     """
         )
         return self.parser
@@ -63,8 +66,9 @@ class ParserUtil():
             k = key.replace('--', '').replace('_', '-')
             return self.defaults.get(k)
 
-    def make_def_mcp_agent_config_path(self, provider: str = "PROVIDER") -> str:
-        return f"dra/apps/{self.which_app}/config/mcp_agent.config.{provider}.yaml"
+    def make_def_mcp_agent_config_path(self, provider: str = None) -> str:
+        pstr = '.ollama' if provider == 'ollama' else ''
+        return f"dra/apps/{self.which_app}/config/mcp_agent.config{pstr}.yaml"
 
     def relative_to(self, rw: str, where: str) -> str:
         return f"If the path doesn't contain a directory prefix, then the file will be {rw} in the directory given by '--{where}'."
@@ -165,7 +169,7 @@ class ParserUtil():
         default = self.get_default("--mcp-agent-config", default)
         self.parser.add_argument(
             "--mcp-agent-config", default=default,
-            help=f"Path to the mcp_agent_config.yaml file for configuration settings. (Default: {default}) Specify an absolute path or a path relative to the project's \"src\" directory. Or, pass '' or None to have the mcp_agent library search for mcp_agent.config.yaml in the root directory, ./.mcp-agent, or ~/.mcp-agent/, as described in mcp-agent's documentation."
+            help=f"Path to the mcp_agent_config.yaml file for configuration settings. (Default: {default}) Specify an absolute path or a path relative to the project's \"src\" directory. See the bottom of this help for more information."
         )
 
     def add_arg_short_run(self):

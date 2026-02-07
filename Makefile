@@ -63,7 +63,11 @@ RESEARCH_MODEL             ?= gpt-4o
 INFERENCE_PROVIDER         ?= openai
 TEMPLATES_DIR              ?= ${REL_APP_DIR}/templates
 MARKDOWN_YAML_HEADER_FILE  ?= github_pages_header.yaml
-MCP_AGENT_CONFIG_FILE      ?= ${REL_APP_DIR}/config/mcp_agent.config.${INFERENCE_PROVIDER}.yaml
+ifeq (ollama,${INFERENCE_PROVIDER})
+	MCP_AGENT_CONFIG_FILE    ?= ${REL_APP_DIR}/config/mcp_agent.config.${INFERENCE_PROVIDER}.yaml
+else
+	MCP_AGENT_CONFIG_FILE    ?= ${REL_APP_DIR}/config/mcp_agent.config.yaml
+endif
 TEMPERATURE                ?= 0.7
 MAX_ITERATIONS             ?= 25
 
