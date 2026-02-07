@@ -77,11 +77,11 @@ class BaseTask():
         raise Exception("Abstract method BaseTask._run() called!")
 
     def attributes_as_strs(self, 
-        which_formatting: VariableFormat = VariableFormat.PLAIN, 
+        variable_format: VariableFormat = VariableFormat.PLAIN, 
         exclusions: set[str] = {}) -> dict[str,str]:
         """
         Return a dictionary of nicely-formatted labels and values for the attributes.
-        The which_formatting flag let's you change styles, e.g., 'markdown' or 'plain'
+        The variable_format flag let's you change styles, e.g., 'markdown' or 'plain'
         Optional exclude some attributes.
         """
         # First create a dictionary with the attribute names as keys and formatted values,
@@ -123,7 +123,7 @@ class BaseTask():
 
         # Create and return a new dictionary, using the labels as keys and formatted
         # strings as values.
-        attrs = dict([(l,s) for _, l, s in Variable.make_formatted(vars, variable_format=which_formatting)])
+        attrs = dict([(l,s) for _, l, s in Variable.make_formatted(vars, variable_format=variable_format)])
         return attrs
 
     def __repr__(self) -> str: 
@@ -231,11 +231,11 @@ class AgentTask(BaseTask):
                 ),
             )
 
-    def attributes_as_strs(self, which_formatting: VariableFormat = VariableFormat.PLAIN, exclusions: set[str] = {}) -> dict[str,str]:
-        d = super().attributes_as_strs(exclusions)
+    def attributes_as_strs(self, variable_format: VariableFormat = VariableFormat.PLAIN, exclusions: set[str] = {}) -> dict[str,str]:
+        d = super().attributes_as_strs(variable_format=variable_format, exclusions=exclusions)
         if 'generate_prompt' not in exclusions:
             var = Variable('generate_prompt', self.generate_prompt)
-            _, label, value_str = var.format()
+            _, label, value_str = var.format(variable_format=variable_format)
             d[label] = value_str
         return d
 
