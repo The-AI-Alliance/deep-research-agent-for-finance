@@ -484,7 +484,7 @@ The Deep Research Agent for Finance integrates into data sources using MCP, whic
 
 Let's discuss changing the tools and services used. We'll assume you are making direct access to them, versus going through a gateway, like IBM Context Forge (mentioned above). Modify the content as described for Context Forge if you are going through a gateway.
 
-There are four steps to adding (or changing) a service:
+There are several steps to adding (or changing) a service:
 
 1. In [`mcp_agent.config.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/mcp_agent.config.yaml), add the details for the MCP server. For example:
 
@@ -520,6 +520,8 @@ mcp:
 
 4. Add any corresponding secrets like API keys to `mcp_agent.secrets.yaml` or use environment variables.
 
+5. Edit the list of tools in the prompt file YAML headers (top of the files) in `src/apps/*/templates`. Only add new tools and services that make sense for that task.
+
 ### Adding Local MCP Tools and Services
 
 Similar to the instructions above for remote services, add local MCP tools and services similarly:
@@ -536,7 +538,9 @@ mcp:
 
 2. Add it to `available_servers` in [`src/main.py`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/main.py) as shown above.
 
-An example is is the `filesystem` service configured in `mcp_agent.config.yaml` and `src/main.py`, for local file access.
+3. Edit the list of tools in the prompt file YAML headers (top of the files) in `src/apps/*/templates`. Only add new tools and services that make sense for that task.
+
+An example is the `filesystem` service configured in `mcp_agent.config.yaml`, `src/main.py`, and `src/apps/finance/templates/financial_research_agent.md` for local file access.
 
 ## Contributing to This Project
 
