@@ -89,7 +89,7 @@ class DeepSearch():
                 await asyncio.sleep(update_iteration_frequency_secs)
             except Exception as e:
                 err_msg = f"WARNING: Error updating observers: {e}"
-                print(error_msg)
+                print(err_msg)
                 if self.logger:
                     self.logger.warning(err_msg)
                 break
@@ -97,12 +97,13 @@ class DeepSearch():
     async def run(self):
         await self.__finish_init()
 
-        verbose = self.variables.get('verbose', Variable('verbose', False))
-        if verbose.value:
+        verbose = Variable.get(self.variables.get('verbose'), False)
+        if verbose:
             self.__print_details()
 
-        update_iteration_frequency_secs = self.variables.get(
-            'update_iteration_frequency_secs', 1.0)
+        update_iteration_frequency_secs = Variable.get(
+            self.variables.get(
+                'update_iteration_frequency_secs'), 1.0)
 
         async def do_work():
 
@@ -116,10 +117,9 @@ class DeepSearch():
                 error_msg = await self.run_tasks()
             finally:
                 # Final update...
-                await self.observers.async_update()
-                self.observers.update(
-                    is_final=True,
-                    other={'messages': [], 'error_msg': error_msg})
+                other = {'messages': [], 'error_msg': error_msg}
+                await self.observers.async_update(is_final=True, other=other)
+                self.observers.update(is_final=True, other=other)
                 update_task.cancel()
                 try:
                     await update_task

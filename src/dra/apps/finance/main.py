@@ -131,10 +131,10 @@ if __name__ == "__main__":
     # Change to app directory
     # os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-    output_dir_path = process_args['output_dir_path']
+    output_dir_path = processed_args['output_dir_path']
     output_spreadsheet_path = resolve_path(args.output_spreadsheet, output_dir_path)
     
-    templates_dir_path = process_args['templates_dir_path']
+    templates_dir_path = processed_args['templates_dir_path']
     # These must exist:
     financial_research_prompt_path = resolve_and_require_path(args.financial_research_prompt_path, templates_dir_path)
     excel_writer_agent_prompt_path = resolve_and_require_path(args.excel_writer_agent_prompt_path, templates_dir_path)
@@ -160,7 +160,7 @@ if __name__ == "__main__":
         Variable("excel_writer_agent_prompt_path", excel_writer_agent_prompt_path, kind='file'),
     ])
     variables_list.extend(only_verbose_common_vars(args, processed_args))
-    variables_list['ux_title'] = "Deep Research Agent for Finance"
+    variables_list.append(Variable('ux_title', "Deep Research Agent for Finance"))
 
     variables = dict([(v.key, v) for v in variables_list])
 
@@ -194,8 +194,8 @@ if __name__ == "__main__":
 
     variables["config"] = Variable("config", config, label="Configuration", kind=only_verbose(args))
 
-    observers = process_args['observers']    
-    display = process_args['display']
+    observers = processed_args['observers']    
+    display = processed_args['display']
     
     deep_search = DeepSearch(
         app_name=def_app_name,

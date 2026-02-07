@@ -10,6 +10,7 @@ from typing import Callable
 
 from dra.common.deep_search import DeepSearch
 from dra.common.markdown import MarkdownObserver
+from dra.common.observer import Observer, Observers
 from dra.common.utils.paths import resolve_path, resolve_and_require_path
 from dra.common.variables import Variable
 

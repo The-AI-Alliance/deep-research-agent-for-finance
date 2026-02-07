@@ -277,7 +277,14 @@ class RichDeepOrchestratorMonitor():
 
 
 class RichDisplay(Display):
+    """
+    The Rich Display.
+    To keep the logic as simple and bug free as possible, we only allow the DeepSearch instance
+    to be set once, during lazy initialization, where it is changed from `None` to the 
+    real instance.
+    """
     def __init__(self, title: str):
+        super().__init__(title, disallow_system_change=True)
         self.orchestrator: DeepOrchestrator = None
         self.monitor: RichDeepOrchestratorMonitor = None
         self.console: Console = None
@@ -289,13 +296,13 @@ class RichDisplay(Display):
         self.start_time = time.time()
         self.execution_time = 0.0
 
-    def set_system(self, system: System):
-        super().set_system(system)
-        if self.system:
-            self.orchestrator = self.system.orchestrator
-            self.monitor = RichDeepOrchestratorMonitor(self.orchestrator)
-            self.console = Console(highlight=False, soft_wrap=False, emoji=False)
-            self.layout  = self.__create_layout()
+    def _after_set_system(self):
+        self.system.logger.info("RichDisplay._after_set_system() (self.system not None)")
+        self.orchestrator = self.system.orchestrator
+        self.monitor = RichDeepOrchestratorMonitor(self.orchestrator)
+        self.console = Console(highlight=False, soft_wrap=False, emoji=False)
+        self.layout  = self.__create_layout()
+        super()._after_set_system()
 
     def __create_layout(self) -> Layout:
         """Create the display Rich Layout"""
@@ -336,7 +343,8 @@ class RichDisplay(Display):
         If `other['messages']` and/or `other['error_msg']` are not empty/None, then 
         format a `list[str]` with them, print it, and return the list.
         """
-
+        # self.system.logger.info(f"RichDisplay._do_update(is_final={is_final})")
+        
         # Header
         self.layout["header"].update(
             Panel("Deep Research", style="bold blue")
@@ -369,18 +377,22 @@ class RichDisplay(Display):
         )
         self.layout["right"].update(right_content)
 
-        if not is_final:
-            return None
-
         self.__update_final_statistics()
         self.__update_budget_summary()
         self.__update_knowledge_summary()
         self.__update_workspace_artifacts()
         self.__update_report_results()
 
+        if not is_final:
+            return None
+
+        output_dir_path_msg = ''
+        if self.system and hasattr(self.system, 'output_dir_path'):
+            output_dir_path_msg = f"output files under {self.system.output_dir_path} and "
+
         msg_list1 = [
             "\n",
-            f"Finished: See output files under {self.output_dir_path} and log files under ./logs.",
+            f"Finished: See {output_dir_path_msg}log files under ./logs.",
             "\n",
         ]
         if other.get('messages'):
@@ -393,8 +405,10 @@ class RichDisplay(Display):
             self.system.logger.info(line)
         return msg_list
 
-    async def async_update(self):
-        await self.__update_token_usage()
+    async def async_update(self,
+        other: dict[str,any] = {},
+        is_final: bool = False) -> any:
+        return await self.__update_token_usage()
 
     def __update_final_statistics(self):
         # Display final statistics

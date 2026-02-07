@@ -22,7 +22,7 @@ from dra.common.observer import Observer
 from dra.common.deep_search import DeepSearch
 from dra.common.tasks import BaseTask, GenerateTask, AgentTask, TaskStatus
 from dra.common.utils.strings import MarkdownUtil, clean_json_string, replace_variables
-from dra.common.variables import Variable
+from dra.common.variables import Variable, VariableFormat
 
 from dra.common.markdown.elements import (
     MarkdownElement,
@@ -326,28 +326,22 @@ class MarkdownObserver(Observer[DeepSearch]):
             See `__repr__()`. This YAML block will be printed first, if the template isn't None
             or the resolved block isn't empty, followed by the hierarchical Markdown sections 
             held in `self.layout`.
+            To keep the logic as simple and bug free as possible, we only allow the DeepSearch instance
+            to be set once, during lazy initialization, where it is changed from `None` to the 
+            real instance.
         """
-        super().__init__()
+        super().__init__(disallow_system_change=True)
         self.title = title
         self.yaml_header_template = yaml_header_template
         # Lazy initialize these in `_after_set_system()`.
         self.monitor: MarkdownDeepOrchestratorMonitor = None
         self.orchestrator: DeepOrchestrator = None
 
-    def _before_set_system(self):
-        """
-        While not recommended, this hook will finish the existing Markdown report.
-        The subsequent call to `_after_set_system()` below will start a new one, but
-        the new report will be written _to the same file location_ as the old one.
-        The expectation is that `_before_set_system()` will never actually be called,
-        but `_after_set_system()` will be called once and only once during an app run.
-        """
-        super()._before_set_system()
-        if self.system:
-            self._do_update(is_final=True)
-
     def _after_set_system(self):
-        """See comments in `_before_set_system()`.""" 
+        """
+        Once the system is set, we finish initializing this object.
+        """ 
+        self.system.logger.info("MarkdownDisplay._after_set_system() (self.system not None)")
         self.orchestrator = self.system.orchestrator
         self.monitor = MarkdownDeepOrchestratorMonitor(self.orchestrator)
 
@@ -366,6 +360,8 @@ class MarkdownObserver(Observer[DeepSearch]):
         Update the display with the current state. Because the final Markdown report 
         is all we care about, we don't do anything unless `is_final == True`! 
         """
+        # self.system.logger.info(f"MarkdownDisplay._do_update(is_final={is_final})")
+        
         if not is_final:
             return self.layout
 
@@ -401,8 +397,12 @@ class MarkdownObserver(Observer[DeepSearch]):
 
         return self.layout
 
-    async def async_update(self):
-        await self.__update_token_usage()
+    async def async_update(self,
+        other: dict[str,any] = {},
+        is_final: bool = False) -> any:
+        if not is_final:
+            return None
+        return await self.__update_token_usage()
 
     def __get_var_value(self, key: str, default: any = None) -> any:
         if not self.system:
