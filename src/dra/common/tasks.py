@@ -87,12 +87,15 @@ class BaseTask():
         # First create a dictionary with the attribute names as keys and formatted values,
         # which we'll then filter for exclusions, then return a new dictionary with the
         # keys converted to nice labels.
-        prompt = "No task prompt string!"
-        result = "No task results!"
+        prompt_str = "No task prompt string!"
+        result_str = "No task results!"
         if self.prompt:
-            prompt = Variable('code', truncate(str(self.prompt), 200, '...'), kind='callout')
+            prompt_str = truncate(str(self.prompt), 200, '...')
         if self.result:
-            result = Variable('code', truncate(str(self.result), 200, '...'), kind='callout')
+            result_str = truncate(str(self.result), 200, '...')
+        
+        prompt = Variable('code', prompt_str, kind='callout')
+        result = Variable('code', result_str, kind='callout')
 
         vars = [
             Variable('name',                 self.name, kind='code'),
@@ -108,7 +111,7 @@ class BaseTask():
         for key in ['temperature', 'max_iterations', 'max_tokens', 'max_cost_dollars', 'max_time_minutes']:
             value = self.properties.get(key)
             if value:
-                vars.append = value
+                vars.append(value)
 
         # Put these two potentially long strings at the end.
         vars.extend([prompt, result])

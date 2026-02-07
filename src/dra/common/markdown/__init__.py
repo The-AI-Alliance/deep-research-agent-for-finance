@@ -596,7 +596,7 @@ class MarkdownObserver(Observer[DeepSearch]):
         task_table = MarkdownTable(
             title=f'**Task {task.title} (`{task.name}`) Properties**',
             columns=['Property', 'Value'])
-        for key, value in task.attributes_as_strs(variable_format = VariableFormat.MARKDOWN).items():
+        for key, value in task.attributes_as_strs(which_formatting = VariableFormat.MARKDOWN).items():
             task_table.add_row([key, value])
 
         result_section = MarkdownSection(title=f"Task #{task_number}: {task.title} (`{task.name}`)", 

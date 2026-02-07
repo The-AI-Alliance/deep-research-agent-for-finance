@@ -247,9 +247,9 @@ class DeepSearch():
                 enable_filesystem=True,
             )
             budget_config=BudgetConfig(
-                max_tokens=10000,
-                max_cost=0.20,
-                max_time_minutes=2,
+                max_tokens=1000,
+                max_cost=0.10,
+                max_time_minutes=1,
             )
         else:
             def get_val(key: str, default: any) -> any:
