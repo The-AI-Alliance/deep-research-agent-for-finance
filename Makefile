@@ -49,7 +49,7 @@ OUTPUT_SPREADSHEET         ?= ${TICKER}_financials.xlsx
 
 # For all apps:
 ifeq (finance,${APP})
-	OUTPUT_DIR              ?= ../output/${APP}/${TIMESTAMP}/${TICKER}
+	OUTPUT_DIR              ?= ../output/${APP}/${TICKER}
 	OUTPUT_REPORT           ?= ${TICKER}_report.md
 else
 	OUTPUT_DIR              ?= ../output/${APP}/${TIMESTAMP}
@@ -177,20 +177,30 @@ endef
 # Because of "colliding" variable definitions, if more than one app is run,
 # make is invoked separately for each app.
 
-.PHONY: all list-apps view-pages view-local clean clean_code clean_docs help 
-.PHONY: setup-jekyll run-jekyll
-.PHONY: all-apps all-apps-help app-run do-app-run-${APP} app-setup app-check 
+.PHONY: all list-apps app-setup
+.PHONY: setup-jekyll run-jekyll view-pages view-local clean clean_code clean_docs help 
+.PHONY: all-apps all-apps-help app-run do-app-run-${APP} before-app-run app-check setup-output-dir after-app-run
 
 .PHONY: uv-check uv-cmd-check venv-check
 .PHONY: mcp-agent-check test tests
 .PHONY: print-info print-app-info print-make-info print-docs-info show-output-files
 
-all:: list-apps
-list-apps::
+all list-apps::
 	@echo "Available Apps: ${APPS}"
-	@echo "To run a particular app, use 'make APP=foo run-app'. See also 'make app-help'."
+	@echo "To run a particular app, use 'make run-app-foo'. See also 'make app-help'."
 
-app-run:: app-check do-app-run-${APP} show-output-files
+apps_run := ${APPS:%=app-run-%}
+${apps_run}::
+	${MAKE} APP=${@:app-run-%=%} app-run
+
+app-run:: before-app-run do-app-run-${APP} after-app-run
+before-app-run:: app-check setup-output-dir
+# Note that OUTPUT_DIR is defined relative to SRC_DIR, but we are currently not in SRC_DIR
+setup-output-dir::
+	@test ! -d ${SRC_DIR}/${OUTPUT_DIR} || (mv ${SRC_DIR}/${OUTPUT_DIR} ${SRC_DIR}/${OUTPUT_DIR}-${TIMESTAMP} && echo "Moved old ${SRC_DIR}/${OUTPUT_DIR} to ${SRC_DIR}/${OUTPUT_DIR}-${TIMESTAMP}")
+	mkdir -p ${SRC_DIR}/${OUTPUT_DIR}
+	@echo
+after-app-run:: show-output-files
 
 do-app-run-finance::
 	cd ${SRC_DIR} && uv run -m ${APP_MODULE} \
@@ -237,7 +247,7 @@ do-app-run-medical::
 		
 show-output-files::
 	@echo
-	@echo "Output files in ${OUTPUT_DIR}:"
+	@echo "Output files in ${SRC_DIR}/${OUTPUT_DIR}:"
 	@cd ${SRC_DIR}/${OUTPUT_DIR} && find . -type f -exec ls -lh {} \;
 
 test tests:: uv-check

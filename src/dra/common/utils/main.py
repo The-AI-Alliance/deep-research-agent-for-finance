@@ -61,7 +61,6 @@ class ParserUtil():
         else:
             # convenience: remove leading '--' if present and change '_' to '-'.
             k = key.replace('--', '').replace('_', '-')
-            print(f"key = {key}, k = {k}")
             return self.defaults.get(k)
 
     def make_def_mcp_agent_config_path(self, provider: str = "PROVIDER") -> str:
@@ -201,7 +200,7 @@ class ParserUtil():
 
         markdown_yaml_header_path = None
         if self.args.markdown_yaml_header:
-            markdown_yaml_header_path = self.resolve_and_require_path(self.args.markdown_yaml_header, templates_dir_path)
+            markdown_yaml_header_path = resolve_and_require_path(self.args.markdown_yaml_header, templates_dir_path)
 
         # If the default value for the mcp_agent_config_path is used, then replace it
         # with the same string but with PROVIDER replaced by the actual provider value.
@@ -212,7 +211,7 @@ class ParserUtil():
                 provider = self.args.provider
                 file = file.replace("PROVIDER", provider)
             # There is no alternative parent path searched for this argument, so we pass None.
-            mcp_agent_config_path = self.resolve_and_require_path(file, None)
+            mcp_agent_config_path = resolve_and_require_path(file, None)
 
         temperature = self.args.temperature
         if self.args.temperature < 0.0:

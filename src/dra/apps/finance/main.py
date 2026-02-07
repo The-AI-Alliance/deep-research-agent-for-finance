@@ -103,7 +103,7 @@ if __name__ == "__main__":
     output_dir_path = parser_util.processed_args['output_dir_path']
     output_spreadsheet_path = resolve_path(parser_util.args.output_spreadsheet, output_dir_path)
     
-    templates_dir_path = processed_args['templates_dir_path']
+    templates_dir_path = parser_util.processed_args['templates_dir_path']
     # These must exist:
     financial_research_prompt_path = resolve_and_require_path(
         parser_util.args.financial_research_prompt_path, templates_dir_path)
@@ -165,7 +165,7 @@ if __name__ == "__main__":
 
     variables["config"] = Variable("config", config, 
         label="Configuration", 
-        kind=parser_util.only_verbose(args))
+        kind=parser_util.only_verbose())
 
     observers = parser_util.processed_args['observers']    
     display = parser_util.processed_args['display']
