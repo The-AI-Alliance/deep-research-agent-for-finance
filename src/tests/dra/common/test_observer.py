@@ -47,16 +47,19 @@ class TestObserver(unittest.TestCase):
         obs = TestObserver.CounterObserver()
         self.assertEqual(None, obs.system)
 
-    def check_observation(self, obs: CounterObserver, counter: Counter, disallow_system_change: bool=False):
+    def check_observation(self, obs: CounterObserver, counter: Counter, disallow_system_change: bool=False, ignore_range: range=None):
         expected_counts = [0]
         expected_others = {0: {}}
         for i in range(4):
             i1 = i+1
+            if ignore_range and i in ignore_range:
+                obs.pause()
+            else:
+                obs.resume()
+                expected_counts.append(i1)
+                expected_others[i1] = {}
             counter.incr()
             self.assertNotEqual(None, obs.system)
-            expected_counts.append(i1)
-            expected_others[i1] = {}
-
             self.assertEqual(disallow_system_change, obs.disallow_system_change)
             self.assertEqual(False, obs.is_final)
             self.assertEqual(expected_counts, obs.counts)
@@ -73,6 +76,11 @@ class TestObserver(unittest.TestCase):
         obs = TestObserver.CounterObserver()
         counter = TestObserver.Counter(obs)
         self.check_observation(obs, counter)
+
+    def test_Observer_update_ignores_updates_if_paused(self):
+        obs = TestObserver.CounterObserver()
+        counter = TestObserver.Counter(obs)
+        self.check_observation(obs, counter, ignore_range=range(1,3))
 
     def test_Observer_update_changes_system_when_allowed(self):
         obs = TestObserver.CounterObserver()
@@ -97,6 +105,29 @@ class TestObserver(unittest.TestCase):
         self.assertEqual(False, obs.is_final)
         self.assertEqual([], obs.counts)
         self.assertEqual({}, obs.others)
+
+    def test_Observers_add_new_observers_allowed_if_keys_unique(self):
+        obs1 = TestObserver.CounterObserver()
+        obs2 = TestObserver.CounterObserver()
+        obss = Observers({'obs1': obs1, 'obs2': obs2})
+        obss.add_observers({'obs3': TestObserver.CounterObserver()})
+        self.assertEqual(3, len(obss.observers))
+
+    def test_Observers_add_new_observers_does_nothing_if_input_None_or_empty(self):
+        obs1 = TestObserver.CounterObserver()
+        obs2 = TestObserver.CounterObserver()
+        obss = Observers({'obs1': obs1, 'obs2': obs2})
+        obss.add_observers({})
+        self.assertEqual(2, len(obss.observers))
+        obss.add_observers(None)
+        self.assertEqual(2, len(obss.observers))
+
+    def test_Observers_add_new_observers_disallowed_if_keys_not_unique(self):
+        obs1 = TestObserver.CounterObserver()
+        obs2 = TestObserver.CounterObserver()
+        obss = Observers({'obs1': obs1, 'obs2': obs2})
+        with self.assertRaises(ValueError):
+            obss.add_observers({'obs1': TestObserver.CounterObserver()})
 
 if __name__ == "__main__":
     unittest.main()

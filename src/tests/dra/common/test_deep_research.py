@@ -1,4 +1,4 @@
-# Unit tests for the "deep search" module using Hypothesis for property-based testing.
+# Unit tests for the "deep research" module using Hypothesis for property-based testing.
 # https://hypothesis.readthedocs.io/en/latest/
 
 from hypothesis import given, strategies as st
@@ -6,15 +6,15 @@ import unittest
 from pathlib import Path
 import os, re, shutil, sys
 
-from dra.common.deep_search import DeepSearch
+from dra.common.deep_research import DeepResearch
 from mcp_agent.workflows.deep_orchestrator.config import DeepOrchestratorConfig
 
 output_dir = './tests/output/META'
 output_dir_path = Path(output_dir)
 
-class TestDeepSearch(unittest.TestCase):
+class TestDeepResearch(unittest.TestCase):
     """
-    Test DeepSearch. TODO
+    Test DeepResearch. TODO
     """
 
     @classmethod
@@ -25,8 +25,9 @@ class TestDeepSearch(unittest.TestCase):
     def tearDownClass(cls):
         shutil.rmtree(output_dir)
 
+    # TODO: This will fail if executed as the constructor args have changed!
     def make(self,
-            app_name: str = 'DeepSearchTest',
+            app_name: str = 'DeepResearchTest',
             config: DeepOrchestratorConfig = None,
             ticker: str = 'META',
             company_name: str = 'Meta Platforms, Inc.',
@@ -34,13 +35,13 @@ class TestDeepSearch(unittest.TestCase):
             research_model_name: str = 'llama3.2:3B',
             excel_writer_model_name: str = 'llama3.2:3B',
             provider: str = 'ollama',
-            templates_dir: str = 'finance_deep_search/templates',
+            templates_dir: str = 'dra/apps/finance/templates',
             financial_research_prompt_path: str = 'financial_research_agent.md',
             excel_writer_agent_prompt_path: str = 'excel_writer_agent.md',
             output_spreadsheet_path: str = output_dir_path / "META_financials.xlsx",
             short_run: bool = False,
             verbose: bool = False):
-        return DeepSearch(
+        return DeepResearch(
             app_name = app_name,
             config = config,
             ticker = ticker,

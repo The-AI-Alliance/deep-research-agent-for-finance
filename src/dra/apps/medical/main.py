@@ -11,30 +11,40 @@ This example demonstrates the Deep Orchestrator (AdaptiveOrchestrator) for medic
 - Full state visibility throughout execution
 """
 
-import argparse
-import asyncio
-import os
-import sys
-import time
-from datetime import datetime
 from pathlib import Path
-from typing import Callable
-
-from mcp_agent.workflows.deep_orchestrator.config import (
-    DeepOrchestratorConfig,
-    ExecutionConfig,
-    BudgetConfig,
-)
-
-from dra.common.deep_search import DeepSearch
+from dra.common.observer import Observer
 from dra.common.tasks import BaseTask, GenerateTask, AgentTask
-from dra.common.utils.main import ParserUtil
+from dra.common.utils.main import ParserUtil, Runner
 from dra.common.utils.paths import resolve_path, resolve_and_require_path
 from dra.common.variables import Variable
 from dra.ux.display import Display
 
+def get_server_list() -> list[str]:
+    """Define the list of tools and services to use for this app."""
+    return [
+        "fetch",
+        "filesystem",
+        "medical-datasets",
+    ]
 
-if __name__ == "__main__":
+def get_extra_observers() -> dict[str, Observer]:
+    """
+    Define any "extra" observers you want, e.g., for additional logging or tracing.
+    To avoid subtle bugs, it is disallowed to add a new observer with the same key
+    as an existing observer. Hence, the `Runner` object used below will verify
+    there are no "key collisions".
+    """
+    return {} # none by default
+
+def define_cli_arguments() -> ParserUtil:
+    """
+    Start by defining default values for our custom CLI arguments, 
+    followed by the names, UX title, etc. for this app.
+
+    Returns:
+        ParserUtil:        A utility that handles CLI arguments and common processing steps for them.
+        dict[str, Path]:   A dictionary of processed input and output paths.
+    """
 
     def_medical_research_agent_prompt_file = "medical_research_agent.md"
     
@@ -43,6 +53,8 @@ if __name__ == "__main__":
     ux_title='Medical Deep Research Agent'
     description = "Medical Deep Research using orchestrated AI agents"
     parser_util = ParserUtil(which_app, app_name, ux_title, description)
+
+    # Define the CLI arguments. It is best to put required arguments first.
 
     parser_util.parser.add_argument(
         "-q", "--query",
@@ -69,7 +81,24 @@ if __name__ == "__main__":
     parser_util.add_arg_short_run()
     parser_util.add_arg_verbose()
     
+    return parser_util
+
+def process_cli_arguments(parser_util: ParserUtil) -> dict[str, Path]:
+    """
+    Process the actual supplied arguments, resolve the common input and output paths
+    like for `--markdown-report` and `--markdown-yaml-header`, etc. (See the discussion
+    in the project README.md.)
+    """
+
     parser_util.process_args()
+
+    # Custom paths for this app.
+    # For example, the help for this option (and most output options) tells the user
+    # that if the argument doesn't have a path prefix, we will write to the location
+    # specified by `--output-dir`. We call `resolve_path` to handle this. (This is done
+    # for you in `parser_util.process_args()` for common arguments like `--markdown-report`
+    # Obviously an 
+    # output file isn't expected to exist yet, so `resolve_and_require_path` isn't called!
     
     output_dir_path = parser_util.processed_args['output_dir_path']    
     templates_dir_path = parser_util.processed_args['templates_dir_path']
@@ -77,60 +106,78 @@ if __name__ == "__main__":
     medical_research_prompt_path = resolve_and_require_path(
         parser_util.args.medical_research_prompt_path, templates_dir_path)
 
+    return {
+        'medical_research_prompt_path': medical_research_prompt_path,
+    }
+
+def create_variables(parser_util: ParserUtil, paths: dict[str,Path]) -> dict[str, Variable]:
+    """
+    The variables dict contains values used throughout the app, including labels 
+    for display purposes and a format feature for rendering the values as plain text,
+    Markdown-appropriate (e.g., `foo` for code), etc. The returned `Variable` dictionary
+    is used more or less like typical Python function `**kvs`.
+    Because the variables are also used for display purposes, we declare them somewhat in
+    the order of most interest to the user, starting with application-specific definitions.
+
+    Args:
+        parser_util (ParserUtil):  A utility that handles CLI arguments and common processing steps for them.
+        paths (dict[str, Path]):   A dictionary of processed input and output paths.
+
+    Return:
+        dict[str, Variable]:       A dictionary of `Variable`s used throughout the app.
+    """
     # The variables dict contains values used by the app components, labels 
     # for display purposes and a format for knowing how to render the value.
     # Start with values we want to see at the top:
     variables_list = [
-        Variable("start_time",  processed_args['start_time']),
-        Variable("query",       args.query),
+        Variable("start_time",  parser_util.processed_args['start_time']),
+        Variable("query",       parser_util.args.query),
     ]
     # Add common values across apps:
     variables_list.extend(parser_util.common_variables())
     
     # Finish with the remaining custom variables for this app and "verbose" variables:
     variables_list.extend([
-        Variable("medical_research_prompt_path", medical_research_prompt_path, kind='file'),
+        Variable("medical_research_prompt_path", paths["medical_research_prompt_path"], kind='file'),
     ])
     variables_list.extend(parser_util.only_verbose_common_vars())
 
-    variables = dict([(v.key, v) for v in variables_list])
+    return dict([(v.key, v) for v in variables_list])
+
+def make_tasks(parser_util: ParserUtil, variables: dict[str, Variable]) -> list[BaseTask]:
+    """
+    Create the tasks for this research agent. All applications will start with a 
+    `GenerateTask` to drive the `mcp-agent` "Deep Orchestrator" that invokes the tools
+    and MCP services (discussed below) to do the basic research, aggregate the results 
+    and generate a report at the end.
+    Additional `AgentTask`s and `GenerateTask`s might be used for additional processing.
+    In the finance app, an `AgentTask` is used to generate an Excel spreadsheet with the 
+    results.
+
+    Args:
+        parser_util (ParserUtil):         A utility that handles CLI arguments and common processing steps for them.
+        variables (dict[str, Variable]):  A dictionary of `Variable`s used throughout the app.
+
+    Return:
+        list[BaseTask]:                   A list of the tasks to do.
+    """
 
     tasks = [
         GenerateTask(
             name="medical_research",
             title="📊 Medical Research Result",
-            model_name=args.research_model,
-            prompt_template_path=medical_research_prompt_path,
-            output_dir_path=output_dir_path,
+            model_name=parser_util.args.research_model,
+            prompt_template_path=variables['financial_research_prompt_path'].value,
+            output_dir_path=variables['output_dir_path'].value,
             properties=variables),
     ]
+    return tasks
 
-    # Create configuration for the Deep Orchestrator
-    # To add additional servers, define them in mcp_agent.config.yaml,
-    # then add them by name the list passed for `available_servers`.
-    # See the project README for details.
-
-    config: DeepOrchestratorConfig = DeepSearch.make_default_config(
-        parser_util.args.short_run,
-        "MedicalDeepResearcher",
-        ["fetch", "filesystem", "medical-datasets"])
-    
-
-    variables["config"] = Variable("config", config, 
-        label="Configuration", 
-        kind=parser_util.only_verbose())
-
-    observers = parser_util.processed_args['observers']    
-    display = parser_util.processed_args['display']
-
-    deep_search = DeepSearch(
-        app_name=app_name,
-        provider=parser_util.args.provider,
-        config=config,
-        tasks=tasks,
-        output_dir_path=output_dir_path,
-        display=display,
-        observers=observers,
-        variables=variables)
-
-    asyncio.run(deep_search.run())
+if __name__ == "__main__":
+    parser_util = define_cli_arguments()
+    paths = process_cli_arguments(parser_util)
+    variables = create_variables(parser_util, paths)
+    tasks = make_tasks(parser_util, variables)
+    runner = Runner(
+        tasks, get_server_list(), get_extra_observers(), parser_util, variables)
+    runner.run()

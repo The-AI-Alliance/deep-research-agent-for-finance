@@ -22,7 +22,7 @@ from rich.layout import Layout
 from rich.columns import Columns
 from rich import box
 
-from dra.common.deep_search import DeepSearch
+from dra.common.deep_research import DeepResearch
 from dra.common.tasks import BaseTask, GenerateTask, AgentTask, TaskStatus
 from dra.common.utils.strings import truncate
 from dra.ux.display import Display
@@ -279,7 +279,7 @@ class RichDeepOrchestratorMonitor():
 class RichDisplay(Display):
     """
     The Rich Display.
-    To keep the logic as simple and bug free as possible, we only allow the DeepSearch instance
+    To keep the logic as simple and bug free as possible, we only allow the DeepResearch instance
     to be set once, during lazy initialization, where it is changed from `None` to the 
     real instance.
     """

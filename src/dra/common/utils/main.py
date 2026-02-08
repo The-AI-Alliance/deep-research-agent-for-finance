@@ -8,9 +8,12 @@ from datetime import datetime
 from pathlib import Path
 from typing import Callable
 
-from dra.common.deep_search import DeepSearch
+from mcp_agent.workflows.deep_orchestrator.config import DeepOrchestratorConfig
+
+from dra.common.deep_research import DeepResearch
 from dra.common.markdown import MarkdownObserver
 from dra.common.observer import Observer, Observers
+from dra.common.tasks import BaseTask
 from dra.common.utils.paths import resolve_path, resolve_and_require_path
 from dra.common.variables import Variable
 
@@ -296,3 +299,66 @@ class ParserUtil():
             Variable("ux_title",          self.processed_args['ux_title'], label = "UX Title", kind=fmt),
         ]
 
+class Runner():
+    """
+    Finishes construction of deep research app components and runs the app!
+    """
+
+    def __init__(self,
+        tasks: list[BaseTask],
+        available_servers: list[str],
+        extra_observers: dict[str, Observer],
+        parser_util: ParserUtil,
+        variables: dict[str, Variable]):
+        """
+        Args:
+            tasks (list[BaseTask]):               The tasks to run.
+            available_servers (list[str]):        The MCP servers, tools, etc. to use. 
+            extra_observers (dict[str,Observer]): Any optional, extra `Observer`s to watch the app.
+            parser_util (ParserUtil):             The `ParserUtil` with arguments, etc.
+            variables (dict[str,Variable]):       The `Variable`s passed around.
+        """
+        self.tasks = tasks
+        self.available_servers = available_servers
+        self.parser_util = parser_util
+        self.variables = variables
+
+        # Create the configuration for the Deep Orchestrator. 
+        self.config: DeepOrchestratorConfig = DeepResearch.make_default_config(
+            parser_util.args.short_run,
+            parser_util.ux_title,
+            available_servers,
+            variables)
+
+        # Add the config to the variables.
+        variables["config"] = Variable("config", self.config, 
+            label="Configuration", 
+            kind=parser_util.only_verbose())
+
+        # Get the common observers and the display. You can add observers here,
+        # if you have additional ones.
+        observers = self.__get_observers(extra_observers)
+        display = parser_util.processed_args['display']
+        
+        # Create our deep research wrapper.
+        self.deep_research = DeepResearch(
+            app_name=parser_util.app_name,
+            provider=parser_util.args.provider,
+            config=config,
+            tasks=tasks,
+            display=display,
+            observers=observers,
+            variables=variables)
+
+    async def run(self):
+        """Run the application!"""
+        asyncio.run(self.deep_research.run())
+
+    def __get_observers(self, extra_observers: dict[str, Observer]):
+        # Verify there are no duplicates!
+        observers = self.parser_util.processed_args['observers']  
+        try:
+            observers.add_observers(extra_observers)  
+        except ValueError as ve:
+            raise ValueError(f'The extra observers passed to Runner have at least some keys that collide with the app-defined observers.') from ve
+        return observers

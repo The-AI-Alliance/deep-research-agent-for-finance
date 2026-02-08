@@ -31,7 +31,7 @@ from dra.common.utils.strings import replace_variables, truncate
 from dra.common.variables import Variable, VariableFormat
 from dra.ux.display import Display
 
-class DeepSearch():
+class DeepResearch():
     """
     Wrapper around mcp_agent for the deep research apps.
     """
@@ -43,7 +43,6 @@ class DeepSearch():
             provider: str,
             config: DeepOrchestratorConfig,
             tasks: list[BaseTask],
-            output_dir_path: Path,
             display: Display,
             observers: Observers,
             variables: dict[str, Variable]):
@@ -51,7 +50,7 @@ class DeepSearch():
         self.provider = provider
         self.config = config
         self.tasks = tasks
-        self.output_dir_path = output_dir_path
+        self.output_dir_path = variables['output_dir_path'].value
         self.display = display
         self.observers = observers
         self.variables = variables
@@ -160,7 +159,7 @@ class DeepSearch():
             # Now let the observers know
             self.observers.update(self)
 
-            self.logger.debug("Finished DeepSearch initialization")
+            self.logger.debug("Finished DeepResearch initialization")
 
     def add_observers(self, observers: dict[str, Observer]) -> dict[str, Observer]:
         """

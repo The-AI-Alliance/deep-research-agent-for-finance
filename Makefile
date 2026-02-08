@@ -51,6 +51,9 @@ OUTPUT_SPREADSHEET         ?= ${TICKER}_financials.xlsx
 ifeq (finance,${APP})
 	OUTPUT_DIR              ?= ../output/${APP}/${TICKER}
 	OUTPUT_REPORT           ?= ${TICKER}_report.md
+else ifeq (medical,${APP})
+	OUTPUT_DIR              ?= ../output/${APP}/${TIMESTAMP}
+	OUTPUT_REPORT           ?= report.md
 else
 	OUTPUT_DIR              ?= ../output/${APP}/${TIMESTAMP}
 	OUTPUT_REPORT           ?= report.md
@@ -197,6 +200,10 @@ apps_run := ${APPS:%=app-run-%}
 ${apps_run}::
 	${MAKE} APP=${@:app-run-%=%} app-run
 
+apps_help := ${APPS:%=app-help-%}
+${apps_help}::
+	${MAKE} APP=${@:app-help-%=%} app-help
+
 app-run:: before-app-run do-app-run-${APP} after-app-run
 before-app-run:: app-check setup-output-dir
 # Note that OUTPUT_DIR is defined relative to SRC_DIR, but we are currently not in SRC_DIR
@@ -206,15 +213,16 @@ setup-output-dir::
 	@echo
 after-app-run:: show-output-files
 
+# Application-specific run commands:
 do-app-run-finance::
 	cd ${SRC_DIR} && uv run -m ${APP_MODULE} \
 		--ticker "${TICKER}" \
 		--company-name "${COMPANY_NAME}" \
+		--reporting-currency "${REPORTING_CURRENCY}" \
 		--output-dir "${OUTPUT_DIR}" \
 		--markdown-report "${OUTPUT_REPORT}" \
 		--markdown-yaml-header "${MARKDOWN_YAML_HEADER_FILE}" \
 		--output-spreadsheet "${OUTPUT_SPREADSHEET}" \
-		--reporting-currency "${REPORTING_CURRENCY}" \
 		--templates-dir "${TEMPLATES_DIR}" \
 		--financial-research-prompt-path "${FIN_RESEARCH_PROMPT_FILE}" \
 		--excel-writer-agent-prompt-path "${EXCEL_WRITER_PROMPT_FILE}" \

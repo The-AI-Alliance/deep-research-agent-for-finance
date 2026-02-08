@@ -151,6 +151,21 @@ class Observers(Observer):
             raise ValueError("Observers() called with an empty list of observers!")
         self.observers = observers
 
+    def add_observers(self, extras: dict[str, Observer]):
+        """
+        Add more Observers. For safety, we raise an exception if a new key already exists!
+        Nothing changes if `extras` is empty or None.
+        """
+        if not extras:
+            return
+        for key in extras.keys():
+            bad_keys = []
+            if key in self.observers:
+                bad_keys.append(key)
+            if bad_keys:
+                raise ValueError(f"At least one input Observer key already exists: {bad_keys} (current keys: {list(self.observers.keys())}, new keys: {list(extras.keys())}")
+        self.observers.update(extras)
+
     async def async_update(self,
         other: dict[str,any] = {},
         is_final: bool = False) -> any:

@@ -19,7 +19,7 @@ from openai.types.chat import ChatCompletionMessage
 from anthropic.types import Message
 
 from dra.common.observer import Observer
-from dra.common.deep_search import DeepSearch
+from dra.common.deep_research import DeepResearch
 from dra.common.tasks import BaseTask, GenerateTask, AgentTask, TaskStatus
 from dra.common.utils.strings import MarkdownUtil, clean_json_string, replace_variables
 from dra.common.variables import Variable, VariableFormat
@@ -296,7 +296,7 @@ class MarkdownDeepOrchestratorMonitor():
         self.execution_time = self.end_time - self.start_time
         return self.execution_time
 
-class MarkdownObserver(Observer[DeepSearch]):
+class MarkdownObserver(Observer[DeepResearch]):
     """
     A Markdown "display", which is used to produce a markdown-formatted report
     at the end of execution. No output is generated during execution, unlike 
@@ -316,7 +316,7 @@ class MarkdownObserver(Observer[DeepSearch]):
             yaml_header_template (Path): An optional template for a YAML block that will be printed first. Useful for GitHub Pages display.
         
         Returns:
-            MarkdownObserver: An observer of DeepSearch state for rendering Markdown.
+            MarkdownObserver: An observer of DeepResearch state for rendering Markdown.
         
         Discussion:
             When printing the final report, the following call, the `yaml_header_template`
@@ -326,7 +326,7 @@ class MarkdownObserver(Observer[DeepSearch]):
             See `__repr__()`. This YAML block will be printed first, if the template isn't None
             or the resolved block isn't empty, followed by the hierarchical Markdown sections 
             held in `self.layout`.
-            To keep the logic as simple and bug free as possible, we only allow the DeepSearch instance
+            To keep the logic as simple and bug free as possible, we only allow the DeepResearch instance
             to be set once, during lazy initialization, where it is changed from `None` to the 
             real instance.
         """
@@ -594,7 +594,7 @@ class MarkdownObserver(Observer[DeepSearch]):
 
     def __make_task_results_section(self, task_number: int, task: BaseTask) -> MarkdownSection:
         task_table = MarkdownTable(
-            title=f'**Task {task.title} (`{task.name}`) Properties**',
+            title=f'Task {task.title} (`{task.name}`) Properties',
             columns=['Property', 'Value'])
         # We don't pass any exclusions...
         for key, value in task.attributes_as_strs(variable_format = VariableFormat.MARKDOWN).items():

@@ -14,9 +14,9 @@
 | `provider` | ollama |
 | `output_path` | /Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-finance/output/META |
 | `output_spreadsheet_path` | ('/Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-finance/output/META/financials_META.xlsx',) |
-| `prompts_path` | finance_deep_search/prompts |
-| `financial_research_prompt_path` | finance_deep_search/prompts/financial_research_agent.md |
-| `excel_writer_agent_prompt_path` | finance_deep_search/prompts/excel_writer_agent.md |
+| `prompts_path` | finance_deep_research/prompts |
+| `financial_research_prompt_path` | finance_deep_research/prompts/financial_research_agent.md |
+| `excel_writer_agent_prompt_path` | finance_deep_research/prompts/excel_writer_agent.md |
 | `start_time` | 2026-01-29 18:00:43 |
 | `short_run` | False |
 | `verbose` | True |
