@@ -325,36 +325,36 @@ class Runner():
 
         # Create the configuration for the Deep Orchestrator. 
         self.config: DeepOrchestratorConfig = DeepResearch.make_default_config(
-            parser_util.args.short_run,
-            parser_util.ux_title,
-            available_servers,
-            variables)
+            self.parser_util.args.short_run,
+            self.parser_util.ux_title,
+            self.available_servers,
+            self.variables)
 
         # Add the config to the variables.
         variables["config"] = Variable("config", self.config, 
             label="Configuration", 
-            kind=parser_util.only_verbose())
+            kind=self.parser_util.only_verbose())
 
         # Get the common observers and the display. You can add observers here,
         # if you have additional ones.
-        observers = self.__get_observers(extra_observers)
-        display = parser_util.processed_args['display']
+        self.observers = self.__get_observers(extra_observers)
+        self.display = self.parser_util.processed_args['display']
         
         # Create our deep research wrapper.
         self.deep_research = DeepResearch(
-            app_name=parser_util.app_name,
-            provider=parser_util.args.provider,
-            config=config,
-            tasks=tasks,
-            display=display,
-            observers=observers,
-            variables=variables)
+            app_name=self.parser_util.app_name,
+            provider=self.parser_util.args.provider,
+            config=self.config,
+            tasks=self.tasks,
+            display=self.display,
+            observers=self.observers,
+            variables=self.variables)
 
     async def run(self):
         """Run the application!"""
         asyncio.run(self.deep_research.run())
 
-    def __get_observers(self, extra_observers: dict[str, Observer]):
+    def __get_observers(self, extra_observers: dict[str, Observer]) -> dict[str, Observer]:
         # Verify there are no duplicates!
         observers = self.parser_util.processed_args['observers']  
         try:

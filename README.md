@@ -84,7 +84,13 @@ Here are the most useful `make` targets:
 | `app-help-finance`   | Help on the finance application |
 | `app-help-medical`   | Help on the medical application |
 | `app-run-finance`    | Run the finance application     |
-| `app-run-medical`    | Run the medical application     |
+| `app-run-medical`    | Run the medical application (see note) |
+
+> [!NOTE]
+> The medical application requires you to supply a query. Do it this way:
+>```shell
+> make QUERY="What are the causes of diabetes mellitus?" app-run-medical
+>```
 
 > [!TIP]
 > Run the command `make -n app-run-APP` to see what command would be executed without actually running it.
@@ -701,13 +707,19 @@ You may have already done this in the step above to define the servers you need,
 
 Currently the `Makefile` knows about the two applications for `finance` and `medical`. For example, the following convenient make targets are there:
 
-| Target               | Description                     |
+| Make Target          | Description                     |
 | :------------------- | :------------------------------ |
 | `list-apps`          | List the known applications     |
 | `app-help-finance`   | Help on the finance application |
 | `app-help-medical`   | Help on the medical application |
 | `app-run-finance`    | Run the finance application     |
-| `app-run-medical`    | Run the medical application     |
+| `app-run-medical`    | Run the medical application (see note) |
+
+> [!NOTE]
+> The medical application requires you to supply a query. Do it this way:
+>```shell
+> make QUERY="What are the causes of diabetes mellitus?" app-run-medical
+>```
 
 Make the following changes to add support for the history application:
 

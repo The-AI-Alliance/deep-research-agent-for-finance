@@ -105,6 +105,9 @@ def process_cli_arguments(parser_util: ParserUtil) -> dict[str, Path]:
     # Obviously an 
     # output file isn't expected to exist yet, so `resolve_and_require_path` isn't called!
     
+    query = parser_util.args.query
+    if not query.strip():
+        raise ValueError("The medical app query can't be empty!")
     output_dir_path = parser_util.processed_args['output_dir_path']    
     templates_dir_path = parser_util.processed_args['templates_dir_path']
     # This must exist:
@@ -173,7 +176,7 @@ def make_tasks(parser_util: ParserUtil, variables: dict[str, Variable]) -> list[
             name="medical_research",
             title="📊 Medical Research Result",
             model_name=parser_util.args.research_model,
-            prompt_template_path=variables['financial_research_prompt_path'].value,
+            prompt_template_path=variables['medical_research_prompt_path'].value,
             output_dir_path=variables['output_dir_path'].value,
             properties=variables),
     ]
