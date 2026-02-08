@@ -19,9 +19,6 @@ mcp:
     fetch:
       command: "uvx"
       args: ["mcp-server-fetch"]
-    medical-datasets:
-      command: "npx"
-      args: ["-y", "mcp-remote", "https://mcp.tbd/mcp"]
     filesystem:
       command: "npx"
       args: ["-y", "@modelcontextprotocol/server-filesystem", "."]

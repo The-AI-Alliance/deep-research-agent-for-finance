@@ -37,7 +37,7 @@ APP_ARGS                   ?=
 # Pass in a quoted string for the query.
 QUERY                      ?=
 MEDICAL_RESEARCH_PROMPT_FILE ?= medical_research_agent.md
-
+REPORT_TITLE               ?= Medical Report
 # For the Finance app:
 TICKER                     ?= META
 COMPANY_NAME               ?= Meta Platforms, Inc.
@@ -241,6 +241,7 @@ do-app-run-finance::
 do-app-run-medical::
 	cd ${SRC_DIR} && uv run -m ${APP_MODULE} \
 		--query "${QUERY}" \
+		--report-title "${REPORT_TITLE}" \
 		--output-dir "${OUTPUT_DIR}" \
 		--markdown-report "${OUTPUT_REPORT}" \
 		--markdown-yaml-header "${MARKDOWN_YAML_HEADER_FILE}" \

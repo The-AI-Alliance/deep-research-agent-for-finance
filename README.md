@@ -89,7 +89,7 @@ Here are the most useful `make` targets:
 > [!TIP]
 > Run the command `make -n app-run-APP` to see what command would be executed without actually running it.
 
-Without using make, the minimum required arguments for the finance application are `--ticker TICKER` and `--company-name COMPANY_NAME`. For the medical application, the one required argument is `--query "QUERY"`. So, for example, here is the shortest command you can run to do research on Meta:
+Without using make, the minimum required arguments for the finance application are `--ticker TICKER` and `--company-name COMPANY_NAME`. For the medical application, the one required argument is `--query "QUERY"` (`--report-title TITLE` is optional, but recommended). So, for example, here is the shortest command you can run to do research on Meta:
 
 ```shell
 cd src && uv run -m dra.apps.finance.main --ticker META --company-name "Meta Platforms, Inc."

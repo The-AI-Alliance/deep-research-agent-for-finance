@@ -24,7 +24,6 @@ def get_server_list() -> list[str]:
     return [
         "fetch",
         "filesystem",
-        "medical-datasets",
     ]
 
 def get_extra_observers() -> dict[str, Observer]:
@@ -47,6 +46,7 @@ def define_cli_arguments() -> ParserUtil:
     """
 
     def_medical_research_agent_prompt_file = "medical_research_agent.md"
+    def_report_title = "Medical Report"
     
     which_app='medical'
     app_name = "medical_deep_research"
@@ -66,6 +66,11 @@ def define_cli_arguments() -> ParserUtil:
     parser_util.add_arg_templates_dir()
     parser_util.parser.add_argument(
         "--medical-research-prompt-path",
+        default=def_report_title,
+        help=f"A concise title to use for the report. (Default: {def_report_title})"
+    )
+    parser_util.parser.add_argument(
+        "--report-title",
         default=def_medical_research_agent_prompt_file,
         help=f"Path where the main research agent prompt file is located. (Default: {def_medical_research_agent_prompt_file}) {parser_util.read_relative_from('templates-dir')}"
     )
@@ -130,8 +135,9 @@ def create_variables(parser_util: ParserUtil, paths: dict[str,Path]) -> dict[str
     # for display purposes and a format for knowing how to render the value.
     # Start with values we want to see at the top:
     variables_list = [
-        Variable("start_time",  parser_util.processed_args['start_time']),
-        Variable("query",       parser_util.args.query),
+        Variable("start_time",    parser_util.processed_args['start_time']),
+        Variable("query",         parser_util.args.query),
+        Variable("report_title",  parser_util.args.report_title, kind='str'),
     ]
     # Add common values across apps:
     variables_list.extend(parser_util.common_variables())
