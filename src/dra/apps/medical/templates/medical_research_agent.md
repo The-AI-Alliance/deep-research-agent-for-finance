@@ -104,5 +104,3 @@ Insert a level three (`###`) section for each of your main sources of informatio
 -->
 
 ```
-
-Write this report to two files, {{markdown_report_path}}, and medical_report.markdown in the current working directory.

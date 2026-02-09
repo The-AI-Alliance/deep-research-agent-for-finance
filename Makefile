@@ -52,8 +52,8 @@ ifeq (finance,${APP})
 	OUTPUT_DIR              ?= ../output/${APP}/${TICKER}
 	OUTPUT_REPORT           ?= ${TICKER}_report.md
 else ifeq (medical,${APP})
-	OUTPUT_DIR              ?= ../output/${APP}/${TIMESTAMP}
-	OUTPUT_REPORT           ?= report.md
+	OUTPUT_DIR              ?= ../output/${APP}/${REPORT_TITLE}
+	OUTPUT_REPORT           ?= ${REPORT_TITLE}_report.md
 else
 	OUTPUT_DIR              ?= ../output/${APP}/${TIMESTAMP}
 	OUTPUT_REPORT           ?= report.md

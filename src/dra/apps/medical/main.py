@@ -11,6 +11,7 @@ This example demonstrates the Deep Orchestrator (AdaptiveOrchestrator) for medic
 - Full state visibility throughout execution
 """
 
+import asyncio
 from pathlib import Path
 from dra.common.observer import Observer
 from dra.common.tasks import BaseTask, GenerateTask, AgentTask
@@ -189,4 +190,4 @@ if __name__ == "__main__":
     tasks = make_tasks(parser_util, variables)
     runner = Runner(
         tasks, get_server_list(), get_extra_observers(), parser_util, variables)
-    runner.run()
+    asyncio.run(runner.run())

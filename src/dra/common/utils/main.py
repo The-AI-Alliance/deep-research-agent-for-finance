@@ -352,7 +352,7 @@ class Runner():
 
     async def run(self):
         """Run the application!"""
-        asyncio.run(self.deep_research.run())
+        await self.deep_research.run()
 
     def __get_observers(self, extra_observers: dict[str, Observer]) -> dict[str, Observer]:
         # Verify there are no duplicates!
