@@ -292,3 +292,6 @@ pac.entitlement
 
 # MCP Agent logs
 logs/
+
+# Some AI development tools...
+.adaptive_workspace

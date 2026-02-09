@@ -2,7 +2,7 @@ name: 🐞 Bug
 description: File a bug/issue
 title: "[BUG] <title>"
 labels: bug
-assignees: [deanwampler,andrew-lastmile]
+assignees: [deanwampler]
 projects: [The-AI-Alliance/42]
 body:
 - type: checkboxes

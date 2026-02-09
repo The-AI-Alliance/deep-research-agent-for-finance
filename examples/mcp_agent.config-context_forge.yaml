@@ -1,0 +1,31 @@
+# This is part of an mcp_agent.config.yaml file example for using 
+# IBM Context Forge as a service gateway. Only the `mcp: servers:`
+# part is shown. See the other mcp_agent.config.yaml files in this
+# project for the full contents.
+
+mcp:
+  servers:
+    # Examples using Context Forge/MCP Gateway as the proxy for the first
+    # three (external) services. A local test server will have the base URL
+    # "http://localhost:4444", by default, which we use here. Replace this
+    # value with the correct URL for your Context Forge deployment.
+    fetch:
+      command: "npx"
+      args: ["-y", "mcp-remote", "http://localhost:4444/mcp/fetch", 
+             "--header", "Authorization: Bearer ${MCPGATEWAY_BEARER_TOKEN}"]
+    yfmcp:
+      command: "npx"
+      args: ["-y", "mcp-remote", "http://localhost:4444/mcp/yfmcp",
+             "--header", "Authorization: Bearer ${MCPGATEWAY_BEARER_TOKEN}"]
+    financial-datasets:
+      command: "npx"
+      args: ["-y", "mcp-remote", "http://localhost:4444/mcp/financial-datasets",
+             "--header", "Authorization: Bearer ${MCPGATEWAY_BEARER_TOKEN}"]
+
+    # Local services that don't use the gateway.
+    filesystem:
+      command: "npx"
+      args: ["-y", "@modelcontextprotocol/server-filesystem", "."]
+    excel_writer:
+      command: "uvx"
+      args: ["excel-mcp-server", "stdio"]

@@ -37,3 +37,29 @@ We also want to demonstrate techniques for testing AI-enabled applications, wher
 ## Try It!
 
 The project [README](https://github.com/The-AI-Alliance/deep-research-agent-for-finance){:target="repo"} describes how to install the dependencies and run this application.
+
+{: .note}
+> **NOTE:**
+>
+> Any of the `app-run-*` commands shown will invoke the inference service defined for all the applications, potentially incurring charges.
+
+Here are some commands to try:
+
+```shell
+# For the default finance app:
+make app-help        # Details on running the default Finance app.
+make app-run         # Run the default Finance app with default arguments.
+make -n app-run      # Tell make to show the command, but don't run it.
+
+# For all the apps:
+make list-apps       # List all the apps currently available.
+make all-apps-help   # Details on running all the apps.
+
+# To run a specific app:
+make app-run-finance # Same as "make app-run"
+make APP=finance app-run # Another way to run the finance app, specifically.
+
+make app-run-medical # Run the medical app with default arguments
+make APP=medical app-run # Another way to run the medical app, specifically.
+```
+

@@ -1,0 +1,46 @@
+# see https://docs.mcp-agent.com/reference/configuration
+$schema: ../../../schema/mcp-agent.config.schema.json
+
+name: deep_research_agent
+execution_engine: asyncio
+
+logger:
+  transports: [file]
+  level: debug # debug, info, warning, error
+  progress_display: true
+  path_settings:
+    # Logs rel
+    path_pattern: "../logs/deep-research-agent-{unique_id}.jsonl"
+    unique_id: "timestamp" # Options: "timestamp" or "session_id"
+    timestamp_format: "%Y%m%d_%H%M%S"
+
+mcp:
+  servers:
+    fetch:
+      command: "uvx"
+      args: ["mcp-server-fetch"]
+    yfmcp:
+      command: "uvx"
+      args: ["yfmcp@latest"]
+    financial-datasets:
+      command: "npx"
+      args: ["-y", "mcp-remote", "https://mcp.financialdatasets.ai/mcp"]
+    filesystem:
+      command: "npx"
+      args: ["-y", "@modelcontextprotocol/server-filesystem", "."]
+    excel_writer:
+      command: "uvx"
+      args: ["excel-mcp-server", "stdio"]
+      
+# Since Ollama and OpenAI use the same internal code path, i.e.,
+# mcp-agent's `OpenAIAugmentedLLM`, the definition for "openai:"
+# here is actually for inference through ollama.
+# Change the default model if you prefer to use another one.
+openai:
+  default_model: "gpt-oss:20b"
+  reasoning_effort: "medium"
+  base_url: "http://localhost:11434/v1"
+  api_key: "ignored"
+
+anthropic:
+  default_model: "claude-3-5-sonnet-20241022"

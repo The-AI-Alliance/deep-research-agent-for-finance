@@ -48,7 +48,7 @@ Then see [API Endpoints](https://ibm.github.io/mcp-context-forge/#api-endpoints)
 
 ### 2. Update the Deep Research Application Configuration File
 
-Edit `mcp_agent.config.yaml` to route external services through Context Forge. Here is how the three external services are currently configured:
+Edit the `mcp_agent.config*.yaml` files in the `src/dra/APP/config/` directory  corresponding to your application, where `APP` is `finance`, for example. Change the `servers` definitions to route external services through Context Forge. Here is how the three external services are currently configured:
 
 ```yaml
 mcp:
@@ -64,7 +64,7 @@ mcp:
       args: ["-y", "mcp-remote", "https://mcp.financialdatasets.ai/mcp"]
 ```
 
-If instead you deploy and/or manage access to any of these servers using Context Forge, then change the corresponding `servers:` definitions as follows, where `<gateway>` is a placeholder for the Context Forge server. For example, if you run a local test instance of Context Forge, `<gateway>` will be `http://localhost:4444` by default.
+If instead you deploy and/or manage access to any of these servers using Context Forge, then change the corresponding definitions as follows, where `<gateway>` is a placeholder for the Context Forge server. For example, if you run a local test instance of Context Forge, `<gateway>` will be `http://localhost:4444` by default.
 
 ```yaml
 mcp:
@@ -86,22 +86,18 @@ mcp:
 
 (_MCP Gateway_ was the original name for the IBM Context Forge project.)
 
-See `mcp_agent.config-context_forge.yaml` for an example configuration for a local Context Forge test deployment.
+This example is also in `examples/mcp_agent.config-context_forge.yaml`.
 
 ### 3. Verify Your Setup
 
 Test that the configuration works using a test run of the deep research application. Using `make`:
 
 ```bash
-make APP_ARGS='--short-run' app-run
+make APP_ARGS='--short-run' app-run-finance
 ```
 
 The `--short-run` flag limits iterations for a quick test. (The "research" results will be suboptimal...)
 
-Alternatively, use the following command:
-```bash
-cd src && uv run main.py --ticker META --company-name "Meta Platforms, Inc." --short-run
-```
 
 ## Troubleshooting
 
