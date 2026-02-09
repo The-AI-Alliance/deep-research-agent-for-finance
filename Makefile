@@ -52,8 +52,9 @@ ifeq (finance,${APP})
 	OUTPUT_DIR              ?= ../output/${APP}/${TICKER}
 	OUTPUT_REPORT           ?= ${TICKER}_report.md
 else ifeq (medical,${APP})
-	OUTPUT_DIR              ?= ../output/${APP}/${REPORT_TITLE}
-	OUTPUT_REPORT           ?= ${REPORT_TITLE}_report.md
+	rt = $(shell echo ${REPORT_TITLE} | sed -e 's/ /_/g' | tr '[A-Z]' '[a-z]')
+	OUTPUT_DIR              ?= ../output/${APP}/${rt}
+	OUTPUT_REPORT           ?= ${rt}.md
 else
 	OUTPUT_DIR              ?= ../output/${APP}/${TIMESTAMP}
 	OUTPUT_REPORT           ?= report.md
@@ -208,8 +209,8 @@ app-run:: before-app-run do-app-run-${APP} after-app-run
 before-app-run:: app-check setup-output-dir
 # Note that OUTPUT_DIR is defined relative to SRC_DIR, but we are currently not in SRC_DIR
 setup-output-dir::
-	@test ! -d ${SRC_DIR}/${OUTPUT_DIR} || (mv ${SRC_DIR}/${OUTPUT_DIR} ${SRC_DIR}/${OUTPUT_DIR}-${TIMESTAMP} && echo "Moved old ${SRC_DIR}/${OUTPUT_DIR} to ${SRC_DIR}/${OUTPUT_DIR}-${TIMESTAMP}")
-	mkdir -p ${SRC_DIR}/${OUTPUT_DIR}
+	@test ! -d "${SRC_DIR}/${OUTPUT_DIR}" || (mv "${SRC_DIR}/${OUTPUT_DIR}" "${SRC_DIR}/${OUTPUT_DIR}"-save-${TIMESTAMP} && echo "*** Moved old "${SRC_DIR}/${OUTPUT_DIR}" to "${SRC_DIR}/${OUTPUT_DIR}"-save-${TIMESTAMP} ***")
+	mkdir -p "${SRC_DIR}/${OUTPUT_DIR}"
 	@echo
 after-app-run:: show-output-files
 
@@ -239,7 +240,7 @@ do-app-run-finance::
 		${APP_ARGS}
 		
 do-app-run-medical::
-	cd ${SRC_DIR} && uv run -m ${APP_MODULE} \
+	echo cd ${SRC_DIR} && uv run -m ${APP_MODULE} \
 		--query "${QUERY}" \
 		--report-title "${REPORT_TITLE}" \
 		--output-dir "${OUTPUT_DIR}" \
@@ -261,7 +262,7 @@ do-app-run-medical::
 show-output-files::
 	@echo
 	@echo "Output files in ${SRC_DIR}/${OUTPUT_DIR}:"
-	@cd ${SRC_DIR}/${OUTPUT_DIR} && find . -type f -exec ls -lh {} \;
+	@cd "${SRC_DIR}/${OUTPUT_DIR}" && find . -type f -exec ls -lh {} \;
 
 test tests:: uv-check
 	cd ${SRC_DIR} && uv run python -m unittest discover

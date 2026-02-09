@@ -89,13 +89,14 @@ Here are the most useful `make` targets:
 > [!NOTE]
 > The medical application requires you to supply a query. Do it this way:
 >```shell
-> make QUERY="What are the causes of diabetes mellitus?" app-run-medical
+> make QUERY="What are the causes of diabetes mellitus?" \
+>      REPORT_TITLE="Diabetes Mellitus" app-run-medical
 >```
 
 > [!TIP]
 > Run the command `make -n app-run-APP` to see what command would be executed without actually running it.
 
-Without using make, the minimum required arguments for the finance application are `--ticker TICKER` and `--company-name COMPANY_NAME`. For the medical application, the one required argument is `--query "QUERY"` (`--report-title TITLE` is optional, but recommended). So, for example, here is the shortest command you can run to do research on Meta:
+Without using make, the minimum required arguments for the finance application are `--ticker TICKER` and `--company-name COMPANY_NAME`. For the medical application, `--query "QUERY"` and `--report-title TITLE` is strongly recommended, although a generic default value will be used. (The output directory and report file name will be based on it, too.) So, for example, here is the shortest command you can run to do research on Meta:
 
 ```shell
 cd src && uv run -m dra.apps.finance.main --ticker META --company-name "Meta Platforms, Inc."
@@ -104,7 +105,9 @@ cd src && uv run -m dra.apps.finance.main --ticker META --company-name "Meta Pla
 For researching diabetes:
 
 ```shell
-cd src && uv run -m dra.apps.medical.main --query "What are the treatment options and the long-term prognosis for adult patients diagnosed with diabetes"
+cd src && uv run -m dra.apps.medical.main \
+  --query "What are the treatment options and the long-term prognosis for adult patients diagnosed with diabetes mellitus" \
+  --report-title "Diabetes Mellitus"
 ```
 
 > [!NOTE]
