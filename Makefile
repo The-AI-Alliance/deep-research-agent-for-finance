@@ -34,10 +34,12 @@ MAX_TIME_MINUTES           ?= 15
 APP_ARGS                   ?=
 
 # For the medical app:
-# Pass in a quoted string for the query.
-QUERY                      ?=
-MEDICAL_RESEARCH_PROMPT_FILE ?= medical_research_agent.md
+# Pass in a quoted string for QUERY. We put a default value here for easy 
+# demonstration purposes. Similarly, you probably want to pass a good value 
+# for REPORT_TITLE
+QUERY                      ?= "What are the treatment options and the long-term prognosis for adult patients diagnosed with diabetes mellitus"
 REPORT_TITLE               ?= Medical Report
+MEDICAL_RESEARCH_PROMPT_FILE ?= medical_research_agent.md
 # For the Finance app:
 TICKER                     ?= META
 COMPANY_NAME               ?= Meta Platforms, Inc.

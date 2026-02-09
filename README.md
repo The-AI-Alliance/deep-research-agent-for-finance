@@ -84,30 +84,34 @@ Here are the most useful `make` targets:
 | `app-help-finance`   | Help on the finance application |
 | `app-help-medical`   | Help on the medical application |
 | `app-run-finance`    | Run the finance application     |
-| `app-run-medical`    | Run the medical application (see note) |
+| `app-run-medical`    | Run the medical application     |
 
 > [!NOTE]
-> The medical application requires you to supply a query. Do it this way:
->```shell
-> make QUERY="What are the causes of diabetes mellitus?" \
->      REPORT_TITLE="Diabetes Mellitus" app-run-medical
->```
+> For easy demonstration purposes, both apps have default definitions for their required flags in the `Makefile`, so you can just build these targets to see them run. 
 
 > [!TIP]
 > Run the command `make -n app-run-APP` to see what command would be executed without actually running it.
 
-Without using make, the minimum required arguments for the finance application are `--ticker TICKER` and `--company-name COMPANY_NAME`. For the medical application, `--query "QUERY"` and `--report-title TITLE` is strongly recommended, although a generic default value will be used. (The output directory and report file name will be based on it, too.) So, for example, here is the shortest command you can run to do research on Meta:
+Without using make, the minimum required arguments for the finance application are `--ticker TICKER` and `--company-name COMPANY_NAME`. For the medical application, `--query "QUERY"` and `--report-title TITLE` is strongly recommended, although a generic default value will be used. (The output directory and report file name will be based on it, too.) 
+
+So, for example, here are the shortest `make` and CLI commands you can run to do research on Meta:
+
 
 ```shell
-cd src && uv run -m dra.apps.finance.main --ticker META --company-name "Meta Platforms, Inc."
+$ make TICKER=META COMPANY_NAME="Meta Platforms, Inc." app-run-finance
+
+$ cd src && uv run -m dra.apps.finance.main --ticker META --company-name "Meta Platforms, Inc."
 ```
 
-For researching diabetes:
+For researching _diabetes mellitus_:
 
 ```shell
-cd src && uv run -m dra.apps.medical.main \
-  --query "What are the treatment options and the long-term prognosis for adult patients diagnosed with diabetes mellitus" \
-  --report-title "Diabetes Mellitus"
+$ make QUERY="What are the causes of diabetes mellitus?" \
+    REPORT_TITLE="Diabetes Mellitus" app-run-medical
+
+$ cd src && uv run -m dra.apps.medical.main \
+    --query "What are the causes of diabetes mellitus?" \
+    --report-title "Diabetes Mellitus"
 ```
 
 > [!NOTE]
@@ -716,13 +720,10 @@ Currently the `Makefile` knows about the two applications for `finance` and `med
 | `app-help-finance`   | Help on the finance application |
 | `app-help-medical`   | Help on the medical application |
 | `app-run-finance`    | Run the finance application     |
-| `app-run-medical`    | Run the medical application (see note) |
+| `app-run-medical`    | Run the medical application     |
 
 > [!NOTE]
-> The medical application requires you to supply a query. Do it this way:
->```shell
-> make QUERY="What are the causes of diabetes mellitus?" app-run-medical
->```
+> For easy demonstration purposes, both apps have default definitions for their required flags in the `Makefile`, so you can just build these targets to see them run. 
 
 Make the following changes to add support for the history application:
 
