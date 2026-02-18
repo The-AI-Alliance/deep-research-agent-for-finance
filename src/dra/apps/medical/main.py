@@ -15,6 +15,7 @@ import asyncio
 from pathlib import Path
 from dra.common.observer import Observer
 from dra.common.tasks import BaseTask, GenerateTask, AgentTask
+from dra.common.utils.io import UserPrompts
 from dra.common.utils.main import ParserUtil, Runner
 from dra.common.utils.paths import resolve_path, resolve_and_require_path
 from dra.common.variables import Variable
@@ -36,6 +37,17 @@ def get_extra_observers() -> dict[str, Observer]:
     """
     return {} # none by default
 
+class MedicalParseUtil(ParserUtil):
+    def __init__(self, which_app: str, app_name: str, ux_title: str, description: str):
+        super().__init__(which_app, app_name, ux_title, description)
+
+    def _do_prompt_for_missing_args(self, up: UserPrompts) -> dict[str, any]:
+        """Prompt the user for the query, if necessary."""
+        query = self.args.query
+        if not query or not query.strip():
+            query = up.read_multi_line_input("Input the query for your research")
+        return {'query': query}
+
 def define_cli_arguments() -> ParserUtil:
     """
     Start by defining default values for our custom CLI arguments, 
@@ -43,35 +55,28 @@ def define_cli_arguments() -> ParserUtil:
 
     Returns:
         ParserUtil:        A utility that handles CLI arguments and common processing steps for them.
-        dict[str, Path]:   A dictionary of processed input and output paths.
     """
 
     def_medical_research_agent_prompt_file = "medical_research_agent.md"
-    def_report_title = "Medical Report"
     
     which_app='medical'
     app_name = "medical_deep_research"
     ux_title='Medical Deep Research Agent'
     description = "Medical Deep Research using orchestrated AI agents"
-    parser_util = ParserUtil(which_app, app_name, ux_title, description)
+    parser_util = MedicalParseUtil(which_app, app_name, ux_title, description)
 
     # Define the CLI arguments. It is best to put required arguments first.
 
     parser_util.parser.add_argument(
         "-q", "--query",
-        required=True,
-        help=f"A quoted string with your research query."
+        help=f"A quoted string with your research query. If not provided on the command line, you will be prompted for it."
     )
-    parser_util.add_arg_output_dir()
     parser_util.add_arg_markdown_report_path()
+    parser_util.add_arg_markdown_research_report_title()
+    parser_util.add_arg_output_dir()
     parser_util.add_arg_templates_dir()
     parser_util.parser.add_argument(
         "--medical-research-prompt-path",
-        default=def_report_title,
-        help=f"A concise title to use for the report. (Default: {def_report_title})"
-    )
-    parser_util.parser.add_argument(
-        "--report-title",
         default=def_medical_research_agent_prompt_file,
         help=f"Path where the main research agent prompt file is located. (Default: {def_medical_research_agent_prompt_file}) {parser_util.read_relative_from('templates-dir')}"
     )
@@ -89,7 +94,7 @@ def define_cli_arguments() -> ParserUtil:
     
     return parser_util
 
-def process_cli_arguments(parser_util: ParserUtil) -> dict[str, Path]:
+def process_cli_arguments(parser_util: ParserUtil):
     """
     Process the actual supplied arguments, resolve the common input and output paths
     like for `--markdown-report` and `--markdown-yaml-header`, etc. (See the discussion
@@ -106,20 +111,16 @@ def process_cli_arguments(parser_util: ParserUtil) -> dict[str, Path]:
     # Obviously an 
     # output file isn't expected to exist yet, so `resolve_and_require_path` isn't called!
     
-    query = parser_util.args.query
-    if not query.strip():
-        raise ValueError("The medical app query can't be empty!")
     output_dir_path = parser_util.processed_args['output_dir_path']    
     templates_dir_path = parser_util.processed_args['templates_dir_path']
     # This must exist:
     medical_research_prompt_path = resolve_and_require_path(
         parser_util.args.medical_research_prompt_path, templates_dir_path)
 
-    return {
-        'medical_research_prompt_path': medical_research_prompt_path,
-    }
+    parser_util.processed_args['medical_research_prompt_path'] = \
+        medical_research_prompt_path
 
-def create_variables(parser_util: ParserUtil, paths: dict[str,Path]) -> dict[str, Variable]:
+def create_variables(parser_util: ParserUtil) -> dict[str, Variable]:
     """
     The variables dict contains values used throughout the app, including labels 
     for display purposes and a format feature for rendering the values as plain text,
@@ -130,25 +131,24 @@ def create_variables(parser_util: ParserUtil, paths: dict[str,Path]) -> dict[str
 
     Args:
         parser_util (ParserUtil):  A utility that handles CLI arguments and common processing steps for them.
-        paths (dict[str, Path]):   A dictionary of processed input and output paths.
 
     Return:
         dict[str, Variable]:       A dictionary of `Variable`s used throughout the app.
     """
     # The variables dict contains values used by the app components, labels 
     # for display purposes and a format for knowing how to render the value.
-    # Start with values we want to see at the top:
+    # Start with definitions we want to see at the top:
     variables_list = [
         Variable("start_time",    parser_util.processed_args['start_time']),
-        Variable("query",         parser_util.args.query),
-        Variable("report_title",  parser_util.args.report_title, kind='str'),
+        Variable("query",         parser_util.processed_args['query'], kind='str'),
+        Variable("research_report_title",  parser_util.processed_args['research_report_title'], kind='str'),
     ]
     # Add common values across apps:
     variables_list.extend(parser_util.common_variables())
     
     # Finish with the remaining custom variables for this app and "verbose" variables:
     variables_list.extend([
-        Variable("medical_research_prompt_path", paths["medical_research_prompt_path"], kind='file'),
+        Variable("medical_research_prompt_path", parser_util.processed_args["medical_research_prompt_path"], kind='file'),
     ])
     variables_list.extend(parser_util.only_verbose_common_vars())
 
@@ -185,8 +185,8 @@ def make_tasks(parser_util: ParserUtil, variables: dict[str, Variable]) -> list[
 
 if __name__ == "__main__":
     parser_util = define_cli_arguments()
-    paths = process_cli_arguments(parser_util)
-    variables = create_variables(parser_util, paths)
+    process_cli_arguments(parser_util)
+    variables = create_variables(parser_util)
     tasks = make_tasks(parser_util, variables)
     runner = Runner(
         tasks, get_server_list(), get_extra_observers(), parser_util, variables)

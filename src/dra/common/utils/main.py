@@ -2,6 +2,7 @@
 
 import argparse
 import os
+import re
 import sys
 import time
 from datetime import datetime
@@ -14,6 +15,7 @@ from dra.common.deep_research import DeepResearch
 from dra.common.markdown import MarkdownObserver
 from dra.common.observer import Observer, Observers
 from dra.common.tasks import BaseTask
+from dra.common.utils.io import UserPrompts
 from dra.common.utils.paths import resolve_path, resolve_and_require_path
 from dra.common.variables import Variable
 
@@ -32,6 +34,7 @@ class ParserUtil():
         self.processed_args: dict[str,any] = {}   # set by  self.process_args()
 
         self.defaults = {
+            'report-title': None,
             'output-dir': "./output",
             'templates-dir': "./templates",
             'markdown-report': f'{self.which_app}_research_report.md',
@@ -85,18 +88,25 @@ class ParserUtil():
 
     # Methods for adding arguments to the parser:
 
-    def add_arg_output_dir(self, default: str = None):
-        default = self.get_default("--output-dir", default)
+    def add_arg_markdown_research_report_title(self, default: str = None):
+        default = self.get_default("--report-title", default)
         self.parser.add_argument(
-            "--output-dir", default=default,
-            help=f"Path where Excel and other output files will be saved. (Default: {default})"
+            "--report-title", default=default,
+            help=f"A concise title to use for the report. If None, you will be prompted to input it."
         )
 
     def add_arg_markdown_report_path(self, default: str = None):
         default = self.get_default("--markdown-report", default)
         self.parser.add_argument(
             "--markdown-report", default=default,
-            help=f"Path where a Markdown report is written. If empty, no report is generated. (Default: {default}) {self.written_relative_to('output-dir')}"
+            help=f"Path where a Markdown report is written. If empty, a file name will be generated from the report title. (Default: {default}) {self.written_relative_to('output-dir')}"
+        )
+
+    def add_arg_output_dir(self, default: str = None):
+        default = self.get_default("--output-dir", default)
+        self.parser.add_argument(
+            "--output-dir", default=default,
+            help=f"Path where Excel and other output files will be saved. (Default: {default})"
         )
 
     def add_arg_templates_dir(self, default: str = None):
@@ -189,17 +199,57 @@ class ParserUtil():
             help="Print some extra output. Useful for some testing and debugging scenarios."
         )
 
-        
+    def prompt_for_missing_args(self) -> dict[str,any]:
+        """
+        Prompt the user for one or more arguments if they aren't provided on the command
+        line. Derived classes should only override _do_prompt_for_missing_args(), which
+        will be called _before_ this method prompts for arguments shared across the apps,
+        which is currently the `--report-title` argument only.
+        """
+        up = UserPrompts()
+        values = self._do_prompt_for_missing_args(up)
+        research_report_title = self.args.report_title
+        if not research_report_title or not research_report_title.strip():
+            research_report_title = up.read_one_line_input("Input the report title",
+                default="Analysis Report")
+        values['research_report_title'] = research_report_title
+        return values
+
+    def _do_prompt_for_missing_args(self, up: UserPrompts) -> dict[str, any]:
+        """Derived classes can override this method. They don't need to call this parent version."""
+        return {}
+
+    def __to_valid_file_name(s: str) -> str:
+        """Replace characters that are not allowed in file names!"""
+        return re.sub('[:/]', ' - ', s)
+
+    def _determine_report_path(self, output_dir_path: Path, research_report_title: str = None) -> Path:
+        """
+        What path should be used for the Markdown report? Either the user specified
+        one explicitly on the command line, or we compute one from the report title
+        argument if not empty, or we default to the value that begins with the "UX" 
+        title. Once this part of the path is determined, we use `resolve_path()` to
+        add the directory prefix, if necessary.
+        """
+        mr = self.args.markdown_report
+        if not mr:
+            if research_report_title:
+                mr = self.__to_valid_file_name(research_report_title) + ".md"
+            else:
+                mr = self.__to_valid_file_name(self.ux_title) + " Analysis Report.md"
+        return resolve_path(mr, output_dir_path)
+
     def process_args(self):
         self.args = self.parser.parse_args()
+
+        prompted_values = self.prompt_for_missing_args()
 
         # Ensure output directory exists
         output_dir_path = Path(self.args.output_dir)
         output_dir_path.mkdir(parents=True, exist_ok=True)
 
-        markdown_report_path = None
-        if self.args.markdown_report:
-            markdown_report_path = resolve_path(self.args.markdown_report, output_dir_path)
+        markdown_report_path = self._determine_report_path(output_dir_path,
+            research_report_title = prompted_values.get('research_report_title'))
 
         templates_dir_path = Path(self.args.templates_dir)
         if not templates_dir_path.exists():
@@ -246,9 +296,8 @@ class ParserUtil():
         display = RichDisplay(self.ux_title)
         observers_d = {'display': display}
 
-        if markdown_yaml_header_path:
-            mo = MarkdownObserver(self.ux_title, markdown_yaml_header_path)
-            observers_d['markdown'] = mo
+        mo = MarkdownObserver(prompted_values.get('research_report_title', self.ux_title), markdown_yaml_header_path)
+        observers_d['markdown'] = mo
         
         observers = Observers(observers=observers_d)
 
@@ -268,6 +317,7 @@ class ParserUtil():
             "max_time_minutes": max_time_minutes,
             "ux_title": self.ux_title,
         }
+        self.processed_args.update(prompted_values)
 
     def only_verbose(self, formatter: str = 'str') -> str | None:
         return formatter if self.args.verbose else None
@@ -279,6 +329,7 @@ class ParserUtil():
             Variable("templates_dir_path",         self.processed_args['templates_dir_path'], kind='file'),
             Variable("output_dir_path",            self.processed_args['output_dir_path'], kind='file'),
             Variable("research_report_path",       self.processed_args['markdown_report_path'], kind='file'),
+            Variable("research_report_title",      self.processed_args['research_report_title'], kind='str'),
             Variable("yaml_header_template_path",  self.processed_args['yaml_header_template_path'], kind='file'),
             Variable("mcp_agent_config_path",      self.processed_args['mcp_agent_config_path'], kind='file'),
         ]

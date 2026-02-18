@@ -34,12 +34,12 @@ MAX_TIME_MINUTES           ?= 15
 APP_ARGS                   ?=
 
 # For the medical app:
-# Pass in a quoted string for QUERY. We put a default value here for easy 
-# demonstration purposes. Similarly, you probably want to pass a good value 
-# for REPORT_TITLE
-QUERY                      ?= "What are the treatment options and the long-term prognosis for adult patients diagnosed with diabetes mellitus"
-REPORT_TITLE               ?= Medical Report
+# Pass in a quoted string for QUERY or prompt the user.
+# Do the same for the report title. Or, you will be prompted for them.
+# QUERY                      ?= 
+# REPORT_TITLE               ?= 
 MEDICAL_RESEARCH_PROMPT_FILE ?= medical_research_agent.md
+
 # For the Finance app:
 TICKER                     ?= META
 COMPANY_NAME               ?= Meta Platforms, Inc.
@@ -53,10 +53,11 @@ OUTPUT_SPREADSHEET         ?= ${TICKER}_financials.xlsx
 ifeq (finance,${APP})
 	OUTPUT_DIR              ?= ../output/${APP}/${TICKER}
 	OUTPUT_REPORT           ?= ${TICKER}_report.md
+	REPORT_TITLE            ?= ${TICKER} Report
 else ifeq (medical,${APP})
-	rt = $(shell echo ${REPORT_TITLE} | sed -e 's/ /_/g' | tr '[A-Z]' '[a-z]')
-	OUTPUT_DIR              ?= ../output/${APP}/${rt}
-	OUTPUT_REPORT           ?= ${rt}.md
+	OUTPUT_DIR              ?= ../output/${APP}
+	# Use the user-supplied title to create the report name.
+	# OUTPUT_REPORT           ?= medical-report.md
 else
 	OUTPUT_DIR              ?= ../output/${APP}/${TIMESTAMP}
 	OUTPUT_REPORT           ?= report.md
@@ -223,6 +224,7 @@ do-app-run-finance::
 		--company-name "${COMPANY_NAME}" \
 		--reporting-currency "${REPORTING_CURRENCY}" \
 		--output-dir "${OUTPUT_DIR}" \
+		--report-title "${REPORT_TITLE}" \
 		--markdown-report "${OUTPUT_REPORT}" \
 		--markdown-yaml-header "${MARKDOWN_YAML_HEADER_FILE}" \
 		--output-spreadsheet "${OUTPUT_SPREADSHEET}" \
@@ -242,11 +244,10 @@ do-app-run-finance::
 		${APP_ARGS}
 		
 do-app-run-medical::
-	echo cd ${SRC_DIR} && uv run -m ${APP_MODULE} \
+	cd ${SRC_DIR} && uv run -m ${APP_MODULE} \
 		--query "${QUERY}" \
 		--report-title "${REPORT_TITLE}" \
 		--output-dir "${OUTPUT_DIR}" \
-		--markdown-report "${OUTPUT_REPORT}" \
 		--markdown-yaml-header "${MARKDOWN_YAML_HEADER_FILE}" \
 		--templates-dir "${TEMPLATES_DIR}" \
 		--medical-research-prompt-path "${MEDICAL_RESEARCH_PROMPT_FILE}" \
@@ -258,8 +259,8 @@ do-app-run-medical::
 		--max-tokens ${MAX_TOKENS} \
 		--max-cost-dollars ${MAX_COST_DOLLARS} \
 		--max-time-minutes ${MAX_TIME_MINUTES} \
-		--verbose \
-		${APP_ARGS}
+		--verbose ${APP_ARGS}
+#		--markdown-report "${OUTPUT_REPORT}" \
 		
 show-output-files::
 	@echo

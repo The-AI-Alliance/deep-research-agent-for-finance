@@ -11,10 +11,11 @@ This example demonstrates the Deep Orchestrator (AdaptiveOrchestrator) for finan
 - Full state visibility throughout execution
 """
 
-import asyncio
+import asyncio, sys
 from pathlib import Path
 from dra.common.observer import Observer
 from dra.common.tasks import BaseTask, GenerateTask, AgentTask
+from dra.common.utils.io import UserPrompts
 from dra.common.utils.main import ParserUtil, Runner
 from dra.common.utils.paths import resolve_path, resolve_and_require_path
 from dra.common.variables import Variable
@@ -39,6 +40,25 @@ def get_extra_observers() -> dict[str, Observer]:
     """
     return {} # none by default
 
+class FinanceParseUtil(ParserUtil):
+    def __init__(self, which_app: str, app_name: str, ux_title: str, description: str):
+        super().__init__(which_app, app_name, ux_title, description)
+
+    def _do_prompt_for_missing_args(self, up: UserPrompts) -> dict[str, any]:
+        """Prompt the user for the company ticker and name, if necessary."""
+        ticker = self.args.ticker
+        if not ticker or not ticker.strip():
+            ticker = up.read_one_line_input("Input the company ticker symbol")
+
+        company_name = self.args.company_name
+        if not company_name or not company_name.strip():
+            company_name = up.read_one_line_input("Input the company name")
+
+        return {
+            'ticker': ticker,
+            'company_name': company_name
+        }
+
 def define_cli_arguments() -> ParserUtil:
     """
     Start by defining default values for our custom CLI arguments, 
@@ -46,7 +66,6 @@ def define_cli_arguments() -> ParserUtil:
 
     Returns:
         ParserUtil:        A utility that handles CLI arguments and common processing steps for them.
-        dict[str, Path]:   A dictionary of processed input and output paths.
     """
 
     def_reporting_currency = "USD"
@@ -59,27 +78,26 @@ def define_cli_arguments() -> ParserUtil:
     app_name = "financial_deep_research"
     ux_title='Financial Deep Research Agent'
     description = "Financial Deep Research using orchestrated AI agents"
-    parser_util = ParserUtil(which_app, app_name, ux_title, description)
+    parser_util = FinanceParseUtil(which_app, app_name, ux_title, description)
 
     # Define the CLI arguments. It is best to put required arguments first.
 
     parser_util.parser.add_argument(
         "--ticker",
-        required=True,
-        help="Stock ticker symbol, e.g., META, AAPL, GOOGL, etc."
+        help="Stock ticker symbol, e.g., META, AAPL, GOOGL, etc. If not provided on the command line, you will be prompted for it."
     )
     parser_util.parser.add_argument(
         "--company-name",
-        required=True,
-        help="Full company name"
+        help="Full company name. If not provided on the command line, you will be prompted for it."
     )    
     parser_util.parser.add_argument(
         "--reporting-currency",
         default=def_reporting_currency,
         help=f"The currency used by the company for financial reporting. (Default: {def_reporting_currency})"
     )    
-    parser_util.add_arg_output_dir()
     parser_util.add_arg_markdown_report_path()
+    parser_util.add_arg_markdown_research_report_title()
+    parser_util.add_arg_output_dir()
     parser_util.parser.add_argument(
         "--output-spreadsheet",
         default=def_excel_spreadsheet_path,
@@ -115,7 +133,7 @@ def define_cli_arguments() -> ParserUtil:
     
     return parser_util
 
-def process_cli_arguments(parser_util: ParserUtil) -> dict[str, Path]:
+def process_cli_arguments(parser_util: ParserUtil):
     """
     Process the actual supplied arguments, resolve the common input and output paths
     like for `--markdown-report` and `--markdown-yaml-header`, etc. (See the discussion
@@ -155,13 +173,13 @@ def process_cli_arguments(parser_util: ParserUtil) -> dict[str, Path]:
     excel_writer_agent_prompt_path = resolve_and_require_path(
         parser_util.args.excel_writer_agent_prompt_path, templates_dir_path)
 
-    return {
+    parser_util.processed_args.update({
         'output_spreadsheet_path':        output_spreadsheet_path, 
         'financial_research_prompt_path': financial_research_prompt_path,
         'excel_writer_agent_prompt_path': excel_writer_agent_prompt_path,
-    }
+    })
 
-def create_variables(parser_util: ParserUtil, paths: dict[str,Path]) -> dict[str, Variable]:
+def create_variables(parser_util: ParserUtil) -> dict[str, Variable]:
     """
     The variables dict contains values used throughout the app, including labels 
     for display purposes and a format feature for rendering the values as plain text,
@@ -172,15 +190,14 @@ def create_variables(parser_util: ParserUtil, paths: dict[str,Path]) -> dict[str
 
     Args:
         parser_util (ParserUtil):  A utility that handles CLI arguments and common processing steps for them.
-        paths (dict[str, Path]):   A dictionary of processed input and output paths.
 
     Return:
         dict[str, Variable]:       A dictionary of `Variable`s used throughout the app.
     """
     variables_list = [
-        Variable("start_time",           parser_util.processed_args['start_time']),
-        Variable("ticker",               parser_util.args.ticker),
-        Variable("company_name",         parser_util.args.company_name),
+        Variable("start_time",           parser_util.processed_args["start_time"]),
+        Variable("ticker",               parser_util.processed_args["ticker"]),
+        Variable("company_name",         parser_util.processed_args["company_name"]),
         Variable("reporting_currency",   parser_util.args.reporting_currency),
         Variable("units",                f"{parser_util.args.reporting_currency} millions"),
     ]
@@ -191,9 +208,9 @@ def create_variables(parser_util: ParserUtil, paths: dict[str,Path]) -> dict[str
     # Finish with the remaining custom variables for this app and "verbose" variables:
     variables_list.extend([
         Variable("excel_writer_model",             parser_util.args.excel_writer_model, kind='code'),
-        Variable("output_spreadsheet_path",        paths["output_spreadsheet_path"], kind='file'),
-        Variable("financial_research_prompt_path", paths["financial_research_prompt_path"], kind='file'),
-        Variable("excel_writer_agent_prompt_path", paths["excel_writer_agent_prompt_path"], kind='file'),
+        Variable("output_spreadsheet_path",        parser_util.processed_args["output_spreadsheet_path"], kind='file'),
+        Variable("financial_research_prompt_path", parser_util.processed_args["financial_research_prompt_path"], kind='file'),
+        Variable("excel_writer_agent_prompt_path", parser_util.processed_args["excel_writer_agent_prompt_path"], kind='file'),
     ])
     variables_list.extend(parser_util.only_verbose_common_vars())
 
@@ -238,8 +255,8 @@ def make_tasks(parser_util: ParserUtil, variables: dict[str, Variable]) -> list[
 
 if __name__ == "__main__":
     parser_util = define_cli_arguments()
-    paths = process_cli_arguments(parser_util)
-    variables = create_variables(parser_util, paths)
+    process_cli_arguments(parser_util)
+    variables = create_variables(parser_util)
     tasks = make_tasks(parser_util, variables)
     runner = Runner(
         tasks, get_server_list(), get_extra_observers(), parser_util, variables)
