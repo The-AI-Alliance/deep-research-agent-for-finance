@@ -29,6 +29,8 @@ This application leverages AI to perform automated financial research and analys
 - Risk and opportunity assessments
 - Investor sentiment analysis
 
+See also this app's [README.md](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/dra/apps/finance/README.md), which provides specific information about running and configuring this application.
+
 ### Medicine
 
 This more-recent application leverages AI to perform automated medical research and analysis. Based on the user query, it gathers data from multiple reliable sources to create structured reports with:
@@ -36,6 +38,8 @@ This more-recent application leverages AI to perform automated medical research 
 - Summary of the findings
 - References to the sources of information
 - Latest known practices, etc.
+
+See also this app's [README.md](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/dra/apps/medical/README.md), which provides specific information about running and configuring this application.
 
 ### Creating New Applications
 
@@ -71,39 +75,39 @@ uv sync
 > [!TIP]
 > While we try to keep commands listed below consistent with the current state of the code, if a command doesn't work as shown, check what is done in the `Makefile`! Of course, [issues](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/issues) or [discussion topics](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/discussions) are welcome, if you find a mistake.
 
-The easiest way to run an application with default values for all optional arguments is `make app-run-APP`, where `APP` is currently `finance` and `medical`. `make app-run` runs the finance application, by default. 
+The easiest way to run an application with default values for _most_ of the arguments is `make app-run-APP`, where `APP` is currently `finance` and `medical`. `make app-run` runs the finance application, by default. 
 
 The `app-run*` targets do some setup and then run the command `cd src && uv run -m dra.apps.APP.main ...` where `...` is a lot of arguments. 
 
 Here are the most useful `make` targets:
 
 
-| Make Target          | Description                     |
-| :------------------- | :------------------------------ |
-| `list-apps`          | List the known applications     |
-| `app-help-finance`   | Help on the finance application |
-| `app-help-medical`   | Help on the medical application |
-| `app-run-finance`    | Run the finance application     |
-| `app-run-medical`    | Run the medical application     |
+| Make Target          | Description                      |
+| :------------------- | :------------------------------- |
+| `list-apps`          | List the known applications.     |
+| `app-help-finance`   | Help on the finance application. |
+| `app-help-medical`   | Help on the medical application. |
+| `app-run-finance`    | Run the finance application. Uses META by default. |
+| `app-run-medical`    | Run the medical application. Prompts you for a research query and a report title. |
 
 > [!NOTE]
-> For easy demonstration purposes, both apps have default definitions for their required flags in the `Makefile`, so you can just build these targets to see them run. 
+> For easy demonstration purposes, the apps either have default definitions for their required flags in the `Makefile` or they will prompt you for values. This makes it easy to just try them out. 
 
 > [!TIP]
 > Run the command `make -n app-run-APP` to see what command would be executed without actually running it.
 
-Without using make, the minimum required arguments for the finance application are `--ticker TICKER` and `--company-name COMPANY_NAME`. For the medical application, `--query "QUERY"` and `--report-title TITLE` is strongly recommended, although a generic default value will be used. (The output directory and report file name will be based on it, too.) 
+Without using make, the minimum required arguments for the finance application are `--ticker TICKER` and `--company-name COMPANY_NAME`. For the medical application, `--query "QUERY"` and `--report-title TITLE` are required, but the app will prompt you for their values if these arguments are not used or the values supplied are empty.
 
-So, for example, here are the shortest `make` and CLI commands you can run to do research on Meta:
+So, for example, here are the shortest `make` and CLI commands you can run to do financial research on IBM:
 
 
 ```shell
-$ make TICKER=META COMPANY_NAME="Meta Platforms, Inc." app-run-finance
+$ make TICKER=IBM COMPANY_NAME="International Business Machines Corporation" app-run-finance
 
-$ cd src && uv run -m dra.apps.finance.main --ticker META --company-name "Meta Platforms, Inc."
+$ cd src && uv run -m dra.apps.finance.main --ticker IBM --company-name "International Business Machines Corporation"
 ```
 
-For researching _diabetes mellitus_:
+For using the medical research app to research _diabetes mellitus_:
 
 ```shell
 $ make QUERY="What are the causes of diabetes mellitus?" \
@@ -117,18 +121,19 @@ $ cd src && uv run -m dra.apps.medical.main \
 > [!NOTE]
 > While running the finance application, you may on rare occasions see a browser window pop up asking for permission to authenticate to a financial dataset MCP server. There is no cost to do this. You can authenticate using a `gmail` email address, for example. If you decline, the application will still run, but it struggle to to gather the necessary information it needs without this resource.
 
-The applications provide many optional CLI options to configure their behaviors. Use the following `make` commands or equivalent, run the previous commands described with a `--help` flag.
+### Built-in Help
+
+The applications provide many optional CLI options to configure their behaviors. Use the following `make` commands or run the previous CLI commands the `--help` flag.
 
 Let's look at the finance application in some depth. The medical application is similar.
 
 ```shell
-$ make app-help-finance      
-make APP=finance app-help
-Application help provided by src/dra/apps/finance/main.py:
-cd src && uv run -m dra.apps.finance.main --help
-usage: main.py [-h] --ticker TICKER --company-name COMPANY_NAME
+$ make app-help-finance
+...
+usage: main.py [-h] [--ticker TICKER] [--company-name COMPANY_NAME]
                [--reporting-currency REPORTING_CURRENCY]
-               [--output-dir OUTPUT_DIR] [--markdown-report MARKDOWN_REPORT]
+               [--markdown-report MARKDOWN_REPORT]
+               [--report-title REPORT_TITLE] [--output-dir OUTPUT_DIR]
                [--output-spreadsheet OUTPUT_SPREADSHEET]
                [--templates-dir TEMPLATES_DIR]
                [--financial-research-prompt-path FINANCIAL_RESEARCH_PROMPT_PATH]
@@ -146,21 +151,27 @@ Financial Deep Research using orchestrated AI agents
 
 options:
   -h, --help            show this help message and exit
-  --ticker TICKER       Stock ticker symbol, e.g., META, AAPL, GOOGL, etc.
+  --ticker TICKER       Stock ticker symbol, e.g., META, AAPL, GOOGL, etc. If
+                        not provided on the command line, you will be prompted
+                        for it.
   --company-name COMPANY_NAME
-                        Full company name
+                        Full company name. If not provided on the command
+                        line, you will be prompted for it.
   --reporting-currency REPORTING_CURRENCY
                         The currency used by the company for financial
                         reporting. (Default: USD)
+  --markdown-report MARKDOWN_REPORT
+                        Path where a Markdown report is written. If empty, a
+                        file name will be generated from the report title.
+                        (Default: finance_research_report.md) If the path
+                        doesn't contain a directory prefix, then the file will
+                        be written in the directory given by '--output-dir'.
+  --report-title REPORT_TITLE
+                        A concise title to use for the report. If None, you
+                        will be prompted to input it.
   --output-dir OUTPUT_DIR
                         Path where Excel and other output files will be saved.
                         (Default: ./output)
-  --markdown-report MARKDOWN_REPORT
-                        Path where a Markdown report is written. If empty, no
-                        report is generated. (Default:
-                        finance_research_report.md) If the path doesn't
-                        contain a directory prefix, then the file will be
-                        written in the directory given by '--output-dir'.
   --output-spreadsheet OUTPUT_SPREADSHEET
                         Path where the Excel spreadsheet is written. (Default:
                         financials.xlsx) If the path doesn't contain a
@@ -262,6 +273,7 @@ cd src && uv run -m dra.apps.finance.main \
     --company-name "Meta Platforms, Inc." \
     --reporting-currency "USD" \
     --output-dir "../output/finance/META" \
+    --report-title "META Report" \
     --markdown-report "META_report.md" \
     --markdown-yaml-header "github_pages_header.yaml" \
     --output-spreadsheet "META_financials.xlsx" \
@@ -307,15 +319,16 @@ The definition starts with `../` because the application is executed from the `s
 
 ```shell
     ...
+    --report-title "META Report"
     --markdown-report "META_report.md"
     --markdown-yaml-header "github_pages_header.yaml"
     --output-spreadsheet "META_financials.xlsx"
     ...
 ```
 
-Write a Markdown-formatted report at the end. If you don't want this report generated, then use `--markdown-report ''` (empty string) or `--markdown-report None`.
+Write a Markdown-formatted report at the end with the title given by `--report-title` and the location given by `--markdown-report`. Since there is no directory prefix shown for the latter, it will be written to the location specified by `--output-dir`.
 
-Similarly, if a non-empty value is specified for `--markdown-yaml-header`, then a YAML header block will be written at the beginning of the markdown file, using the input YAML file as a _template_ for this block. This feature is useful if the report will be presented using GitHub Pages. As shown, we are referencing the file [`./src/dra/apps/finance/templates/github_pages_header.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/dra/apps/finance/templates/github_pages_header.yaml). The file is a _template_, meaning that any variable definitions of the form `{{title}}`, will be replaced with values by the application.
+If a non-empty value is specified for `--markdown-yaml-header`, then a YAML header block will be written at the beginning of the markdown file, using the input YAML file as a _template_ for this block. This feature is useful if the report will be presented using GitHub Pages. As shown, we are referencing the file [`./src/dra/apps/finance/templates/github_pages_header.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/dra/apps/finance/templates/github_pages_header.yaml). The file is a _template_, where any variable definitions of the form `{{title}}` will be replaced with values by the application.
 
 The `--output-spreadsheet` argument specifies the file name for the generated spreadsheet. 
 
@@ -530,20 +543,41 @@ See [CONTEXT_FORGE_MIGRATION.md](CONTEXT_FORGE_MIGRATION.md) for details on usin
 
 ## Customizing Data Sources for Deep Research
 
-The applications integrate data sources using MCP, which means you can customize which data sources they have access to.
+The applications integrate freely-accessible data sources using MCP. You can customize which data sources used. In particular, you can add data sources for which you have access, such as through a paid subscription.
 
 ### Adding External MCP Tools and Services
 
 Let's discuss changing the tools and services used. There are several steps to adding (or changing) a service:
 
-1. In one or more of the `mcp_agent.config.yaml` files discussed above, add the details for the MCP server. For example:
+1. In one or more of the `mcp_agent.config.yaml` files discussed above, add the details for the MCP server. For example, the finance application is configured with these servers, where we have added `# comments` to explain details inline:
 
 ```yaml
 mcp:
   servers:
-    yfmcp:
+    fetch:                         # A locally-executed Python MCP server for web search.
+      command: "uvx"               # It is executed with `uvx`.
+      args: ["mcp-server-fetch"]   # See https://pypi.org/project/mcp-server-fetch/
+
+    yfmcp:                         # A local Python MCP server for fetching Yahoo! Finance data.
       command: "uvx"
-      args: ["yfmcp@latest"]
+      args: ["yfmcp@latest"]       # See https://pypi.org/project/yfmcp/
+
+    financial-datasets:            # A local Node MCP server for working with external MCP servers
+      command: "npx"               # See https://www.npmjs.com/package/mcp-remote
+      args: ["-y", "mcp-remote", "https://mcp.financialdatasets.ai/mcp"]
+
+    filesystem:                    # A local Node MCP server for working with the file system.
+      command: "npx"               # See https://www.npmjs.com/package/@modelcontextprotocol/server-filesystem
+      args: ["-y", "@modelcontextprotocol/server-filesystem", "."]
+
+    excel_writer:                  # A local MCP server for manipulating Excel files.
+      command: "uvx"
+      args: ["excel-mcp-server", "stdio"]
+```
+
+The URLs provide details on customizing these definitions and, in some cases, debugging tips. For example, `mcp-remote` allows you to customize the HTTP headers, so you can pass _bearer tokens_, for example:
+
+```yaml
     example-mcp-server:
       command: "npx"
       args: [
@@ -553,8 +587,6 @@ mcp:
         "Authorization: Bearer ${BEARER_TOKEN}"
       ]
 ```
-
-Both of the servers shown here are accessed by running local Python applications with `uvx`, which connect to corresponding external services.
 
 2. In `src/dra/apps/APP/main.py` (e.g., for finance, [`src/dra/apps/finance/main.py`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/dra/apps/finance/main.py)), change the list of servers in the function `get_server_list()` near the top of the file. For the finance app, it currently looks like this:
 
