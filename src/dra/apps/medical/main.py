@@ -12,6 +12,7 @@ This example demonstrates the Deep Orchestrator (AdaptiveOrchestrator) for medic
 """
 
 import asyncio
+import re
 from pathlib import Path
 from dra.common.observer import Observer
 from dra.common.tasks import BaseTask, GenerateTask, AgentTask
@@ -26,6 +27,12 @@ def get_server_list() -> list[str]:
     return [
         "fetch",
         "filesystem",
+        "pubmed-central",
+        "pubmed-gpt",
+        "nih-clinical-trials",
+        "healthcare-repository",
+        "medical-qa",
+        "bio-mcp",
     ]
 
 def get_extra_observers() -> dict[str, Observer]:
@@ -37,7 +44,7 @@ def get_extra_observers() -> dict[str, Observer]:
     """
     return {} # none by default
 
-class MedicalParseUtil(ParserUtil):
+class MedicalParserUtil(ParserUtil):
     def __init__(self, which_app: str, app_name: str, ux_title: str, description: str):
         super().__init__(which_app, app_name, ux_title, description)
 
@@ -46,7 +53,16 @@ class MedicalParseUtil(ParserUtil):
         query = self.args.query
         if not query or not query.strip():
             query = up.read_multi_line_input("Input the query for your research")
-        return {'query': query}
+        
+        terms = self.args.terms
+        if not terms or not terms.strip():
+            terms = up.read_one_line_input("Input any comma-separated terms and phrases for searches (spaces allowed)",
+                empty_allowed=True)
+        return {
+            'query': query,
+            'terms': terms,
+        }
+
 
 def define_cli_arguments() -> ParserUtil:
     """
@@ -59,17 +75,21 @@ def define_cli_arguments() -> ParserUtil:
 
     def_medical_research_agent_prompt_file = "medical_research_agent.md"
     
-    which_app='medical'
-    app_name = "medical_deep_research"
-    ux_title='Medical Deep Research Agent'
+    which_app   = "medical"
+    app_name    = "medical_deep_research"
+    ux_title    = "Medical Deep Research Agent"
     description = "Medical Deep Research using orchestrated AI agents"
-    parser_util = MedicalParseUtil(which_app, app_name, ux_title, description)
+    parser_util = MedicalParserUtil(which_app, app_name, ux_title, description)
 
     # Define the CLI arguments. It is best to put required arguments first.
 
     parser_util.parser.add_argument(
         "-q", "--query",
         help=f"A quoted string with your research query. If not provided on the command line, you will be prompted for it."
+    )
+    parser_util.parser.add_argument(
+        "--terms", "--keywords",
+        help=f"Optional, comma-separated key terms or phrases. Spaces are allowed within them. Used in some queries to data sources (recommended)."
     )
     parser_util.add_arg_markdown_report_path()
     parser_util.add_arg_markdown_research_report_title()
@@ -120,6 +140,14 @@ def process_cli_arguments(parser_util: ParserUtil):
     parser_util.processed_args['medical_research_prompt_path'] = \
         medical_research_prompt_path
 
+    # If terms given, construct the parameter part of a URL used for some data source queries.
+    terms = parser_util.processed_args.get('terms')
+    if terms:
+        params = []
+        for term in terms.split(','):
+            params.append("%22" + re.sub(r'\s+', '+', term.strip()) + "%22")
+        parser_util.processed_args['terms_url_params'] = "+OR+".join(params)
+
 def create_variables(parser_util: ParserUtil) -> dict[str, Variable]:
     """
     The variables dict contains values used throughout the app, including labels 
@@ -141,6 +169,8 @@ def create_variables(parser_util: ParserUtil) -> dict[str, Variable]:
     variables_list = [
         Variable("start_time",    parser_util.processed_args['start_time']),
         Variable("query",         parser_util.processed_args['query'], kind='str'),
+        Variable("terms",         parser_util.processed_args['terms'], kind='str'),
+        Variable("terms_url_params",       parser_util.processed_args['terms_url_params'], kind='str'),
         Variable("research_report_title",  parser_util.processed_args['research_report_title'], kind='str'),
     ]
     # Add common values across apps:

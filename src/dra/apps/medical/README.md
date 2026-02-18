@@ -197,10 +197,24 @@ Note that we also passed the report title this way, because the `make -n ...` ou
 
 Finally, `--medical-research-prompt-path`, is also unique to this app. It is the path to the prompt template file. The default value for this path is `medical_research_agent.md`. Because a directory path isn't specified, this file will be searched for in the value given by the `--templates-dir` option, which defaults to `dra/apps/medical/templates`.
 
+See [`examples/gpt-oss_20b/diabetes_report.md`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/examples/gpt-oss_20b/diabetes_report.md) for a sample output.
 
 ## Customizing Data Sources for Medical Deep Research
 
 Much of the important medical information is behind paywalls. As an open-source demo application, we can only use freely-accessible data sources. If you have accounts to sources behind paywalls, you can add them to the application following the instructions in the main [README](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/README.md). Also, many datasets, research paper portals, etc. don't provide MCP server access, so other means are necessary.
 
 The list of resources we are investigating is maintained in this project [issue](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/issues/48). Help wanted!
+
+Currently, we have integrated the following sources:
+
+* Medical MCP servers cataloged at [Medical MCP Servers](https://medicbrain.eu/mcp-servers):
+  * PubMed Central: https://www.ncbi.nlm.nih.gov/pmc/tools/api/
+  * PubMedGPT: https://api.ncbi.nlm.nih.gov/lit/
+  * NIH Clinical Trials: https://clinicaltrials.gov/api/
+  * Healthcare Repository MCP: https://api.healthcarerepo.org/mcp/v1
+  * MedicalQA: https://api.medicalqa.ai/mcp/v1
+  * BioMCP: https://biomcp.genomoncology.com/api/v1
+* A non-MCP server example:
+  * [Medline Plus](https://medlineplus.gov/about/developers/webservices/)
+    * `https://wsearch.nlm.nih.gov/ws/query?db=healthTopics&term={{terms_url_params}}` 
 

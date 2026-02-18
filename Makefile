@@ -37,6 +37,7 @@ APP_ARGS                   ?=
 # Pass in a quoted string for QUERY or prompt the user.
 # Do the same for the report title. Or, you will be prompted for them.
 # QUERY                      ?= 
+# TERMS                      ?=
 # REPORT_TITLE               ?= 
 MEDICAL_RESEARCH_PROMPT_FILE ?= medical_research_agent.md
 
@@ -246,6 +247,7 @@ do-app-run-finance::
 do-app-run-medical::
 	cd ${SRC_DIR} && uv run -m ${APP_MODULE} \
 		--query "${QUERY}" \
+		--terms "${TERMS}" \
 		--report-title "${REPORT_TITLE}" \
 		--output-dir "${OUTPUT_DIR}" \
 		--markdown-yaml-header "${MARKDOWN_YAML_HEADER_FILE}" \

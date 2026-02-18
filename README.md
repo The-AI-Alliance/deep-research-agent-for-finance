@@ -545,11 +545,19 @@ See [CONTEXT_FORGE_MIGRATION.md](CONTEXT_FORGE_MIGRATION.md) for details on usin
 
 The applications integrate freely-accessible data sources using MCP. You can customize which data sources used. In particular, you can add data sources for which you have access, such as through a paid subscription.
 
+### Specifying Particular Web Sites to Search
+
+What if you want to emphasize particular websites to search? The finance app demonstrates how to do this. No changes are required to the `mcp_agent.config.yaml` config files. They already have the `fetch` service configured for doing web search.
+
+Instead, add content to the prompt template file to list desired web sites and what information should be searched for on them. A good example is the **Search Strategies** section of the main finance app's prompt file, [`financial_research_agent.md`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/tree/main/src/dra/apps/finance/templates/financial_research_agent.md), where it lists key web sites and the content of interest.
+
 ### Adding External MCP Tools and Services
 
-Let's discuss changing the tools and services used. There are several steps to adding (or changing) a service:
+To add or change the tools and services used for an application, there are several steps required.
 
-1. In one or more of the `mcp_agent.config.yaml` files discussed above, add the details for the MCP server. For example, the finance application is configured with these servers, where we have added `# comments` to explain details inline:
+#### Edit `mcp_agent.config*.yaml`
+
+In the application's `mcp_agent.config*.yaml` files discussed above, add the details for the MCP server. For example, the finance application is configured with these servers, where we have added inline `# comments` to explain the details:
 
 ```yaml
 mcp:
@@ -575,7 +583,13 @@ mcp:
       args: ["excel-mcp-server", "stdio"]
 ```
 
-The URLs provide details on customizing these definitions and, in some cases, debugging tips. For example, `mcp-remote` allows you to customize the HTTP headers, so you can pass _bearer tokens_, for example:
+Conventional web searches are handled by the `fetch` tool.
+
+Most of the time, you will define a local `npx` `mcp-remote` server to access a remote MCP server, as is done here for the server `https://mcp.financialdatasets.ai/mcp`. See also the medical application config files for other examples like this.
+
+The URLs in the comments provide details on customizing these definitions, such as passing HTTP headers, debugging flags, etc. 
+
+For example, `mcp-remote` allows you to customize the HTTP headers, so you can pass _bearer tokens_, for example:
 
 ```yaml
     example-mcp-server:
@@ -588,7 +602,13 @@ The URLs provide details on customizing these definitions and, in some cases, de
       ]
 ```
 
-2. In `src/dra/apps/APP/main.py` (e.g., for finance, [`src/dra/apps/finance/main.py`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/dra/apps/finance/main.py)), change the list of servers in the function `get_server_list()` near the top of the file. For the finance app, it currently looks like this:
+#### Edit the `main.py` for the Application
+
+Edit the corresponding `src/dra/apps/APP/main.py`, i.e., 
+* Finance: [`src/dra/apps/finance/main.py`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/dra/apps/finance/main.py) 
+* Medical: [`src/dra/apps/medical/main.py`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/dra/apps/medical/main.py) 
+
+Change the list of servers in the function `get_server_list()` near the top of the file. For the finance app, it currently looks like this:
 
 ```python
 def get_server_list() -> list[str]:
@@ -602,12 +622,16 @@ def get_server_list() -> list[str]:
     ]
 ```
 
-3. Optionally edit the appropriate `*_agent.md` prompt templates in the `src/dra/apps/APP/templates` directories of your applications, e.g., for [finance](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/tree/main/src/dra/apps/finance/templates). There are two things to edit:
+#### Edit the Prompt Template(s)
 
-  * The list of tools in the YAML header at the top of the file. Only add new tools and services that make sense for that task.
-  * Describe in the prompt body how the agent should use the tool or service, including possible performance optimization tips. See, for example, how the main finance deep research prompt, [`src/dra/apps/finance/templates/financial_research_agent.md`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/tree/main/src/dra/apps/finance/templates/financial_research_agent.md), provides instructions for tool use.
+Optionally, edit the appropriate `*_agent.md` prompt templates in the `src/dra/apps/APP/templates` directories of your applications (for [finance](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/tree/main/src/dra/apps/finance/templates) and for [medical](https://github.com/The-AI-Alliance/deep-research-agent-for-medical/tree/main/src/dra/apps/medical/templates)). There are two things to edit:
 
-4. Add any corresponding secrets like API keys to `mcp_agent.secrets.yaml` or use environment variables.
+* The list of tools in the YAML header at the top of the file. Only add new tools and services that make sense for that task. **However**, this YAML block is currently _not used for anything_, so this step is unnecessary at this time.
+* Describe in the prompt body how the agent should use the tool or service, including possible performance optimization tips. See, for example, how the main finance deep research prompt, [`src/dra/apps/finance/templates/financial_research_agent.md`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/tree/main/src/dra/apps/finance/templates/financial_research_agent.md), provides instructions for tool use.
+
+#### Define Required Secrets
+
+Add any corresponding secrets like API keys to `mcp_agent.secrets.yaml` or use environment variables.
 
 ### Adding Local MCP Tools and Services
 
@@ -667,11 +691,17 @@ If you know what tools and services you'll need, edit the list returned by the f
 
 The next function in `main.py`, `get_extra_observers()` is a "hook" for adding [`Observer`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/dra/common/observer.py) instances. The app defines two (at the time of this writing...): the Rich Console display and the Markdown report generator. You might add additional observers for tracing and notification purposes. The comment for `get_extra_observers()` says the keys used can't collide with the existing observer keys, which are `display` and `markdown` for the two built-in observers.
 
+#### Decide If You Need a Custom `ParserUtil`
+
+Both the finance and medical applications define custom subclasses of [`ParserUtil`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/dra/common/utils/main.py#L25) in their `main.py` files, `FinanceParserUtil` and `MedicalParserUtil`, respectively. They are used for one purpose, to handle the required arguments where the user will be prompted for values if they aren't supplied through CLI arguments. 
+
+If your application wants to use this feature, follow these examples. Define a subclass of `ParserUtil` and instantiate it inside `define_cli_arguments()`. If you _don't_ need a subclass, just instantiate `ParserUtil` inside `define_cli_arguments()`.
+
 #### Define the Application's Command-line Arguments
 
 The next function `define_cli_arguments()` is where the CLI arguments are specified.
 
-There are common CLI arguments, which are included with calls like `parser_util.add_arg_output_dir()` (around line 80) in `main.py`, which adds the root output directory for all generated content. You will most likely want to keep all the common CLI arguments in `main.py`. However, the order in which the arguments are setup in this function is done to group help information logically. Put the required arguments before the optional arguments. 
+There are common CLI arguments, which are included with calls like `parser_util.add_arg_output_dir()` (around line 100) in `main.py`, which adds the root output directory for all generated content. You will most likely want to keep all the common CLI arguments in `main.py`. However, the order in which the arguments are setup in this function is done to group help information logically. Put the required arguments before the optional arguments. 
 
 > [!TIP]
 > Run `make app-help-finance` to see how its CLI argument definitions are reflected in the finance app's CLI.
@@ -682,21 +712,22 @@ Start by editing the `def_*` variables near the top of the function. They define
 
 Next edit the definitions of `which_app` (use `history` in this example), `app_name`, etc.
 
-Then edit the sequence of statements to add CLI arguments, including your custom arguments. (We use Python's [`argparse`](https://docs.python.org/3/library/argparse.html#module-argparse) module.)
+Then edit the sequence of statements to add CLI arguments, including your custom arguments. (We use Python's [`argparse`](https://docs.python.org/3/library/argparse.html#module-argparse) module inside `ParserUtil`.)
 
-For example, the invocation of `parser_util.add_arg_output_dir()` uses a shared `ParserUtil` class in [`src/dra/common/utils/main.py](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/dra/common/utils/main.py). Interspersed with those calls are custom argument definitions, like this one for `--ticker TICKER`:
+Here is an example of how to add your custom argument definitions, the `--ticker TICKER` argument in the finance application:
 
 ```python
     parser_util.parser.add_argument(
         "--ticker",
-        required=True,
-        help="Stock ticker symbol, e.g., META, AAPL, GOOGL, etc."
+        help="Stock ticker symbol, e.g., META, AAPL, GOOGL, etc. If not provided..."
     )
 ```
 
-We put this one first in the finance application, followed by the definition for `--company-name`, since they are the two required arguments for it.
+Note this argument is _required_, but we _don't_ use the `required=True` flag. Instead the `FinanceParserUtils` checks if the user provided a ticket and if not, the user is prompted for it.
 
-Note that we use custom CLI arguments for the two prompt files needed by the finance application. They correspond to the two "tasks" that are executed, discussed below. Consider meaning argument names and values for the prompts you'll need. 
+Put required arguments like this one at the beginning of your arguments, so they show up first in the help message. For the finance application, `--company-name` is also required and it also handled with user prompting, if needed.
+
+The finance application `define_cli_arguments()` also adds custom arguments for the output spreadsheet and the two prompt files needed by the finance application. They correspond to the two "tasks" that are executed (discussed below). Consider meaningful argument names and values for the prompt files you'll use. 
 
 #### Process Custom Input and Output Paths
 
@@ -717,6 +748,9 @@ When we discuss the prompt _template_ files below, we'll mention that you may ne
 Finally, there are a number of common variables that are mostly of use for debugging and other "verbose" output, which can are added by `parser_util.only_verbose_common_vars()`. This means if user doesn't pass the `--verbose` CLI argument, these "verbose" variables won't appear in the Markdown report, etc.
 
 After constructing the list, `create_variables()` returns a dictionary where the variable keys are used as the dictionary keys. This supports fast lookup later on.
+
+> [!WARN]
+> Don't forget to add the keys and values for _all_ your custom arguments to these variables! This isn't done automatically, so you control the order in which they appear.
 
 #### Edit the Research Tasks
 
@@ -760,7 +794,7 @@ Currently the `Makefile` knows about the two applications for `finance` and `med
 Make the following changes to add support for the history application:
 
 * Define `HISTORY_APP` and add it to the definition of `APPS`.
-* Find the `# For the Finance app:` section and add a new one below it for the history application. Define any custom variables and values that will be use for running the command with your preferred CLI arguments.
+* Find the `# For the Finance app:` section and add a new one below it for the history application. Define any custom variables and values that will be use for running the command with your preferred CLI arguments. See also how the medical application definitions are handled for the _query_ and _terms_. Make variables `QUERY` and `TERMS` are referenced in the command below, but _not defined_ in the `Makefile`, so they are effectively "", unless defined when `make` is invoked. 
 * In `# For all apps:` add a new `else ifeq...` clause, or just rely on the default `else` definition:
 
 ```

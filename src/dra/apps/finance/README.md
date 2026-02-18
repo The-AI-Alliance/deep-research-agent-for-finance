@@ -37,6 +37,8 @@ $ cd src && uv run -m dra.apps.finance.main --ticker IBM --company-name "Interna
 
 The application provides many optional CLI options to configure its behavior. They are discussed in the main [README](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/README.md).
 
+See [`examples/gpt-oss_20b/META*`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/examples/gpt-oss_20b/) for example output files for a META report.
+
 ## Customizing Data Sources for Finance Deep Research
 
 Much of the important finance information is behind paywalls. As an open-source demo application, we can only use freely-accessible data sources. If you have accounts to sources behind paywalls, you can add them to the application following the instructions in the main [README](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/README.md). 

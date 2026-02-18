@@ -19,6 +19,24 @@ mcp:
     fetch:
       command: "uvx"
       args: ["mcp-server-fetch"]
+    pubmed-central:
+      command: "npx"
+      args: ["-y", "mcp-remote@latest", "https://www.ncbi.nlm.nih.gov/pmc/tools/api/"]
+    pubmed-gpt:
+      command: "npx"
+      args: ["-y", "mcp-remote@latest", "https://api.ncbi.nlm.nih.gov/lit/"]
+    nih-clinical-trials:
+      command: "npx"
+      args: ["-y", "mcp-remote@latest", "https://clinicaltrials.gov/api/"]
+    healthcare-repository:
+      command: "npx"
+      args: ["-y", "mcp-remote@latest", "https://api.healthcarerepo.org/mcp/v1"]
+    medical-qa:
+      command: "npx"
+      args: ["-y", "mcp-remote@latest", "https://api.medicalqa.ai/mcp/v1"]
+    bio-mcp:
+      command: "npx"
+      args: ["-y", "mcp-remote@latest", "https://biomcp.genomoncology.com/api/v1"]
     filesystem:
       command: "npx"
       args: ["-y", "@modelcontextprotocol/server-filesystem", "."]

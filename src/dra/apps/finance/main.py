@@ -40,7 +40,7 @@ def get_extra_observers() -> dict[str, Observer]:
     """
     return {} # none by default
 
-class FinanceParseUtil(ParserUtil):
+class FinanceParserUtil(ParserUtil):
     def __init__(self, which_app: str, app_name: str, ux_title: str, description: str):
         super().__init__(which_app, app_name, ux_title, description)
 
@@ -78,7 +78,7 @@ def define_cli_arguments() -> ParserUtil:
     app_name = "financial_deep_research"
     ux_title='Financial Deep Research Agent'
     description = "Financial Deep Research using orchestrated AI agents"
-    parser_util = FinanceParseUtil(which_app, app_name, ux_title, description)
+    parser_util = FinanceParserUtil(which_app, app_name, ux_title, description)
 
     # Define the CLI arguments. It is best to put required arguments first.
 
