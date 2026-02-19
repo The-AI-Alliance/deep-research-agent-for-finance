@@ -51,6 +51,9 @@ EXCEL_WRITER_PROMPT_FILE   ?= excel_writer_agent.md
 OUTPUT_SPREADSHEET         ?= ${TICKER}_financials.xlsx
 
 # For all apps:
+
+# Use a non-empty value for DEBUG to enable debug flags for MCP servers:
+DEBUG                      ?= 
 ifeq (finance,${APP})
 	OUTPUT_DIR              ?= ../output/${APP}/${TICKER}
 	OUTPUT_REPORT           ?= ${TICKER}_report.md
@@ -71,10 +74,16 @@ RESEARCH_MODEL             ?= gpt-4o
 INFERENCE_PROVIDER         ?= openai
 TEMPLATES_DIR              ?= ${REL_APP_DIR}/templates
 MARKDOWN_YAML_HEADER_FILE  ?= github_pages_header.yaml
-ifeq (ollama,${INFERENCE_PROVIDER})
-	MCP_AGENT_CONFIG_FILE    ?= ${REL_APP_DIR}/config/mcp_agent.config.${INFERENCE_PROVIDER}.yaml
+
+ifeq (,${DEBUG})
+	DEBUG_FILE = 
 else
-	MCP_AGENT_CONFIG_FILE    ?= ${REL_APP_DIR}/config/mcp_agent.config.yaml
+	DEBUG_FILE = .debug
+endif
+ifeq (ollama,${INFERENCE_PROVIDER})
+	MCP_AGENT_CONFIG_FILE    ?= ${REL_APP_DIR}/config/mcp_agent.config.${INFERENCE_PROVIDER}${DEBUG_FILE}.yaml
+else
+	MCP_AGENT_CONFIG_FILE    ?= ${REL_APP_DIR}/config/mcp_agent.config${DEBUG_FILE}.yaml
 endif
 TEMPERATURE                ?= 0.7
 MAX_ITERATIONS             ?= 25

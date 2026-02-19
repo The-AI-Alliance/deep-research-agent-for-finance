@@ -15,16 +15,21 @@ logger:
     timestamp_format: "%Y%m%d_%H%M%S"
 
 mcp:
+  # In this config file, all supported debugging flags or tools are used, 
+  # like @modelcontextprotocol/inspector. See
+  #   https://modelcontextprotocol.io/docs/tools/inspector#pypi-package
+  #   https://pypi.org/project/mcp-server-fetch/ (example)
+  # Note that @modelcontextprotocol/inspector is actually intended for interactive use.
   servers:
     fetch:
-      command: "uvx"
-      args: ["mcp-server-fetch"]
+      command: "npx"
+      args: ["-y", "@modelcontextprotocol/inspector", "uvx", "mcp-server-fetch"]
     yfmcp:
-      command: "uvx"
-      args: ["yfmcp@latest"]
+      command: npx"
+      args: ["-y", "@modelcontextprotocol/inspector", "uvx", "yfmcp@latest"]
     financial-datasets:
       command: "npx"
-      args: ["-y", "mcp-remote", "https://mcp.financialdatasets.ai/mcp"]
+      args: ["-y", "mcp-remote@latest", "https://mcp.financialdatasets.ai/mcp", "--debug"]
     filesystem:
       command: "npx"
       args: ["-y", "@modelcontextprotocol/server-filesystem", ".."]
@@ -37,9 +42,10 @@ mcp:
 # here is actually for inference through ollama.
 # Change the default model if you prefer to use another one.
 openai:
-  default_model: "gpt-4o-mini"
+  default_model: "gpt-oss:20b"
   reasoning_effort: "medium"
-  base_url: "https://api.openai.com/v1"
-  
+  base_url: "http://localhost:11434/v1"
+  api_key: "ignored"
+
 anthropic:
   default_model: "claude-3-5-sonnet-20241022"

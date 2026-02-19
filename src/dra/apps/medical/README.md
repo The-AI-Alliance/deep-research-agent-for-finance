@@ -139,8 +139,8 @@ provider' argument. It defaults to 'openai'. The value will be used to select
 the correct 'mcp_agent_config.yaml' file for configuring settings. The
 mcp_agent library can also search for a 'mcp_agent.config.yaml' in the project
 root directory, "./.mcp-agent", and "~/.mcp-agent/", as described in mcp-
-agent's documentation. Pass '' or None as the '--mcp-agent-config' to trigger
-this process.
+agent's documentation. Pass '' or None as the '--mcp-agent-config' value to
+have `mcp-agent` search these directories instead.
 
 TIPS:
 1. Use 'make print-app-info' to see some make variables you can override.

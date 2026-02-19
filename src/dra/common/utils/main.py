@@ -53,15 +53,15 @@ class ParserUtil():
         self.parser = argparse.ArgumentParser(
             description=self.description,
             epilog="""
-    Due to current limitations, you must use either OpenAI, Anthropic, or local models
-    served by ollama, and you have to tell us which one using the '--provider' argument.
-    It defaults to 'openai'. The value will be used to select the correct 'mcp_agent_config.yaml'
-    file for configuring settings. 
-    The mcp_agent library can also search for a 'mcp_agent.config.yaml' in the project root directory, 
-    "./.mcp-agent", and "~/.mcp-agent/", as described in mcp-agent's documentation. 
-    Pass '' or None as the '--mcp-agent-config' to trigger this process.
-    """
-        )
+                Due to current limitations, you must use either OpenAI, Anthropic, or local models
+                served by ollama, and you have to tell us which one using the '--provider' argument.
+                It defaults to 'openai'. The value will be used to select the correct 'mcp_agent_config.yaml'
+                file for configuring settings. 
+                The mcp_agent library can also search for a 'mcp_agent.config.yaml' in the project root directory, 
+                "./.mcp-agent", and "~/.mcp-agent/", as described in mcp-agent's documentation. 
+                Pass '' or None as the '--mcp-agent-config' value to
+                have `mcp-agent` search these directories instead.
+                """)
         return self.parser
 
     def get_default(self, key: str, default: any = None) -> any:
@@ -72,9 +72,14 @@ class ParserUtil():
             k = key.replace('--', '').replace('_', '-')
             return self.defaults.get(k)
 
-    def make_def_mcp_agent_config_path(self, provider: str = None) -> str:
+    # TODO: In fact, we never call this with a provider or true `debug` argument.
+    # Instead, we handle these variations in the Makefile and the value it passes for
+    # `--mcp-agent-config`. We should either remove the extra logic here or implement
+    # real support for it with a new `--debug` flag for the CLI.
+    def make_def_mcp_agent_config_path(self, provider: str = None, debug: bool = False) -> str:
         pstr = '.ollama' if provider == 'ollama' else ''
-        return f"dra/apps/{self.which_app}/config/mcp_agent.config{pstr}.yaml"
+        dstr = '.debug'  if debug else ''
+        return f"dra/apps/{self.which_app}/config/mcp_agent.config{pstr}{dstr}.yaml"
 
     def relative_to(self, rw: str, where: str) -> str:
         return f"If the path doesn't contain a directory prefix, then the file will be {rw} in the directory given by '--{where}'."
@@ -247,6 +252,8 @@ class ParserUtil():
         # Ensure output directory exists
         output_dir_path = Path(self.args.output_dir)
         output_dir_path.mkdir(parents=True, exist_ok=True)
+        cache_dir_path = output_dir_path / "cache"
+        cache_dir_path.mkdir(parents=True, exist_ok=True)
 
         markdown_report_path = self._determine_report_path(output_dir_path,
             research_report_title = prompted_values.get('research_report_title'))
@@ -306,6 +313,7 @@ class ParserUtil():
             'display': display,
             'observers': observers,
             "output_dir_path": output_dir_path,
+            "cache_dir_path": cache_dir_path,
             "templates_dir_path": templates_dir_path,
             "markdown_report_path": markdown_report_path,
             "yaml_header_template_path": markdown_yaml_header_path,
@@ -340,6 +348,7 @@ class ParserUtil():
             Variable("verbose",           self.args.verbose, kind=fmt),
             Variable("short_run",         self.args.short_run, kind=fmt),
             Variable("observers",         self.processed_args['observers'], kind=fmt),
+            Variable("cache_dir_path",    self.processed_args['cache_dir_path'], kind='file'),
             Variable("temperature",       self.processed_args['temperature'], label="LLM Temperature", kind=fmt), 
             Variable("max_iterations",    self.processed_args['max_iterations'], label="LLM Max Iterations", kind=fmt),
             Variable("max_tokens",        self.processed_args['max_tokens'], label="LLM Max Inference Tokens", kind=fmt),

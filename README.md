@@ -250,8 +250,8 @@ provider' argument. It defaults to 'openai'. The value will be used to select
 the correct 'mcp_agent_config.yaml' file for configuring settings. The
 mcp_agent library can also search for a 'mcp_agent.config.yaml' in the project
 root directory, "./.mcp-agent", and "~/.mcp-agent/", as described in mcp-
-agent's documentation. Pass '' or None as the '--mcp-agent-config' to trigger
-this process.
+agent's documentation. Pass '' or None as the '--mcp-agent-config' value to
+have `mcp-agent` search these directories instead.
 
 TIPS:
 1. Use 'make print-app-info' to see some make variables you can override.
@@ -374,7 +374,10 @@ The `--provider` argument is used to ensure that the correct `mcp-agent` code pa
 
 The `--mcp-agent-config` points to the correct `mcp-agent` configuration file to use, based on the `--provider` value. The example shown works for both OpenAI and Anthropic inference. If you use Ollama inference, the `Makefile` will construct this argument to be `dra/apps/finance/config/mcp_agent.config.ollama.yaml`. This is necessary because different settings have to be provided for the OpenAI code path in `mcp-agent`, compared to _actual_ OpenAI inference.
 
-See [Configuration](#configuration) below for more details on these YAML files.
+Also, if you invoke `make` with `DEBUG=true` (or any non-empty value), it will instead use a `*.debug.yaml` version of the configuration file, which configures all the MCP servers to use any debug flags, extra logging, inspectors, etc. they support. Not all the config files have debug equivalents.
+See [`src/dra/apps/medical/config/mcp_agent.config.ollama.debug.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/dra/apps/medical/config/mcp_agent.config.ollama.debug.yaml) for one example, where the server configurations could be copied to other config files, as desired.
+
+See [Configuration](#configuration) and [Edit `mcp_agent.config*.yaml`](#edit-mcp-agent-config-yaml) below for more details on these YAML files.
 
 The rest of this group of arguments fine tune inference calls and budgeting. If you use OpenAI or Anthropic, you might wish to use small `--max-*` values in some cases.
 
@@ -555,6 +558,8 @@ Instead, add content to the prompt template file to list desired web sites and w
 
 To add or change the tools and services used for an application, there are several steps required.
 
+<a id="edit-mcp-agent-config-yaml"></a>
+
 #### Edit `mcp_agent.config*.yaml`
 
 In the application's `mcp_agent.config*.yaml` files discussed above, add the details for the MCP server. For example, the finance application is configured with these servers, where we have added inline `# comments` to explain the details:
@@ -601,6 +606,10 @@ For example, `mcp-remote` allows you to customize the HTTP headers, so you can p
         "Authorization: Bearer ${BEARER_TOKEN}"
       ]
 ```
+
+> [!TIP]
+> Some of the config files have "debug" versions, e.g., [`src/dra/apps/medical/config/mcp_agent.config.ollama.debug.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/dra/apps/medical/config/mcp_agent.config.ollama.debug.yaml). These versions use add debugging flags and other tools for additional logging and troubleshooting. 
+> See the [Debugging Tips](#debugging-tips) below for more details.
 
 #### Edit the `main.py` for the Application
 
@@ -820,6 +829,21 @@ Of course, don't forget to save your work in git...
 ### Submit a PR?
 
 Consider contributing your application back to the project! The next section discusses getting involved.
+
+## Debugging Tips
+
+Understanding why things fail is difficult, because of the complex internal logic in the `mcp-agent` orchestrator and the _stochastic_ behavior of LLMs. Error reporting isn't as "visible" as it could be.
+
+Here are some tips:
+
+* Study the `mcp-agent` log files, which are written to `logs` and timestamped. (By default, `mcp-agent` writes its logs to `$HOME/.mcp-agent/logs/mcp-agent.log`, but we change the default location and naming.) There can be a lot of output, but sometimes you will notice an error message (search for `ERROR`) or other message that suggests a problem. 
+  * For example, for a while we couldn't figure out why the Excel spreadsheet wasn't created in the finance app, even though the research task appeared successful otherwise. In the logs we found a message that the `excel_writer` server requires an absolute path for the output file.
+* Some of the tools also write log files elsewhere, e.g., `$HOME/.mcp-auth/mcp-remote-*/`. 
+* Study the output in the Markdown report. We decided to print a lot of details in the report about messages received back from MCP tool calls, configuration settings, etc., even though a lot of this information just creates clutter when the job is successful; you have to find the useful output for your research task. We will improve this output over time, but for now, it has been helpful to have this output as a complement to the log files.
+* Some of the MCP servers and tools have debugging flags you can use. See the tool and server documentation links in the `mcp_agent.config.yaml` [discussion above](#edit-mcp-agent-config-yaml) for details.
+  * Also discussed there, we have provided variants of some of the config files with these debug configurations enabled, e.g., [`src/dra/apps/medical/config/mcp_agent.config.ollama.debug.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/dra/apps/medical/config/mcp_agent.config.ollama.debug.yaml). Added are debugging flags and other tools for additional logging and troubleshooting. You trigger the use of these versions by invoking `make DEBUG=true target`. (The value passed for `DEBUG` can be any non-empty string.)
+  * See in particular the [documentation](https://www.npmjs.com/package/mcp-remote) for the `mcp-remote` server proxy that we use. There are lots of configuration flags, most of which are not specific to debugging, but some of which might provide more robust results in your application.
+* The `Makefile` passes the `--verbose` argument, by default, which adds some extra output.
 
 ## Contributing to This Project
 

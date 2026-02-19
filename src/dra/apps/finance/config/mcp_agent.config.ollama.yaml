@@ -27,7 +27,7 @@ mcp:
       args: ["-y", "mcp-remote", "https://mcp.financialdatasets.ai/mcp"]
     filesystem:
       command: "npx"
-      args: ["-y", "@modelcontextprotocol/server-filesystem", "."]
+      args: ["-y", "@modelcontextprotocol/server-filesystem", ".."]
     excel_writer:
       command: "uvx"
       args: ["excel-mcp-server", "stdio"]

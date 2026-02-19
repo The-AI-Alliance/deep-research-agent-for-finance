@@ -10,7 +10,7 @@ def cwd() -> Path:
 def this_files_directory(file: str|Path = __file__) -> Path:
     return os.path.dirname(os.path.realpath(file))
 
-def resolve_path(path_str: str, possible_parent: Path) -> Path:
+def resolve_path(path_str: str, possible_parent: Path, return_abs_path: bool = True) -> Path:
     """
     If the input `path_str` contains a directory prefix, then return it as a `Path`.
     If it doesn't contain a directory prefix, return a Path with `possible_parent` as
@@ -19,17 +19,21 @@ def resolve_path(path_str: str, possible_parent: Path) -> Path:
     Args:
         path_str (str): A path that may or may not contain a directory prefix.
         possible_parent (Path): If not None, use this parent path if `path_str` doesn't contain a directory prefix.
+        return_abs_path (bool): Return the absolute path if the the resolved path is relative.
 
     Returns:
-        The resolved path, whether or not it a actualy exists!
+        The resolved path, whether or not it a actually exists!
     """
     path = Path(path_str)
     if not len(path.parents) or path.parents[0] == PosixPath('.'):
         if possible_parent:
             path = possible_parent / path
-    return path
+    if return_abs_path:
+        return path.resolve()
+    else:
+        return path
 
-def resolve_and_require_path(path_str: str, possible_parent: Path, raise_on_missing: bool = True) -> Path:
+def resolve_and_require_path(path_str: str, possible_parent: Path, raise_on_missing: bool = True, return_abs_path: bool = True) -> Path:
     """
     If the input `path_str` contains a directory prefix, then return it as a `Path`.
     If it doesn't contain a directory prefix, return a Path with `possible_parent` as
@@ -39,11 +43,12 @@ def resolve_and_require_path(path_str: str, possible_parent: Path, raise_on_miss
         path_str (str): A path that may or may not contain a directory prefix.
         possible_parent (Path): If not None, use this parent path is `path_str` doesn't contain a directory prefix.
         raise_on_missing (bool): If `True` and the resolved path doesn't exist, raise a `ValueError`. If `False`, return `None`.
+        return_abs_path (bool): Return the absolute path if the the resolved path is relative.
 
     Returns:
         The resolved path or None if the path doesn't exist, but `raise_on_missing` is `False`.
     """
-    path = resolve_path(path_str, possible_parent)
+    path = resolve_path(path_str, possible_parent, return_abs_path=return_abs_path)
     if not path.exists():
         if raise_on_missing:
             raise ValueError(f"Resolved path '{path}' doesn't exist!")

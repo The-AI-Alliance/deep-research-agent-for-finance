@@ -15,28 +15,33 @@ logger:
     timestamp_format: "%Y%m%d_%H%M%S"
 
 mcp:
+  # In this config file, all supported debugging flags or tools are used, 
+  # like @modelcontextprotocol/inspector. See
+  #   https://modelcontextprotocol.io/docs/tools/inspector#pypi-package
+  #   https://pypi.org/project/mcp-server-fetch/ (example)
+  # Note that @modelcontextprotocol/inspector is actually intended for interactive use.
   servers:
     fetch:
-      command: "uvx"
-      args: ["mcp-server-fetch"]
+      command: "npx"
+      args: ["-y", "@modelcontextprotocol/inspector", "uvx", "mcp-server-fetch"]
     pubmed-central:
       command: "npx"
-      args: ["-y", "mcp-remote@latest", "https://www.ncbi.nlm.nih.gov/pmc/tools/api/"]
+      args: ["-y", "mcp-remote@latest", "https://www.ncbi.nlm.nih.gov/pmc/tools/api/", "--debug"]
     pubmed-gpt:
       command: "npx"
-      args: ["-y", "mcp-remote@latest", "https://api.ncbi.nlm.nih.gov/lit/"]
+      args: ["-y", "mcp-remote@latest", "https://api.ncbi.nlm.nih.gov/lit/", "--debug"]
     nih-clinical-trials:
       command: "npx"
-      args: ["-y", "mcp-remote@latest", "https://clinicaltrials.gov/api/"]
+      args: ["-y", "mcp-remote@latest", "https://clinicaltrials.gov/api/", "--debug"]
     healthcare-repository:
       command: "npx"
-      args: ["-y", "mcp-remote@latest", "https://api.healthcarerepo.org/mcp/v1"]
+      args: ["-y", "mcp-remote@latest", "https://api.healthcarerepo.org/mcp/v1", "--debug"]
     medical-qa:
       command: "npx"
-      args: ["-y", "mcp-remote@latest", "https://api.medicalqa.ai/mcp/v1"]
+      args: ["-y", "mcp-remote@latest", "https://api.medicalqa.ai/mcp/v1", "--debug"]
     bio-mcp:
       command: "npx"
-      args: ["-y", "mcp-remote@latest", "https://biomcp.genomoncology.com/api/v1"]
+      args: ["-y", "mcp-remote@latest", "https://biomcp.genomoncology.com/api/v1", "--debug"]
     filesystem:
       command: "npx"
       args: ["-y", "@modelcontextprotocol/server-filesystem", ".."]

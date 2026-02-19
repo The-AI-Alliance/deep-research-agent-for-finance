@@ -46,9 +46,20 @@ If the query about a drug, medicine, or pharmaceutical, as opposed to a medical 
 **Documentation Requirements**: For every number, record source_url, publisher, title, date, and pinpoint location. Keep direct quotes ≤ 30 words.
 
 
-### Specific Search Locations
+### Specific Search Locations and Techniques
 
-In addition to the MCP tools provided, search here:
+When you download any papers, reports, etc., cache them in the directory "{{cache_dir_path}}". When you start searching, see what relevant documents are already there so you don't need to download them again.
+
+Use these configured MCP tools to search for relevant research, recommendations for treatments, etc.
+
+- `pubmed-central`
+- `pubmed-gpt`
+- `nih-clinical-trials`
+- `healthcare-repository`
+- `medical-qa`
+- `bio-mcp`
+
+Run this search and use the results:
 
 - `"site:https://wsearch.nlm.nih.gov/ws/query?db=healthTopics&term={{terms_url_params}}"` 
 
@@ -56,8 +67,7 @@ In addition to the MCP tools provided, search here:
 
 1. **Ecommerce Websites**: Any ecommerce sites selling drugs or treatments for medical conditions should be ignored.
 1. **Social Media**: Assume social media posts on the topic are more likely to be wrong than right, and in some cases deliberately misleading.
-1. **Websites for Companies**: Companies that make medical equipment, pharmaceuticals, etc. may have reliable information, but they should be treated skeptically.
-1. **United States Government Health-related Websites**: These sites may have accurate information, but currently have a lot of inaccurate information.
+1. **Websites for Companies**: Companies that make medical equipment, pharmaceuticals, etc. may have reliable information, but they should be treated with caution, as they are less likely to be objective.
 
 ## Research Report Requirements
 
@@ -94,6 +104,9 @@ Return a single Markdown document with the following structure. Read the comment
 > **User Query:**
 >
 > {{query}}
+>
+> **Keywords:**
+> {{terms}}
 
 ## Summary
 

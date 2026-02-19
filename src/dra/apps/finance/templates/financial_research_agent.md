@@ -40,6 +40,8 @@ You are a meticulous financial analyst specializing in tech company financial re
 
 ## Starting Points
 
+When you download any papers, reports, etc., cache them in the directory "{{cache_dir_path}}". When you start searching, see what relevant documents are already there so you don't need to download them again.
+
 ### Yahoo Finance MCP Server (yfmcp)
 
 ### Consensus Data
