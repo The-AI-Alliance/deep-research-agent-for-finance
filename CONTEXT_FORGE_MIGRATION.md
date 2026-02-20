@@ -34,7 +34,7 @@ This section summarized details also available in the README.
 
 ### 1. Set Up Context Forge
 
-Follow the [Context Forge documentation](https://ibm.github.io/mcp-context-forge/) instructions to install and run it. 
+Follow the [Context Forge documentation](https://ibm.github.io/mcp-context-forge/) instructions to install and run it. For example, see [these instructions](https://ibm.github.io/mcp-context-forge/#1-install-run-copy-paste-friendly).
 
 For queries to the gateway, you need to obtain and configure your Context Forge _bearer token_. Getting the value for this token is also discussed in the [API Endpoints](https://ibm.github.io/mcp-context-forge/#api-endpoints) documentation. Use the environment variable name `MCPGATEWAY_BEARER_TOKEN` for it, e.g.,
 
@@ -46,9 +46,9 @@ Add this definition to the shell profile (`.bashrc`, `.zshrc`, etc.) for the acc
 
 Then see [API Endpoints](https://ibm.github.io/mcp-context-forge/#api-endpoints) for details on adding tools and services with API calls, or use the GUI at the gateway root URL, which is [localhost:4444](https://localhost:4444) when running locally.
 
-### 2. Update the Deep Research Application Configuration File
+### 2. Update the Desired Deep Research Application Configuration File
 
-Edit the `mcp_agent.config*.yaml` files in the `src/dra/APP/config/` directory  corresponding to your application, where `APP` is `finance`, for example. Change the `servers` definitions to route external services through Context Forge. Here is how the three external services are currently configured:
+Edit one or more of the `mcp_agent.config*.yaml` files in the `src/dra/APP/config/` directory corresponding to your application, where `APP` is `finance` or `medical`. Change the `servers` definitions to route external services through Context Forge. Here is how the three external services are currently configured:
 
 ```yaml
 mcp:
@@ -90,10 +90,10 @@ This example is also in `examples/mcp_agent.config-context_forge.yaml`.
 
 ### 3. Verify Your Setup
 
-Test that the configuration works using a test run of the deep research application. Using `make`:
+Test that the configuration works using a test run one of the deep research applications. Using `make`:
 
 ```bash
-make APP_ARGS='--short-run' app-run-finance
+make APP_ARGS='--short-run' app-run-medical
 ```
 
 The `--short-run` flag limits iterations for a quick test. (The "research" results will be suboptimal...)

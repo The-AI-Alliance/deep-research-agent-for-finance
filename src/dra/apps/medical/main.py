@@ -27,12 +27,7 @@ def get_server_list() -> list[str]:
     return [
         "fetch",
         "filesystem",
-        "pubmed-central",
-        "pubmed-gpt",
-        "nih-clinical-trials",
-        "healthcare-repository",
-        "medical-qa",
-        "bio-mcp",
+        "medical-mcp",
     ]
 
 def get_extra_observers() -> dict[str, Observer]:

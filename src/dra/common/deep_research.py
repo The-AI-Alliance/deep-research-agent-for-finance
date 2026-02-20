@@ -153,7 +153,10 @@ class DeepResearch():
             # Configure filesystem server with current directory
             app.context.config.mcp.servers["filesystem"].args.extend([os.getcwd()])
 
-            self.token_counter = app.context.token_counter
+            # Due to an occasionally, apparent infinite loop bug when using ollama, we
+            # don't invoke this code if serving that way.
+            if (self.provider != "ollama"):
+                self.token_counter = app.context.token_counter
 
             # Now let the observers know
             self.observers.update(self)

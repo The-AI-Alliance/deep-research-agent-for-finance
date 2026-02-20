@@ -1,6 +1,6 @@
 # Deep Research Agent for Medical Research
 
-This README adds additional information to supplement the description provided in the repo's main [README](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/README.md).
+This README adds additional information to supplement the description provided in the repo's main [README](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/README.md). See that README for required tools, including `uv` and `npm`.
 
 <a id="usage"></a>
 
@@ -9,12 +9,54 @@ This README adds additional information to supplement the description provided i
 > [!TIP]
 > While we try to keep commands listed below consistent with the current state of the code, if a command doesn't work as shown, check what is done in the `Makefile`! Of course, [issues](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/issues) or [discussion topics](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/discussions) are welcome, if you find a mistake.
 
-The easiest way to run the application with default values for all optional arguments is `make app-run-medical`. (There is a `make app-run` target, but it runs the finance application, by default.) 
+The main MCP server used by the medical application has to be installed first.
+
+### Installing `medical-mcp`
+
+The [`medical-mcp`](https://github.com/JamesANZ/medical-mcp) MCP server runs locally on your machine and it does most of the searching for this application's deep research. While most `node`-based MCP servers can be installed and run automatically using `npx`, this one can't.  
+
+#### Install the Node Module
+
+Use the following command to install `medical-mcp` or see the `medical-mcp` [README](https://github.com/JamesANZ/medical-mcp) for other options.
+
+```shell
+npm install -g medical-mcp
+``` 
+
+Next, determine where this module is installed, as you may need to change a path in the `mcp_agent.config*.yaml` files for the medical application.
+
+If you installed `node` using [HomeBrew](https://brew.sh/) on MacOS or Linux, then try the following commands. 
+
+```shell
+echo $HOMEBREW_HOME
+ls -l $HOMEBREW_HOME/lib/node_modules/medical-mcp/build/index.js
+```
+
+If the file exists _and_ `HOMEBREW_HOME` is set to `/opt/homebrew`, you can skip the rest of this step and go to **A Note about the Prompt Template File**.
+
+If the `ls` command found the file, but `HOMEBREW_HOME` is not set to `/opt/homebrew` (`/usr/local/homebrew` is one possibility...), then jump a few paragraphs to where we tell you edit the YAML files and just change the path to `build/index.js` to match the your path, as shown by `ls -l`.
+
+If you didn't install `node` with HomeBrew or you are on Windows, then do the following. Use the `which npm` command on MacOS or Linux or `where npm` on Windows. As an example, suppose the command returns `$HOME/mytools/node/bin/npm`. The `medical-mcp` library will be installed in `$HOME/mytools/node/lib/node_modules/medical-mcp/`. Under this directory will be a file `build/index.js`, `$HOME/mytools/node/lib/node_modules/medical-mcp/build/index.js`. This is the path you would need to use in the `mcp_agent.config*.yaml` files.
+
+Finally, edit the medical configuration YAML files in [`src/dra/apps/medical/config`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/dra/apps/medical/config). Find the configuration for `medical-mcp` in each one and change the path in the `args:` line to match your path:
+
+```yaml
+medical-mcp:
+  command: "node"
+  "args": ["/opt/homebrew/lib/node_modules/medical-mcp/build/index.js"]
+```
+
+# A Note about the Prompt Template File
+
+The prompt template file [`medical_research_agent.md`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/dra/apps/medical/templates/medical_research_agent.md) tells the model how to use this MCP Server for different kinds of user queries.
+
+### Make Targets for Running the Application and Related Tasks
+
+Finally we are ready to run the application. The easiest way to run the application with default values for all optional arguments is `make app-run-medical`.
 
 The `app-run-medical` target does some setup and then runs the command `cd src && uv run -m dra.apps.medical.main ...` where `...` is a lot of arguments. 
 
 Here are the most useful `make` targets for this application:
-
 
 | Make Target          | Description                     |
 | :------------------- | :------------------------------ |
@@ -22,17 +64,22 @@ Here are the most useful `make` targets for this application:
 | `app-help-medical`   | Help on the medical application |
 | `app-run-medical`    | Run the medical application. Prompts you for a research query and a report title. |
 
-Either running with or without `make`, the required arguments for the medical application are `--query "QUERY"` and `--report-title "TITLE"`, but you will be prompted for them if you don't supply the arguments.
+> [!NOTE]
+> The application can run for a long time!
 
-As an example, here are the shortest `make` and CLI commands you can run to do research with a custom query about _diabetes mellitus_:
+Either running with or without `make`, the required arguments for the medical application are `--query "QUERY"`, `--terms "TERMS`, and `--report-title "TITLE"`, but you will be prompted for them if you don't supply the arguments.
+
+As an example, here is an example of the shortest `make` and CLI commands you can run to do research with a custom query about _diabetes mellitus_:
 
 ```shell
-$ make QUERY="What are the causes of diabetes mellitus?" \
-    REPORT_TITLE="Diabetes Mellitus" app-run-medical
+make QUERY="What are the causes of diabetes mellitus?" \
+    REPORT_TITLE="Diabetes Mellitus" app-run-medical \
+    TERMS="diabetes,insulin,pancreas"
 
-$ cd src && uv run -m dra.apps.medical.main \
+cd src && uv run -m dra.apps.medical.main \
     --query "What are the causes of diabetes mellitus?" \
-    --report-title "Diabetes Mellitus"
+    --report-title "Diabetes Mellitus" \
+    --terms "diabetes,insulin,pancreas"
 ```
 
 The application provides many optional CLI arguments to configure its behavior. Use the following `make` and CLI commands to see the help.

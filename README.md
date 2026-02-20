@@ -29,7 +29,7 @@ This application leverages AI to perform automated financial research and analys
 - Risk and opportunity assessments
 - Investor sentiment analysis
 
-See also this app's [README.md](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/dra/apps/finance/README.md), which provides specific information about running and configuring this application.
+See also this app's [README](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/dra/apps/finance/README.md), which provides specific information about running and configuring this application.
 
 ### Medicine
 
@@ -39,7 +39,7 @@ This more-recent application leverages AI to perform automated medical research 
 - References to the sources of information
 - Latest known practices, etc.
 
-See also this app's [README.md](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/dra/apps/medical/README.md), which provides specific information about running and configuring this application.
+See also this app's [README](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/dra/apps/medical/README.md), which provides specific information about running and configuring this application. For example, there is a `node` module for an MCP server that has to be installed locally on your machine; using `npx` as is done for other node services, doesn't work for this MCP server.
 
 ### Creating New Applications
 
@@ -55,7 +55,7 @@ An account with OpenAI or Anthropic is required, or you can use a local option l
 - [uv](https://docs.astral.sh/uv/) Python package manager, for running the application and some local MCP servers.
 - [npm/npx](https://nodejs.org/en/download) Node package manager, for running some local MCP servers.
 
-If you don't use `uv`, change the commands below and in the `Makefile` as required.
+If you don't use `uv`, change the commands that use that are discussed below, in the `Makefile`, and in the `mcp-agent.config*.yaml` files.
 
 ### Installation
 
@@ -89,34 +89,36 @@ Here are the most useful `make` targets:
 | `app-help-finance`   | Help on the finance application. |
 | `app-help-medical`   | Help on the medical application. |
 | `app-run-finance`    | Run the finance application. Uses META by default. |
-| `app-run-medical`    | Run the medical application. Prompts you for a research query and a report title. |
+| `app-run-medical`    | Run the medical application. Prompts you for a research query, keywords/terms, and a report title. |
 
 > [!NOTE]
-> For easy demonstration purposes, the apps either have default definitions for their required flags in the `Makefile` or they will prompt you for values. This makes it easy to just try them out. 
+> For easy demonstration purposes, the apps either have default definitions for their required flags in the `Makefile` or they will prompt you for values. This makes it easy to just try them out. However, the main MCP server used by the medical application has to be installed first. See that application's [README](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/dra/apps/medical/README.md) for details.
 
 > [!TIP]
 > Run the command `make -n app-run-APP` to see what command would be executed without actually running it.
 
-Without using make, the minimum required arguments for the finance application are `--ticker TICKER` and `--company-name COMPANY_NAME`. For the medical application, `--query "QUERY"` and `--report-title TITLE` are required, but the app will prompt you for their values if these arguments are not used or the values supplied are empty.
+Without using make, the minimum required arguments for the finance application are `--ticker TICKER` and `--company-name COMPANY_NAME`. For the medical application, `--query "QUERY"`, `--terms "TERMS" (keywords), and `--report-title TITLE` are required, but the app will prompt you for their values if these arguments are not used or the values supplied are empty.
 
 So, for example, here are the shortest `make` and CLI commands you can run to do financial research on IBM:
 
 
 ```shell
-$ make TICKER=IBM COMPANY_NAME="International Business Machines Corporation" app-run-finance
+make TICKER=IBM COMPANY_NAME="International Business Machines Corporation" app-run-finance
 
-$ cd src && uv run -m dra.apps.finance.main --ticker IBM --company-name "International Business Machines Corporation"
+cd src && uv run -m dra.apps.finance.main --ticker IBM --company-name "International Business Machines Corporation"
 ```
 
 For using the medical research app to research _diabetes mellitus_:
 
 ```shell
-$ make QUERY="What are the causes of diabetes mellitus?" \
-    REPORT_TITLE="Diabetes Mellitus" app-run-medical
+make QUERY="What are the causes of diabetes mellitus?" \
+    REPORT_TITLE="Diabetes Mellitus" app-run-medical \
+    TERMS="diabetes,insulin,pancreas"
 
-$ cd src && uv run -m dra.apps.medical.main \
+cd src && uv run -m dra.apps.medical.main \
     --query "What are the causes of diabetes mellitus?" \
-    --report-title "Diabetes Mellitus"
+    --report-title "Diabetes Mellitus" \
+    --terms "diabetes,insulin,pancreas"
 ```
 
 > [!NOTE]
@@ -410,12 +412,12 @@ A [Rich console UI](https://rich.readthedocs.io/en/stable/introduction.html) is 
 
 A Markdown final report is written as discussed above in [Markdown Report](#markdown-report). The repo contains an example from a test run for Meta: [`./examples/gpt-oss_20b/META_report.md`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/examples/gpt-oss_20b/META_report.md). there is also an example output Excel spreadsheet in that directory, [`./examples/gpt-oss_20b/META_financials.xlsx`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/examples/gpt-oss_20b/META_financials.xlsx).
 
-## What the Application Does
+## What the Applications Do
 
-The application will:
+The applications use the same internal logic for deep research. They will:
 1. Connect to the configured MCP servers
 2. Execute the research agent with predefined instructions
-3. Generate a comprehensive stock report
+3. Generate a comprehensive report
 
 ## Architecture
 
@@ -434,7 +436,7 @@ High level flow:
 Key components:
 - **TODO Queue** - a queue of multiple steps and full plan for execution
 - **Memory and Knowledge** - persisting memory and knowledge across steps. Determining when context should be fed in
-- **Non-LLM functions** - Dependendency validation, MCP server validation, Agent verification
+- **Non-LLM functions** - Dependency validation, MCP server validation, Agent verification
 - **Replanning** - logic for triggering a new replan
 - **Emergency stop** - stopping execution due to repeated failures
 - **Force completion** - respecting the budget and forcing completion due to budget overrun
@@ -445,7 +447,7 @@ Key components:
 
 The `mcp-agent` modules uses two configuration files:
 
-- `mcp_agent.config.yaml` - Main configuration settings. We discussed this above and the repo has several versions, e.g., [`dra/apps/finance/config/mcp_agent.config.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/dra/apps/finance/config/mcp_agent.config.yaml)
+- `mcp_agent.config.yaml` - Main configuration settings. We discussed this above and the repo has several versions for each application, e.g., [`dra/apps/finance/config/mcp_agent.config.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/dra/apps/finance/config/mcp_agent.config.yaml)
 - `mcp_agent.secrets.yaml` - API keys and secrets, put in the root directory of the repo or your home directory and _**not**_ tracked in git, since it contains secrets!
 
 See the [`mcp-agent` configuration docs](https://docs.mcp-agent.com/reference/configuration) for details on these files.
@@ -502,6 +504,10 @@ For more details on configuring different providers that `mcp-agent` supports:
 - [Ollama](https://github.com/lastmile-ai/mcp-agent/tree/main/examples/model_providers/mcp_basic_ollama_agent)
 - [Gemini](https://github.com/lastmile-ai/mcp-agent/tree/main/examples/model_providers/mcp_basic_google_agent)
 - [All supported providers](https://github.com/lastmile-ai/mcp-agent/tree/main/examples/model_providers/)
+
+#### Debug Variants
+
+Finally, each of the above YAML files for each application have `mcp_agent.config*.debug.yaml` variants, where extra debugging flags are added to the server configurations. They are used if you invoke the make `run` targets as follows: `make DEBUG=true app-run-<APP>`.
 
 ### Setting Up Secrets
 
@@ -609,7 +615,7 @@ For example, `mcp-remote` allows you to customize the HTTP headers, so you can p
 ```
 
 > [!TIP]
-> Some of the config files have "debug" versions, e.g., [`src/dra/apps/medical/config/mcp_agent.config.ollama.debug.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/dra/apps/medical/config/mcp_agent.config.ollama.debug.yaml). These versions use add debugging flags and other tools for additional logging and troubleshooting. 
+> Some of the config files have "debug" versions, e.g., [`src/dra/apps/medical/config/mcp_agent.config.ollama.debug.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/dra/apps/medical/config/mcp_agent.config.ollama.debug.yaml). These versions add debugging flags and other tools for additional logging and troubleshooting. Those tools include `@modelcontextprotocol/inspector`, which will pop up a GUI for interacting with the services it is "inspecting". 
 > See the [Debugging Tips](#debugging-tips) below for more details.
 
 #### Edit the `main.py` for the Application
