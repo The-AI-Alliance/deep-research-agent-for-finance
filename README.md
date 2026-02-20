@@ -52,7 +52,8 @@ An account with OpenAI or Anthropic is required, or you can use a local option l
 ### Prerequisites
 
 - Python 3.10 or higher
-- [uv](https://docs.astral.sh/uv/) package manager
+- [uv](https://docs.astral.sh/uv/) Python package manager, for running the application and some local MCP servers.
+- [npm/npx](https://nodejs.org/en/download) Node package manager, for running some local MCP servers.
 
 If you don't use `uv`, change the commands below and in the `Makefile` as required.
 
