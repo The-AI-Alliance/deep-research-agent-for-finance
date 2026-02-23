@@ -76,9 +76,11 @@ uv sync
 > [!TIP]
 > While we try to keep commands listed below consistent with the current state of the code, if a command doesn't work as shown, check what is done in the `Makefile`! Of course, [issues](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/issues) or [discussion topics](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/discussions) are welcome, if you find a mistake.
 
+Using [`make`](https://www.gnu.org/software/make/) is the easiest way to run the applications and to get built-in help. A convenient `zsh` script, `make.sh`, can be used for running either application with different arguments. Run `make.sh --help` for the details.
+
 The easiest way to run an application with default values for _most_ of the arguments is `make app-run-APP`, where `APP` is currently `finance` and `medical`. `make app-run` runs the finance application, by default. 
 
-The `app-run*` targets do some setup and then run the command `cd src && uv run -m dra.apps.APP.main ...` where `...` is a lot of arguments. 
+Inside the `Makefile`, the `app-run*` targets do some setup and then run the command `cd src && uv run -m dra.apps.APP.main ...` where `...` elides a lot of arguments. 
 
 Here are the most useful `make` targets:
 
@@ -97,12 +99,13 @@ Here are the most useful `make` targets:
 > [!TIP]
 > Run the command `make -n app-run-APP` to see what command would be executed without actually running it.
 
-Without using make, the minimum required arguments for the finance application are `--ticker TICKER` and `--company-name COMPANY_NAME`. For the medical application, `--query "QUERY"`, `--terms "TERMS" (keywords), and `--report-title TITLE` are required, but the app will prompt you for their values if these arguments are not used or the values supplied are empty.
+The minimum required arguments for the finance application are `--ticker TICKER` and `--company-name COMPANY_NAME`. Default values are defined for them in the `Makefile`. For the medical application, `--query "QUERY"`, `--terms "TERMS" (keywords), and `--report-title TITLE` are required, but the app will prompt you for their values if these arguments are not used or the values supplied are empty. (They are empty in the `Makefile`)
 
-So, for example, here are the shortest `make` and CLI commands you can run to do financial research on IBM:
-
+So, for example, here are the shortest `make.sh`, `make` and CLI commands you can run to do financial research on IBM (OpenAI inference will be used):
 
 ```shell
+make.sh --finance --ibm 
+
 make TICKER=IBM COMPANY_NAME="International Business Machines Corporation" app-run-finance
 
 cd src && uv run -m dra.apps.finance.main --ticker IBM --company-name "International Business Machines Corporation"
@@ -111,6 +114,11 @@ cd src && uv run -m dra.apps.finance.main --ticker IBM --company-name "Internati
 For using the medical research app to research _diabetes mellitus_:
 
 ```shell
+make.sh --medical \
+  --query "What are the causes of diabetes mellitus?" \
+  --report-title "Diabetes Mellitus" \
+  --terms "diabetes,insulin,pancreas"
+
 make QUERY="What are the causes of diabetes mellitus?" \
     REPORT_TITLE="Diabetes Mellitus" app-run-medical \
     TERMS="diabetes,insulin,pancreas"
