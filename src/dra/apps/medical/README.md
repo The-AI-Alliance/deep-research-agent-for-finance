@@ -9,13 +9,15 @@ This README adds additional information to supplement the description provided i
 > [!TIP]
 > While we try to keep commands listed below consistent with the current state of the code, if a command doesn't work as shown, check what is done in the `Makefile`! Of course, [issues](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/issues) or [discussion topics](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/discussions) are welcome, if you find a mistake.
 
-The main MCP server used by the medical application has to be installed first.
+The main MCP server used by the medical application has to be installed locally first.
 
 ### Installing `medical-mcp`
 
-The [`medical-mcp`](https://github.com/JamesANZ/medical-mcp) MCP server runs locally on your machine and it does most of the searching for this application's deep research. While most `node`-based MCP servers can be installed and run automatically using `npx`, this one can't.  
+The [`medical-mcp`](https://github.com/JamesANZ/medical-mcp) MCP server runs locally on your machine and it does most of the searching for this application's deep research. While most Node- and Python-based MCP servers can be installed and run automatically using `npx` or `uvx`, respectively, this one apparently can't be run that way.
 
 #### Install the Node Module
+
+Node (with `npm` and `npx`) should already be installed, as they were listed as requirements in the project [README](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/README.md).
 
 Use the following command to install `medical-mcp` or see the `medical-mcp` [README](https://github.com/JamesANZ/medical-mcp) for other options.
 
@@ -25,20 +27,22 @@ npm install -g medical-mcp
 
 Next, determine where this module is installed, as you may need to change a path in the `mcp_agent.config*.yaml` files for the medical application.
 
-If you installed `node` using [HomeBrew](https://brew.sh/) on MacOS or Linux, then try the following commands. 
+If you installed `node` using [HomeBrew](https://brew.sh/) on MacOS or Linux, then try the following commands:
 
 ```shell
 echo $HOMEBREW_HOME
 ls -l $HOMEBREW_HOME/lib/node_modules/medical-mcp/build/index.js
 ```
 
-If the file exists _and_ `HOMEBREW_HOME` is set to `/opt/homebrew`, you can skip the rest of this step and go to **A Note about the Prompt Template File**.
+If the file exists _and_ `HOMEBREW_HOME` is set to `/opt/homebrew`, you can skip the rest of this section and go to **A Note about the Prompt Template File**.
 
-If the `ls` command found the file, but `HOMEBREW_HOME` is not set to `/opt/homebrew` (`/usr/local/homebrew` is one possibility...), then jump a few paragraphs to where we tell you edit the YAML files and just change the path to `build/index.js` to match the your path, as shown by `ls -l`.
+If the `ls` command found the file, but `HOMEBREW_HOME` is not set to `/opt/homebrew` (`/usr/local/homebrew` is one possibility...), then jump a few paragraphs to where we tell you edit the YAML files and just change the path to `build/index.js` to match your path, as shown by the `ls -l` command.
 
-If you didn't install `node` with HomeBrew or you are on Windows, then do the following. Use the `which npm` command on MacOS or Linux or `where npm` on Windows. As an example, suppose the command returns `$HOME/mytools/node/bin/npm`. The `medical-mcp` library will be installed in `$HOME/mytools/node/lib/node_modules/medical-mcp/`. Under this directory will be a file `build/index.js`, `$HOME/mytools/node/lib/node_modules/medical-mcp/build/index.js`. This is the path you would need to use in the `mcp_agent.config*.yaml` files.
+If you didn't install `node` with HomeBrew or you are on Windows, then do the following. Use the `which npm` command on MacOS or Linux, or `where npm` on Windows to determine where `npm` is installed. 
 
-Finally, edit the medical configuration YAML files in [`src/dra/apps/medical/config`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/dra/apps/medical/config). Find the configuration for `medical-mcp` in each one and change the path in the `args:` line to match your path:
+As an example, suppose the command returns `$HOME/mytools/node/bin/npm`. The `medical-mcp` library will be installed in `$HOME/mytools/node/lib/node_modules/medical-mcp/`. Under this directory will be a file `build/index.js`, i.e., `$HOME/mytools/node/lib/node_modules/medical-mcp/build/index.js`. This is the path you need to use in the `mcp_agent.config*.yaml` files.
+
+Finally, edit the medical configuration YAML files, `mcp_agent.config*.yaml`, in [`src/dra/apps/medical/config`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/dra/apps/medical/config). Find the configuration for `medical-mcp` in each one and change the path in the `args:` line to match your path. Here is the default setting:
 
 ```yaml
 medical-mcp:
@@ -46,13 +50,13 @@ medical-mcp:
   "args": ["/opt/homebrew/lib/node_modules/medical-mcp/build/index.js"]
 ```
 
-# A Note about the Prompt Template File
+### A Note about the Prompt Template File
 
-The prompt template file [`medical_research_agent.md`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/dra/apps/medical/templates/medical_research_agent.md) tells the model how to use this MCP Server for different kinds of user queries.
+The prompt template file [`medical_research_agent.md`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/dra/apps/medical/templates/medical_research_agent.md) tells the model how to use this MCP Server for different kinds of user queries. This is instructive to read if you try other MCP servers. Similarly, the prompt template files for the finance application also provide guidance for use of the MCP servers configured for it.
 
 ### Make Targets for Running the Application and Related Tasks
 
-Finally we are ready to run the application. The easiest way to run the application with default values for all optional arguments is `make app-run-medical`.
+Finally we are ready to run the application. The easiest way to run it with default values for all optional arguments is `make app-run-medical`.
 
 The `app-run-medical` target does some setup and then runs the command `cd src && uv run -m dra.apps.medical.main ...` where `...` is a lot of arguments. 
 
@@ -65,7 +69,11 @@ Here are the most useful `make` targets for this application:
 | `app-run-medical`    | Run the medical application. Prompts you for a research query and a report title. |
 
 > [!NOTE]
-> The application can run for a long time!
+> The application can run for a long time! If you want to limit it to a short run to see what it does (with less than optimal results...), try this instead:
+>
+> ```shell
+> make APP_ARGS=--short-run app-run-medical
+> ```
 
 Either running with or without `make`, the required arguments for the medical application are `--query "QUERY"`, `--terms "TERMS`, and `--report-title "TITLE"`, but you will be prompted for them if you don't supply the arguments.
 
@@ -73,8 +81,9 @@ As an example, here is an example of the shortest `make` and CLI commands you ca
 
 ```shell
 make QUERY="What are the causes of diabetes mellitus?" \
-    REPORT_TITLE="Diabetes Mellitus" app-run-medical \
-    TERMS="diabetes,insulin,pancreas"
+    REPORT_TITLE="Diabetes Mellitus" \
+    TERMS="diabetes,insulin,pancreas" \
+    app-run-medical
 
 cd src && uv run -m dra.apps.medical.main \
     --query "What are the causes of diabetes mellitus?" \
@@ -198,13 +207,16 @@ TIPS:
 
 ```
 
-Most of this help output was generated by passing `--help` to the command itself, e.g.,:
+Most of the arguments are shared between the applications, so they are discussed
+in the main [README](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/README.md).
+
+This help output was generated by passing `--help` to the command itself, e.g.,:
 
 ```shell
 cd src && uv run -m dra.apps.medical.main --help
 ```
 
-Note that for the optional arguments, default values are shown. _These are the defaults built into the application itself,_ which will sometimes be different than the values explicitly passed to the command in the `Makefile`. To see the latter values easily, use the following command, where the `-n` argument tells `make` to echo the commands, but don't run them:
+Note that for the optional arguments, default values are shown. _These are the defaults built into the application itself,_ which will sometimes be different than the values explicitly passed to the command in the `Makefile`. To see these values easily, use the following command, where the `-n` argument tells `make` to echo commands, but don't run them:
 
 ```shell
 $ make -n app-run-medical
@@ -232,36 +244,17 @@ cd src && uv run -m dra.apps.medical.main \
 > * All the values for the CLI arguments shown here are defined as variables near the top of the `Makefile`. So, if you want to permanently change any of these values, edit the corresponding variable definitions there.
 > * Use `make help` to see a list of the most important `make` targets with brief descriptions.
 
-The unique options for the medical application include the `--query`. We pass an empty string in the `Makefile`, so you will be prompted for it. You could pass these values to `make` as follows:
+The unique options for the medical application include the `--query` and `--report-title`. We pass an empty string in the `Makefile`, so you will be prompted for them. 
 
+There is also a `--markdown-report` option that specifies the report's file name. The `Makefile` doesn't use this argument for the medical application (it does for the finance application...). Instead, it allows the application to synthesize a suitable name based on the report title you specify. However, it will be written in the `--output-dir` location, so you can find it easily.
 
-```shell
-$ make QUERY="What are the causes of diabetes mellitus?" \
-    REPORT_TITLE="Diabetes Mellitus" app-run-medical
-```
+Finally, `--medical-research-prompt-path`, is also unique to this app. It is the path to the prompt template file. The default value for this path is `medical_research_agent.md`. Because a directory path isn't specified, this file will be searched for in the value passed with `--templates-dir`, which defaults to `dra/apps/medical/templates`.
 
-Note that we also passed the report title this way, because the `make -n ...` output shows that an empty string is passed for `--report-title`, since we decided there isn't a very useful default we can use for this option (unlike for the finance app). If you don't pass a non-empty value, you will also be prompted for the title.
-
-Finally, `--medical-research-prompt-path`, is also unique to this app. It is the path to the prompt template file. The default value for this path is `medical_research_agent.md`. Because a directory path isn't specified, this file will be searched for in the value given by the `--templates-dir` option, which defaults to `dra/apps/medical/templates`.
-
-See [`examples/gpt-oss_20b/diabetes_report.md`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/examples/gpt-oss_20b/diabetes_report.md) for a sample output.
+See [`examples/gpt-oss_20b/diabetes_report.md`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/examples/gpt-oss_20b/diabetes_report.md) for a sample report.
 
 ## Customizing Data Sources for Medical Deep Research
 
-Much of the important medical information is behind paywalls. As an open-source demo application, we can only use freely-accessible data sources. If you have accounts to sources behind paywalls, you can add them to the application following the instructions in the main [README](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/README.md). Also, many datasets, research paper portals, etc. don't provide MCP server access, so other means are necessary.
+Much of the world's important medical information is behind paywalls. As an open-source demo application, we can only use freely-accessible data sources. If you have accounts to sources behind paywalls, you can add them to the application following the instructions in the main [README](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/README.md). Also, many datasets, research paper portals, etc. don't provide MCP server access, so other means are necessary.
 
 The list of resources we are investigating is maintained in this project [issue](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/issues/48). Help wanted!
-
-Currently, we have integrated the following sources:
-
-* Medical MCP servers cataloged at [Medical MCP Servers](https://medicbrain.eu/mcp-servers):
-  * PubMed Central: https://www.ncbi.nlm.nih.gov/pmc/tools/api/
-  * PubMedGPT: https://api.ncbi.nlm.nih.gov/lit/
-  * NIH Clinical Trials: https://clinicaltrials.gov/api/
-  * Healthcare Repository MCP: https://api.healthcarerepo.org/mcp/v1
-  * MedicalQA: https://api.medicalqa.ai/mcp/v1
-  * BioMCP: https://biomcp.genomoncology.com/api/v1
-* A non-MCP server example:
-  * [Medline Plus](https://medlineplus.gov/about/developers/webservices/)
-    * `https://wsearch.nlm.nih.gov/ws/query?db=healthTopics&term={{terms_url_params}}` 
 

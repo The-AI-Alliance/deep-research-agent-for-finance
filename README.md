@@ -92,7 +92,7 @@ Here are the most useful `make` targets:
 | `app-run-medical`    | Run the medical application. Prompts you for a research query, keywords/terms, and a report title. |
 
 > [!NOTE]
-> For easy demonstration purposes, the apps either have default definitions for their required flags in the `Makefile` or they will prompt you for values. This makes it easy to just try them out. However, the main MCP server used by the medical application has to be installed first. See that application's [README](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/dra/apps/medical/README.md) for details.
+> For easy demonstration purposes, the apps either have default definitions for their required flags in the `Makefile` or they will prompt you for values. This makes it easy to just try them out. However, the main MCP server used by the medical application has to be installed locally first. See the medical application's [README](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src/dra/apps/medical/README.md) for details.
 
 > [!TIP]
 > Run the command `make -n app-run-APP` to see what command would be executed without actually running it.

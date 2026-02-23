@@ -43,7 +43,7 @@ If the query about a drug, medicine, or pharmaceutical, as opposed to a medical 
 4. **Health Websites from the United Nations and Affiliate Organizations**:
 5. **Health Websites from the European Union, Member Countries, and the United Kingdom**:
 
-**Documentation Requirements**: For every number, record source_url, publisher, title, date, and pinpoint location. Keep direct quotes ≤ 30 words.
+**Documentation Requirements**: For every result, record source_url, publisher, title, date, and pinpoint location. Keep direct quotes ≤ 30 words.
 
 ### Specific Search Locations and Techniques
 
