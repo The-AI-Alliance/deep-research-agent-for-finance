@@ -226,10 +226,13 @@ class MarkdownDeepOrchestratorMonitor():
         memory = self.orchestrator.memory
         if memory.knowledge:
             for item in memory.knowledge[-3:]:
-                table.add_row([item.key[:40], str(item.value)[:40]])
+                valstr = str(item.value)
+                valstr400 = valstr[:400]
+                if valstr400 != valstr:
+                    valstr400 = valstr400 + "..."
+                table.add_row([item.key[:40], valstr400])
         else:
             table.add_row(["None", ""])
-
         return table
 
     def get_agents_table(self) -> MarkdownTable:
@@ -250,7 +253,8 @@ class MarkdownDeepOrchestratorMonitor():
         # Show cached agent names
         if cache.cache:
             agent_names = []
-            for key, agent in list(cache.cache.items())[:3]:
+            items = list(cache.cache.items())
+            for key, agent in items[:3]:
                 agent_names.append(agent.name)
             if agent_names:
                 table.add_row(["Recent", ", ".join(agent_names)])
@@ -697,14 +701,18 @@ class MarkdownObserver(Observer[DeepResearch]):
                 "Confidence",
             ])
             for item in self.orchestrator.memory.knowledge[:10]:  # Show first 10
+                key = item.key[:30] + "..." if len(item.key) > 30 else item.key
+                valstr = str(item.value)
+                value = valstr[:50] + "..." if len(valstr) > 50 else valstr
                 knowledge_table.add_row([
                     item.category,
-                    item.key[:30] + "..." if len(item.key) > 30 else item.key,
-                    str(item.value)[:50] + "..."
-                    if len(str(item.value)) > 50
-                    else str(item.value),
+                    key,
+                    value,
                     f"{item.confidence:.2f}",
                 ])
+            if len(self.orchestrator.memory.knowledge) > 10:
+                knowledge_table.add_row(['...', '...'])
+
 
         return self.add_section("🧠 Knowledge Extracted", [knowledge_table])
 
@@ -724,8 +732,11 @@ class MarkdownObserver(Observer[DeepResearch]):
         artifacts_info = ["Workspace artifacts usage not available"]
         if self.orchestrator.memory.artifacts:
             artifacts_info = []
-            for name in list(self.orchestrator.memory.artifacts.keys())[:5]:
+            keys = list(self.orchestrator.memory.artifacts.keys())
+            for name in keys[:5]:
                 artifacts_info.append(f"* {name}")
+            if len(keys) > 5:
+                artifacts_info.append(f"* ...")
 
         return self.add_section("📁 Artifacts Created", artifacts_info)
 
