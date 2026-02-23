@@ -10,10 +10,10 @@ has_children: false
 {: .tip}
 > **Tip:** Use the search box at the top of this page to find specific content.
 
-Welcome to the **The AI Alliance**: **Deep Research Agent: Applications for Finance and Medicine**. This project started as an example application of using a _deep research_ agent for financial research and recently the first version of a medical search application was added, demonstrating the universality and flexibility of the deep research approach and the underlying tool kits.   
+Welcome to the **The AI Alliance**: **Deep Research Agent: Applications for Finance and Medicine**. This project started as an example application of using a _deep research_ agent for financial research and recently a medical research application was added, demonstrating the universality and flexibility of the deep research approach and the underlying tool kits.   
 
 {: .note}
-> **Note:** Do you have finance, medical, or legal industry expertise? Do you have AI expertise? Do you want to grow your expertise in either area. Please join us! See our [contributing]({{site.baseurl}}/contributing) page for details.
+> **Note:** Do you have domain expertise, especially in finance, medical, legal, automation, industrial processes, etc.? Do you have AI agent expertise? Or, do you want to grow your expertise in these areas. Please join us! See our [contributing]({{site.baseurl}}/contributing) page for details.
 
 ## What Is It?
 
@@ -21,7 +21,7 @@ This applications use a **deep research agent** designed to collect comprehensiv
 
 The finance application targets financial analysts or investors as users, who want to research publicly-traded companies. 
 
-The medical application targets interested "lay" people and eventually domain experts who want to do research on medical conditions, pharmaceuticals, etc. (This application is in its early stages and is very basic...)
+The medical application targets interested "lay" people and eventually domain experts who want to do research on medical conditions, pharmaceuticals, etc. (This application is currently in its early stages...)
 
 ## About
 
@@ -36,9 +36,9 @@ The finance research application gathers data from multiple reliable financial s
 - Risk and opportunity assessments
 - Investor sentiment analysis
 
-The medical research application currently uses web search only, prioritizing known-reliable sources, with plans for more in-depth searching of research portals, etc.
+The medical research application currently uses medical MCP servers and web search, prioritizing known-reliable and freely-accessible sources.
 
-A legal research application is planned.
+Other applications are planned. Possibilities include legal research, general science, industrial processes, including automation, etc. 
 
 The project [`README`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance){:target="repo"} provides extensive information on running the applications, configuring them, and how to create new applications.
 
@@ -46,14 +46,7 @@ On our roadmap are plans to demonstrate techniques for testing AI-enabled applic
 
 ## Try It!
 
-The project [README](https://github.com/The-AI-Alliance/deep-research-agent-for-finance){:target="repo"} describes how to install the dependencies and run the applications.
-
-{: .note}
-> **NOTE:**
->
-> Any of the `app-run-*` commands shown will invoke the inference service defined for all the applications, potentially incurring charges.
-
-Here are some commands to try:
+The project [README](https://github.com/The-AI-Alliance/deep-research-agent-for-finance){:target="repo"} describes how to install the dependencies and run the applications. Once set up, the following `make` commands provide an easy way to get help on the commands and run them.
 
 ```shell
 # For the default finance app:
@@ -71,3 +64,8 @@ make -n app-run-medical  # Show the command that would be run, but don't run it.
 make help               # General help about the make targets.
 ```
 
+
+{: .note}
+> **NOTE:**
+>
+> The `app-run-*` commands shown will invoke the inference service (OpenAI by default), incurring charges.

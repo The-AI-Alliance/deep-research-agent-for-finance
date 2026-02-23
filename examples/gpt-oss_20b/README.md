@@ -10,4 +10,9 @@ This directory contains some example output files from various runs of the appli
 
 ## Medical Application
 
-* [diabetes_report.md](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/examples/gpt-oss_20b/diabetes_report.md). The medical app's answer to a query about diabetes.
+Two example reports from running the medical application with the query, _"What are the best treatments for diabetes mellitus?"_  and the terms, _"insulin, diabetes, pharmaceuticals, surgery."_
+
+If you compare them, they have a lot of different material, reflecting the _stocahstic_ nature of LLMs. This suggests it's a good idea to run a report, for either application, several times and compare the results.
+
+* [diabetes_report-1.md](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/examples/gpt-oss_20b/diabetes_report-1.md).
+* [diabetes_report-2.md](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/examples/gpt-oss_20b/diabetes_report-2.md).
