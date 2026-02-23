@@ -30,9 +30,9 @@ Without using make, the minimum required arguments for the finance application a
 So, for example, here are the shortest `make` and CLI commands you can run to do research on IBM:
 
 ```shell
-$ make TICKER=IBM COMPANY_NAME="International Business Machines Corporation" app-run-finance
+make TICKER=IBM COMPANY_NAME="International Business Machines Corporation" app-run-finance
 
-$ cd src && uv run -m dra.apps.finance.main --ticker IBM --company-name "International Business Machines Corporation"
+cd src && uv run -m dra.apps.finance.main --ticker IBM --company-name "International Business Machines Corporation"
 ```
 
 The application provides many optional CLI options to configure its behavior. They are discussed in the main [README](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/README.md).

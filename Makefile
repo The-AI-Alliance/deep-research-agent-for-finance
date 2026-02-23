@@ -250,8 +250,7 @@ do-app-run-finance::
 		--max-tokens ${MAX_TOKENS} \
 		--max-cost-dollars ${MAX_COST_DOLLARS} \
 		--max-time-minutes ${MAX_TIME_MINUTES} \
-		--verbose \
-		${APP_ARGS}
+		--verbose ${APP_ARGS}
 		
 do-app-run-medical::
 	cd ${SRC_DIR} && uv run -m ${APP_MODULE} \
@@ -271,7 +270,7 @@ do-app-run-medical::
 		--max-cost-dollars ${MAX_COST_DOLLARS} \
 		--max-time-minutes ${MAX_TIME_MINUTES} \
 		--verbose ${APP_ARGS}
-#		--markdown-report "${OUTPUT_REPORT}" \
+#		--markdown-report "${OUTPUT_REPORT}" 
 		
 show-output-files::
 	@echo

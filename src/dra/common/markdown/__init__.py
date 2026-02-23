@@ -304,6 +304,10 @@ class MarkdownObserver(Observer[DeepResearch]):
 
     If the user doesn't want a report, don't instantiate this object, as it will use
     a default output path to write the file, if none is defined!
+
+    TODO: The Anthropic message handling needs testing and possibly better handling. 
+    We spent a long time experimenting with the OpenAI `ChatCompletionMessages` returned
+    to find a (reasonably) good way of displaying the results!
     """
 
     def __init__(self, 
@@ -475,21 +479,13 @@ class MarkdownObserver(Observer[DeepResearch]):
 
     def __parse_openai_message(self, message_index: int, obj: any) -> list[any]:
         # For inference with OpenAI, the results will be a ChatCompletionMessage:
-        def make_metadata_table(
-            refusal: str,
-            role: str,
-            annotations: str,
-            audio: str,
-            function_call: str,
-            tool_calls: str) -> MarkdownTable:
+
+        def make_metadata_table_from_dict(
+            ccm: ChatCompletionMessage) -> MarkdownTable:
             table = MarkdownTable(title=f"✉️ OpenAI/Ollama Reply Message #{message_index}: Metadata",
                 columns = [('Item', 'left'), ('Value', 'left')])
-            table.add_row(['refusal', str(refusal)])
-            table.add_row(['role', str(role)])
-            table.add_row(['annotations', str(annotations)])
-            table.add_row(['audio', str(audio)])
-            table.add_row(['function_call', str(function_call)])
-            table.add_row(['tool_calls', str(tool_calls)])
+            for key, value in ccm.to_dict().items():
+                table.add_row([key, str(value)])
             return table
 
         sobj = str(obj)
@@ -499,13 +495,7 @@ class MarkdownObserver(Observer[DeepResearch]):
         if isinstance(obj, ChatCompletionMessage):
             ccm: ChatCompletionMessage = cast(ChatCompletionMessage, obj)
             content = ccm.content.split('\n') if ccm.content else []
-            metadata_table = make_metadata_table(
-                ccm.refusal,
-                ccm.role,
-                ccm.annotations,
-                ccm.audio,
-                ccm.function_call,
-                ccm.tool_calls)
+            metadata_table = make_metadata_table_from_dict(ccm)
         elif sobj.startswith("ChatCompletion"):
             # Is it a "str(ChatCompletion...)"? Try parsing it with the following
             #  _ugly_ hack to extract just the `content` from the string:

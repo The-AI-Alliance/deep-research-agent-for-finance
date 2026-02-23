@@ -479,7 +479,9 @@ class RichDisplay(Display):
 
     async def __update_token_usage(self):
         """Display the token usage, if available."""
-        if self.orchestrator.context.token_counter:
+        # Due to an occasionally, apparent infinite loop bug when using ollama, we
+        # don't invoke this code if serving that way.
+        if self.orchestrator.context.token_counter and not self.system.provider == "ollama":
             summary = await self.orchestrator.context.token_counter.get_summary()
             if summary and hasattr(summary, "usage"):
                 self.console.print(
