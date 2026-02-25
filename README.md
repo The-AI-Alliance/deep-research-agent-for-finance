@@ -569,7 +569,7 @@ What if you want to emphasize particular websites to search? The finance app dem
 
 Instead, add content to the prompt template file to list desired web sites and what information should be searched for on them. A good example is the **Search Strategies** section of the main finance app's prompt file, [`financial_research_agent.md`](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/tree/main/src/dra/apps/finance/templates/financial_research_agent.md), where it lists key web sites and the content of interest.
 
-### Adding External MCP Tools and Services
+### Adding Additional MCP Tools and Services
 
 To add or change the tools and services used for an application, there are several steps required.
 
@@ -605,7 +605,7 @@ mcp:
 
 Conventional web searches are handled by the `fetch` tool.
 
-Most of the time, you will define a local `npx` `mcp-remote` server to access a remote MCP server, as is done here for the server `https://mcp.financialdatasets.ai/mcp`. See also the medical application config files for other examples like this.
+Many public MCP servers have python or node libraries that you can run locally to use them. The Yahoo! Finance `yfmcp` app is an example. Other times, you will define a local `npx mcp-remote` server to access a remote MCP server, as is done here for the server `https://mcp.financialdatasets.ai/mcp`. See also the medical application config files for other examples like this.
 
 The URLs in the comments provide details on customizing these definitions, such as passing HTTP headers, debugging flags, etc. 
 
@@ -621,6 +621,8 @@ For example, `mcp-remote` allows you to customize the HTTP headers, so you can p
         "Authorization: Bearer ${BEARER_TOKEN}"
       ]
 ```
+
+See the [MCP Agent Configuration Guide](https://docs.mcp-agent.com/reference/configuration) for more details on configuring external servers. See [CONTEXT_FORGE_MIGRATION.md](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/CONTEXT_FORGE_MIGRATION.md) for an example of how to configure services that are accessed through a gateway, in this case [IBM Context Forge](https://ibm.github.io/mcp-context-forge/).
 
 > [!TIP]
 > Some of the config files have "debug" versions, e.g., [`src/dra/apps/medical/config/mcp_agent.config.ollama.debug.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/src/dra/apps/medical/config/mcp_agent.config.ollama.debug.yaml). These versions add debugging flags and other tools for additional logging and troubleshooting. Those tools include `@modelcontextprotocol/inspector`, which will pop up a GUI for interacting with the services it is "inspecting". 
