@@ -1,0 +1,25 @@
+[project]
+name = "dra-core"
+version = "0.4.0"
+description = "Core library for Deep Research Agent applications"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "anthropic>=0.76.0",
+    "mcp-agent>=0.1.25",
+    "ollama>=0.6.1",
+    "openai>=1.96.0",
+    "openpyxl>=3.1.5",
+]
+
+[dependency-groups]
+dev = [
+    "hypothesis>=6.150.2",
+]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]

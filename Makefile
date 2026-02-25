@@ -2,10 +2,11 @@
 pages_url       := https://the-ai-alliance.github.io/deep-research-agent-for-applications/
 docs_dir        := docs
 site_dir        := ${docs_dir}/_site
-clean_code_dirs := logs output src/output ${SRC_DIR}/.hypothesis
+clean_code_dirs := logs output apps/src/output dra-core/.hypothesis
 clean_doc_dirs  := ${site_dir} ${docs_dir}/.sass-cache
 clean_dirs      := ${clean_code_dirs} ${clean_doc_dirs}
-SRC_DIR         := src
+APPS_DIR        := apps/src
+DRA_CORE_DIR    := dra-core
 
 ## Environment variables
 MAKEFLAGS           ?= # -w --warn-undefined-variables
@@ -199,12 +200,13 @@ endef
 # make is invoked separately for each app.
 
 .PHONY: all list-apps app-setup
-.PHONY: setup-jekyll run-jekyll view-pages view-local clean clean_code clean_docs help 
+.PHONY: setup-jekyll run-jekyll view-pages view-local clean clean_code clean_docs help
 .PHONY: all-apps all-apps-help app-run do-app-run-${APP} before-app-run app-check setup-output-dir after-app-run
 
 .PHONY: uv-check uv-cmd-check venv-check
 .PHONY: mcp-agent-check test tests
 .PHONY: print-info print-app-info print-make-info print-docs-info show-output-files
+.PHONY: build-dra-core install-dra-core test-dra-core
 
 all list-apps::
 	@echo "Available Apps: ${APPS}"
@@ -218,18 +220,31 @@ apps_help := ${APPS:%=app-help-%}
 ${apps_help}::
 	${MAKE} APP=${@:app-help-%=%} app-help
 
+# DRA Core targets
+build-dra-core::
+	@echo "Building dra-core package..."
+	cd ${DRA_CORE_DIR} && uv build
+
+install-dra-core::
+	@echo "Installing dra-core package in development mode..."
+	cd ${DRA_CORE_DIR} && uv sync
+
+test-dra-core::
+	@echo "Running dra-core tests..."
+	cd ${DRA_CORE_DIR} && uv run python -m unittest discover
+
 app-run:: before-app-run do-app-run-${APP} after-app-run
 before-app-run:: app-check setup-output-dir
-# Note that OUTPUT_DIR is defined relative to SRC_DIR, but we are currently not in SRC_DIR
+# Note that OUTPUT_DIR is defined relative to APPS_DIR, but we are currently not in APPS_DIR
 setup-output-dir::
-	@test ! -d "${SRC_DIR}/${OUTPUT_DIR}" || (mv "${SRC_DIR}/${OUTPUT_DIR}" "${SRC_DIR}/${OUTPUT_DIR}"-save-${TIMESTAMP} && echo "*** Moved old "${SRC_DIR}/${OUTPUT_DIR}" to "${SRC_DIR}/${OUTPUT_DIR}"-save-${TIMESTAMP} ***")
-	mkdir -p "${SRC_DIR}/${OUTPUT_DIR}"
+	@test ! -d "${APPS_DIR}/${OUTPUT_DIR}" || (mv "${APPS_DIR}/${OUTPUT_DIR}" "${APPS_DIR}/${OUTPUT_DIR}"-save-${TIMESTAMP} && echo "*** Moved old "${APPS_DIR}/${OUTPUT_DIR}" to "${APPS_DIR}/${OUTPUT_DIR}"-save-${TIMESTAMP} ***")
+	mkdir -p "${APPS_DIR}/${OUTPUT_DIR}"
 	@echo
 after-app-run:: show-output-files
 
 # Application-specific run commands:
 do-app-run-finance::
-	cd ${SRC_DIR} && uv run -m ${APP_MODULE} \
+	cd ${APPS_DIR} && uv run -m ${APP_MODULE} \
 		--ticker "${TICKER}" \
 		--company-name "${COMPANY_NAME}" \
 		--reporting-currency "${REPORTING_CURRENCY}" \
@@ -253,7 +268,7 @@ do-app-run-finance::
 		--verbose ${APP_ARGS}
 		
 do-app-run-medical::
-	cd ${SRC_DIR} && uv run -m ${APP_MODULE} \
+	cd ${APPS_DIR} && uv run -m ${APP_MODULE} \
 		--query "${QUERY}" \
 		--terms "${TERMS}" \
 		--report-title "${REPORT_TITLE}" \
@@ -274,11 +289,10 @@ do-app-run-medical::
 		
 show-output-files::
 	@echo
-	@echo "Output files in ${SRC_DIR}/${OUTPUT_DIR}:"
-	@cd "${SRC_DIR}/${OUTPUT_DIR}" && find . -type f -exec ls -lh {} \;
+	@echo "Output files in ${APPS_DIR}/${OUTPUT_DIR}:"
+	@cd "${APPS_DIR}/${OUTPUT_DIR}" && find . -type f -exec ls -lh {} \;
 
-test tests:: uv-check
-	cd ${SRC_DIR} && uv run python -m unittest discover
+test tests:: test-dra-core
 
 app-check:: uv-check mcp-agent-check
 
@@ -286,20 +300,22 @@ uv-check:: uv-cmd-check venv-check
 uv-cmd-check::
 	@command -v uv > /dev/null || ( echo ${missing_uv_message} && exit 1 )
 venv-check::
-	[[ -d .venv ]] || uv venv
+	[[ -d ${DRA_CORE_DIR}/.venv ]] || (cd ${DRA_CORE_DIR} && uv venv)
+	[[ -d ${APPS_DIR}/../.venv ]] || (cd apps && uv venv)
 
 mcp-agent-check::
-	@uv pip freeze | grep mcp-agent > /dev/null || ( echo ${missing_mcp_agent_message} && exit 1 )
+	@cd ${DRA_CORE_DIR} && uv pip freeze | grep mcp-agent > /dev/null || ( echo ${missing_mcp_agent_message} && exit 1 )
 
-app-setup:: uv-check venv-check
-	uv add mcp-agent
+app-setup:: uv-check venv-check install-dra-core
+	@echo "Installing apps dependencies..."
+	cd apps && uv sync
 
 .PHONY: app-help app-run-help app-help-header app-help-footer
 
 app-help app-run-help:: app-help-header app-help-footer
 app-help-header::
-	@echo "Application help provided by ${SRC_DIR}/${REL_APP_PATH}:"
-	cd ${SRC_DIR} && uv run -m ${APP_MODULE} --help
+	@echo "Application help provided by ${APPS_DIR}/${REL_APP_PATH}:"
+	cd ${APPS_DIR} && uv run -m ${APP_MODULE} --help
 	@echo
 app-help-footer::
 	$(info ${app_help_footer})

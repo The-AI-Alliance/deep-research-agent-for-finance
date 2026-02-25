@@ -29,7 +29,7 @@ This application leverages AI to perform automated financial research and analys
 - Risk and opportunity assessments
 - Investor sentiment analysis
 
-See also this app's [README](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/src/dra/apps/finance/README.md), which provides specific information about running and configuring this application.
+See also this app's [README](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/apps/src/dra/finance/README.md), which provides specific information about running and configuring this application.
 
 ### Medicine
 
@@ -39,7 +39,7 @@ This more-recent application leverages AI to perform automated medical research 
 - References to the sources of information
 - Latest known practices, etc.
 
-See also this app's [README](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/src/dra/apps/medical/README.md), which provides specific information about running and configuring this application. For example, there is a `node` module for an MCP server that has to be installed locally on your machine; using `npx` as is done for other node services, doesn't work for this MCP server.
+See also this app's [README](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/apps/src/dra/medical/README.md), which provides specific information about running and configuring this application. For example, there is a `node` module for an MCP server that has to be installed locally on your machine; using `npx` as is done for other node services, doesn't work for this MCP server.
 
 ### Creating New Applications
 
@@ -94,7 +94,7 @@ Here are the most useful `make` targets:
 | `app-run-medical`    | Run the medical application. Prompts you for a research query, keywords/terms, and a report title. |
 
 > [!NOTE]
-> For easy demonstration purposes, the apps either have default definitions for their required flags in the `Makefile` or they will prompt you for values. This makes it easy to just try them out. However, the main MCP server used by the medical application has to be installed locally first. See the medical application's [README](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/src/dra/apps/medical/README.md) for details.
+> For easy demonstration purposes, the apps either have default definitions for their required flags in the `Makefile` or they will prompt you for values. This makes it easy to just try them out. However, the main MCP server used by the medical application has to be installed locally first. See the medical application's [README](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/apps/src/dra/medical/README.md) for details.
 
 > [!TIP]
 > Run the command `make -n app-run-APP` to see what command would be executed without actually running it.
@@ -339,7 +339,7 @@ The definition starts with `../` because the application is executed from the `s
 
 Write a Markdown-formatted report at the end with the title given by `--report-title` and the location given by `--markdown-report`. Since there is no directory prefix shown for the latter, it will be written to the location specified by `--output-dir`.
 
-If a non-empty value is specified for `--markdown-yaml-header`, then a YAML header block will be written at the beginning of the markdown file, using the input YAML file as a _template_ for this block. This feature is useful if the report will be presented using GitHub Pages. As shown, we are referencing the file [`./src/dra/apps/finance/templates/github_pages_header.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/src/dra/apps/finance/templates/github_pages_header.yaml). The file is a _template_, where any variable definitions of the form `{{title}}` will be replaced with values by the application.
+If a non-empty value is specified for `--markdown-yaml-header`, then a YAML header block will be written at the beginning of the markdown file, using the input YAML file as a _template_ for this block. This feature is useful if the report will be presented using GitHub Pages. As shown, we are referencing the file [`./apps/src/dra/finance/templates/github_pages_header.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/apps/src/dra/finance/templates/github_pages_header.yaml). The file is a _template_, where any variable definitions of the form `{{title}}` will be replaced with values by the application.
 
 The `--output-spreadsheet` argument specifies the file name for the generated spreadsheet. 
 
@@ -353,10 +353,10 @@ The `--output-spreadsheet` argument specifies the file name for the generated sp
     ...
 ```
 
-Similar to how the output files and location were specified, the two input _template_ files for this application are specified in a similarly way. They are located in [`./src/dra/apps/finance/templates`](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/src/dra/apps/finance/templates). (Just as for `--output-dir` above, the argument value is _relative_ to `src`, where the application is executed.)
+Similar to how the output files and location were specified, the two input _template_ files for this application are specified in a similarly way. They are located in [`./apps/src/dra/finance/templates`](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/apps/src/dra/finance/templates). (Just as for `--output-dir` above, the argument value is _relative_ to `src`, where the application is executed.)
     
-* `--financial-research-prompt-path "financial_research_agent.md"` - for the deep research task ([repo](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/src/dra/apps/finance/templates/financial_research_agent.md))
-* `--excel-writer-agent-prompt-path "excel_writer_agent.md"` - for the Excel file writer task ([repo](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/src/dra/apps/finance/templates/excel_writer_agent.md)), which creates an Excel file with some of the data gathered.
+* `--financial-research-prompt-path "financial_research_agent.md"` - for the deep research task ([repo](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/apps/src/dra/finance/templates/financial_research_agent.md))
+* `--excel-writer-agent-prompt-path "excel_writer_agent.md"` - for the Excel file writer task ([repo](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/apps/src/dra/finance/templates/excel_writer_agent.md)), which creates an Excel file with some of the data gathered.
 
 If you specify a value for either prompt that includes an absolute or relative directory path, then the `--templates-path` is ignored for it. In this case, the arguments don't include directories, so the files are expected to be found in the value for `--templates-path`. This pat is also used for the optional input Markdown YAML header mentioned in the previous section.
 
@@ -386,7 +386,7 @@ The `--provider` argument is used to ensure that the correct `mcp-agent` code pa
 The `--mcp-agent-config` points to the correct `mcp-agent` configuration file to use, based on the `--provider` value. The example shown works for both OpenAI and Anthropic inference. If you use Ollama inference, the `Makefile` will construct this argument to be `dra/apps/finance/config/mcp_agent.config.ollama.yaml`. This is necessary because different settings have to be provided for the OpenAI code path in `mcp-agent`, compared to _actual_ OpenAI inference.
 
 Also, if you invoke `make` with `DEBUG=true` (or any non-empty value), it will instead use a `*.debug.yaml` version of the configuration file, which configures all the MCP servers to use any debug flags, extra logging, inspectors, etc. they support. Not all the config files have debug equivalents.
-See [`src/dra/apps/medical/config/mcp_agent.config.ollama.debug.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/src/dra/apps/medical/config/mcp_agent.config.ollama.debug.yaml) for one example, where the server configurations could be copied to other config files, as desired.
+See [`apps/src/dra/medical/config/mcp_agent.config.ollama.debug.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/apps/src/dra/medical/config/mcp_agent.config.ollama.debug.yaml) for one example, where the server configurations could be copied to other config files, as desired.
 
 See [Configuration](#configuration) and [Edit `mcp_agent.config*.yaml`](#edit-mcp-agent-config-yaml) below for more details on these YAML files.
 
@@ -455,7 +455,7 @@ Key components:
 
 The `mcp-agent` modules uses two configuration files:
 
-- `mcp_agent.config.yaml` - Main configuration settings. We discussed this above and the repo has several versions for each application, e.g., [`dra/apps/finance/config/mcp_agent.config.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/src/dra/apps/finance/config/mcp_agent.config.yaml)
+- `mcp_agent.config.yaml` - Main configuration settings. We discussed this above and the repo has several versions for each application, e.g., [`apps/src/dra/finance/config/mcp_agent.config.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/apps/src/dra/finance/config/mcp_agent.config.yaml)
 - `mcp_agent.secrets.yaml` - API keys and secrets, put in the root directory of the repo or your home directory and _**not**_ tracked in git, since it contains secrets!
 
 See the [`mcp-agent` configuration docs](https://docs.mcp-agent.com/reference/configuration) for details on these files.
@@ -567,7 +567,7 @@ The applications integrate freely-accessible data sources using MCP. You can cus
 
 What if you want to emphasize particular websites to search? The finance app demonstrates how to do this. No changes are required to the `mcp_agent.config.yaml` config files. They already have the `fetch` service configured for doing web search.
 
-Instead, add content to the prompt template file to list desired web sites and what information should be searched for on them. A good example is the **Search Strategies** section of the main finance app's prompt file, [`financial_research_agent.md`](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/tree/main/src/dra/apps/finance/templates/financial_research_agent.md), where it lists key web sites and the content of interest.
+Instead, add content to the prompt template file to list desired web sites and what information should be searched for on them. A good example is the **Search Strategies** section of the main finance app's prompt file, [`financial_research_agent.md`](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/tree/main/apps/src/dra/finance/templates/financial_research_agent.md), where it lists key web sites and the content of interest.
 
 ### Adding Additional MCP Tools and Services
 
@@ -625,14 +625,14 @@ For example, `mcp-remote` allows you to customize the HTTP headers, so you can p
 See the [MCP Agent Configuration Guide](https://docs.mcp-agent.com/reference/configuration) for more details on configuring external servers. See [CONTEXT_FORGE_MIGRATION.md](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/CONTEXT_FORGE_MIGRATION.md) for an example of how to configure services that are accessed through a gateway, in this case [IBM Context Forge](https://ibm.github.io/mcp-context-forge/).
 
 > [!TIP]
-> Some of the config files have "debug" versions, e.g., [`src/dra/apps/medical/config/mcp_agent.config.ollama.debug.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/src/dra/apps/medical/config/mcp_agent.config.ollama.debug.yaml). These versions add debugging flags and other tools for additional logging and troubleshooting. Those tools include `@modelcontextprotocol/inspector`, which will pop up a GUI for interacting with the services it is "inspecting". 
+> Some of the config files have "debug" versions, e.g., [`apps/src/dra/medical/config/mcp_agent.config.ollama.debug.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/apps/src/dra/medical/config/mcp_agent.config.ollama.debug.yaml). These versions add debugging flags and other tools for additional logging and troubleshooting. Those tools include `@modelcontextprotocol/inspector`, which will pop up a GUI for interacting with the services it is "inspecting". 
 > See the [Debugging Tips](#debugging-tips) below for more details.
 
 #### Edit the `main.py` for the Application
 
-Edit the corresponding `src/dra/apps/APP/main.py`, i.e., 
-* Finance: [`src/dra/apps/finance/main.py`](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/src/dra/apps/finance/main.py) 
-* Medical: [`src/dra/apps/medical/main.py`](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/src/dra/apps/medical/main.py) 
+Edit the corresponding `apps/src/dra/APP/main.py`, i.e.,
+* Finance: [`apps/src/dra/finance/main.py`](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/apps/src/dra/finance/main.py)
+* Medical: [`apps/src/dra/medical/main.py`](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/apps/src/dra/medical/main.py)
 
 Change the list of servers in the function `get_server_list()` near the top of the file. For the finance app, it currently looks like this:
 
@@ -650,10 +650,10 @@ def get_server_list() -> list[str]:
 
 #### Edit the Prompt Template(s)
 
-Optionally, edit the appropriate `*_agent.md` prompt templates in the `src/dra/apps/APP/templates` directories of your applications (for [finance](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/tree/main/src/dra/apps/finance/templates) and for [medical](https://github.com/The-AI-Alliance/deep-research-agent-for-medical/tree/main/src/dra/apps/medical/templates)). There are two things to edit:
+Optionally, edit the appropriate `*_agent.md` prompt templates in the `apps/src/dra/APP/templates` directories of your applications (for [finance](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/tree/main/apps/src/dra/finance/templates) and for [medical](https://github.com/The-AI-Alliance/deep-research-agent-for-medical/tree/main/apps/src/dra/medical/templates)). There are two things to edit:
 
 * The list of tools in the YAML header at the top of the file. Only add new tools and services that make sense for that task. **However**, this YAML block is currently _not used for anything_, so this step is unnecessary at this time.
-* Describe in the prompt body how the agent should use the tool or service, including possible performance optimization tips. See, for example, how the main finance deep research prompt, [`src/dra/apps/finance/templates/financial_research_agent.md`](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/tree/main/src/dra/apps/finance/templates/financial_research_agent.md), provides instructions for tool use.
+* Describe in the prompt body how the agent should use the tool or service, including possible performance optimization tips. See, for example, how the main finance deep research prompt, [`apps/src/dra/finance/templates/financial_research_agent.md`](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/tree/main/apps/src/dra/finance/templates/financial_research_agent.md), provides instructions for tool use.
 
 #### Define Required Secrets
 
@@ -677,7 +677,7 @@ mcp:
 
 3. Edit the list of tools in the prompt file YAML headers (top of the files) in `src/apps/*/templates`. Only add new tools and services that make sense for that task.
 
-See for example the `filesystem` service (for local file access) configured in the finance app's `mcp_agent.config*.yaml`, `main.py`, and `financial_research_agent.md` files.
+See for example the `filesystem` service (for local file access) configured in the finance app's `mcp_agent.config*.yaml`, `main.py`, and `financial_research_agent.md` files in `apps/src/dra/finance/`.
 
 <a id="how-to-create-a-new-application"></a>
 
@@ -697,18 +697,18 @@ As you go through the following steps, think about these tasks.
 
 ### Create the Corresponding `apps` Directory
 
-We'll copy and edit the finance application. You might find it useful to refer to the history application, for comparison.
+We'll copy and edit the finance application. You might find it useful to refer to the medical application, for comparison.
 
-1. Copy `src/dra/apps/finance` to `src/dra/apps/history`.
+1. Copy `apps/src/dra/finance` to `apps/src/dra/history`.
 1. Delete the `__pycache__` directory and any other obvious work files.
 
-### Edit `src/dra/apps/history/main.py`
+### Edit `apps/src/dra/history/main.py`
 
 Start by editing the documentation comment at the top as desired.
 
 ### Configure the Tools and Services
 
-If you know what tools and services you'll need, edit the list returned by the function `get_server_list()` at the top of the file. You'll also need to edit the definitions in `mcp_agent.config*.yaml` files in `src/dra/apps/history/config` and the prompt templates in `src/dra/apps/history/config`. The details were described above in [Customizing Data Sources for Deep Research](#customizing-data-sources-for-deep-research) above. Follow those instructions.
+If you know what tools and services you'll need, edit the list returned by the function `get_server_list()` at the top of the file. You'll also need to edit the definitions in `mcp_agent.config*.yaml` files in `apps/src/dra/history/config` and the prompt templates in `apps/src/dra/history/templates`. The details were described above in [Customizing Data Sources for Deep Research](#customizing-data-sources-for-deep-research) above. Follow those instructions.
 
 > [!TIP]
 > To get started quickly and build your capabilities incrementally, consider starting with basic web search and file system access, the `fetch` and `filesystem` services, then add more advances services later.
@@ -786,7 +786,7 @@ The finance application has a second [`AgentTask`](https://github.com/The-AI-All
 
 Your application may only need the `GenerateTask`, but the hooks are here for more advanced uses.
 
-Each prompt will have a prompt template file in `src/dra/apps/history/templates`. We discuss editing them next.
+Each prompt will have a prompt template file in `apps/src/dra/history/templates`. We discuss editing them next.
 
 The bottom of `main.py` calls these functions and constructs a [`Runner`](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/src/dra/common/utils/main.py) instance, which does final component initialization and then the application is executed!
 
@@ -858,7 +858,7 @@ Here are some tips:
 * Some of the tools also write log files elsewhere, e.g., `$HOME/.mcp-auth/mcp-remote-*/`. 
 * Study the output in the Markdown report. We decided to print a lot of details in the report about messages received back from MCP tool calls, configuration settings, etc., even though a lot of this information just creates clutter when the job is successful; you have to find the useful output for your research task. We will improve this output over time, but for now, it has been helpful to have this output as a complement to the log files.
 * Some of the MCP servers and tools have debugging flags you can use. See the tool and server documentation links in the `mcp_agent.config.yaml` [discussion above](#edit-mcp-agent-config-yaml) for details.
-  * Also discussed there, we have provided variants of some of the config files with these debug configurations enabled, e.g., [`src/dra/apps/medical/config/mcp_agent.config.ollama.debug.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/src/dra/apps/medical/config/mcp_agent.config.ollama.debug.yaml). Added are debugging flags and other tools for additional logging and troubleshooting. You trigger the use of these versions by invoking `make DEBUG=true target`. (The value passed for `DEBUG` can be any non-empty string.)
+  * Also discussed there, we have provided variants of some of the config files with these debug configurations enabled, e.g., [`apps/src/dra/medical/config/mcp_agent.config.ollama.debug.yaml`](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/apps/src/dra/medical/config/mcp_agent.config.ollama.debug.yaml). Added are debugging flags and other tools for additional logging and troubleshooting. You trigger the use of these versions by invoking `make DEBUG=true target`. (The value passed for `DEBUG` can be any non-empty string.)
   * See in particular the [documentation](https://www.npmjs.com/package/mcp-remote) for the `mcp-remote` server proxy that we use. There are lots of configuration flags, most of which are not specific to debugging, but some of which might provide more robust results in your application.
 * The `Makefile` passes the `--verbose` argument, by default, which adds some extra output.
 
