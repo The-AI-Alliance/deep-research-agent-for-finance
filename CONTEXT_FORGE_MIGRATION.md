@@ -348,7 +348,7 @@ mcp:
     ...
 ```
 
-(The `*_timeout_seconds` values could be adjusted as you see fit.)
+The `*_timeout_seconds` values could be adjusted as you see fit. consider longer values if log entries indicate premature connection closures.
 
 Alternatively, the SEE endpoint could be used:
 
@@ -363,6 +363,8 @@ mcp:
         api_key: "${MCPGATEWAY_BEARER_TOKEN}"
     ...
 ```
+
+This alternative would also avoid HTTP connection timeouts, if those become an issue.
 
 ## Troubleshooting
 

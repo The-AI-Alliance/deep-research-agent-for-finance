@@ -49,38 +49,6 @@ If the query about a drug, medicine, or pharmaceutical, as opposed to a medical 
 
 #### Use the `medical-mcp` tool first to query sources
 
-If the user query is about drugs or pharmaceuticals, use a query of the following form, where `<drug_name>` is replaced with the name of the drug:
-
-```json
-{
-  "tool": "search-drugs",
-  "arguments": { "query": "<drug_name>", "limit": 10 }
-}
-```
-
-If the user query asks to search the medical literature or asks about diseases or treatments where the latest research knowledge would be useful, then run the following search for peer-reviewed research articles on the medical topic, replacing `<query>` with a condensed version of the user's query. 
-
-```json
-{
-  "tool": "search-medical-literature",
-  "arguments": { "query": "<query>", "max_results": 10 }
-}
-```
-
-For example, if the user query contains the following, "Research the best current treatments and most promising experimental treatments for COVID-19", send the condensed query "COVID-19 treatment" to the tool.
-
-If the user query is about health statistics, use a query of the following form, where `<indicator>` is replaced with the user's the topic of interest (for example, "Life expectancy at birth (years)") and `<country>` is replaced by the country. If it is not clear from the user's query which country they are interested in, use `USA`:
-
-```json
-{
-  "tool": "get-health-statistics",
-  "arguments": {
-    "indicator": "<indicator>",
-    "country": "<country>"
-  }
-}
-```
-
 ### Sources to Treat Skeptically
 
 1. **Ecommerce Websites**: Any ecommerce sites selling drugs or treatments for medical conditions should be ignored.
