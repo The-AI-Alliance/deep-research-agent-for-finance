@@ -711,7 +711,7 @@ class MarkdownObserver(Observer[DeepResearch]):
                     f"{item.confidence:.2f}",
                 ])
             if len(self.orchestrator.memory.knowledge) > 10:
-                knowledge_table.add_row(['...', '...'])
+                knowledge_table.add_row(['...', '...', '...', '...'])
 
 
         return self.add_section("🧠 Knowledge Extracted", [knowledge_table])
