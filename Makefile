@@ -1,5 +1,5 @@
 
-pages_url       := https://the-ai-alliance.github.io/deep-research-agent-for-finance/
+pages_url       := https://the-ai-alliance.github.io/deep-research-agent-for-applications/
 docs_dir        := docs
 site_dir        := ${docs_dir}/_site
 clean_code_dirs := logs output src/output ${SRC_DIR}/.hypothesis

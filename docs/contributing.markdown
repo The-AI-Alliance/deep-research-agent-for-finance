@@ -13,13 +13,13 @@ The following people have contributed to the creation and maintenance of this pr
 
 # How to Contribute to this Project
 
-We welcome your contributions to this project. Visit the project's [GitHub repo](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/){:target="repo"}, the [discussions](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/discussions){:target="repo-disc"}, and the [open issues](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/issues){:target="repo-issues"}, in particular, for areas where you might contribute.
+We welcome your contributions to this project. Visit the project's [GitHub repo](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/){:target="repo"}, the [discussions](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/discussions){:target="repo-disc"}, and the [open issues](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/issues){:target="repo-issues"}, in particular, for areas where you might contribute.
 
-The project [README](https://github.com/The-AI-Alliance/deep-research-agent-for-finance){:target="repo"} describes how to install and run this application.
+The project [README](https://github.com/The-AI-Alliance/deep-research-agent-for-applications){:target="repo"} describes how to install and run this application.
 
-Contributing changes as [pull requests](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/pulls){:target="prs"} is the best way to contribute. Alternatively, consider [posting issues](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/issues){:target="issues"}. 
+Contributing changes as [pull requests](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/pulls){:target="prs"} is the best way to contribute. Alternatively, consider [posting issues](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/issues){:target="issues"}. 
 
-We also welcome feedback through [email](mailto:contact@thealliance.ai?subject=Feedback for the Deep Research Agent for Finance project). Be sure to mention this project.
+We also welcome feedback through [email](mailto:contact@thealliance.ai?subject=Feedback for the Deep Research Agent for Applications project). Be sure to mention this project.
 
 # Joining the Project
 

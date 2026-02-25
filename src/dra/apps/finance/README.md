@@ -1,13 +1,13 @@
 # Deep Research Agent for Finance
 
-This README adds additional information to supplement the description provided in the repo's main [README](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/README.md).
+This README adds additional information to supplement the description provided in the repo's main [README](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/README.md).
 
 <a id="usage"></a>
 
 ## Usage
 
 > [!TIP]
-> While we try to keep commands listed below consistent with the current state of the code, if a command doesn't work as shown, check what is done in the `Makefile`! Of course, [issues](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/issues) or [discussion topics](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/discussions) are welcome, if you find a mistake.
+> While we try to keep commands listed below consistent with the current state of the code, if a command doesn't work as shown, check what is done in the `Makefile`! Of course, [issues](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/issues) or [discussion topics](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/discussions) are welcome, if you find a mistake.
 
 The easiest way to run the application with default values for all optional arguments is `make app-run-finance`. (There is a `make app-run` target, but it runs the finance application, by default.) 
 
@@ -35,14 +35,14 @@ make TICKER=IBM COMPANY_NAME="International Business Machines Corporation" app-r
 cd src && uv run -m dra.apps.finance.main --ticker IBM --company-name "International Business Machines Corporation"
 ```
 
-The application provides many optional CLI options to configure its behavior. They are discussed in the main [README](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/README.md).
+The application provides many optional CLI options to configure its behavior. They are discussed in the main [README](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/README.md).
 
-See [`examples/gpt-oss_20b/META*`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/examples/gpt-oss_20b/) for example output files for a META report.
+See [`examples/gpt-oss_20b/META*`](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/examples/gpt-oss_20b/) for example output files for a META report.
 
 ## Notes on This Application
 
-We have discovered that the Excel spreadsheet task will not write the file if a relative output path is provided. By default, the `Makefile` uses a relative path for `OUTPUT_DIR`, which is passed to the application, but `resolve_path()` in the [`paths.py`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/src//dra/common/utils/paths.py) utils converts paths to absolute, by default.
+We have discovered that the Excel spreadsheet task will not write the file if a relative output path is provided. By default, the `Makefile` uses a relative path for `OUTPUT_DIR`, which is passed to the application, but `resolve_path()` in the [`paths.py`](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/src//dra/common/utils/paths.py) utils converts paths to absolute, by default.
 
 ## Customizing Data Sources for Finance Deep Research
 
-Much of the important finance information is behind paywalls. As an open-source demo application, we can only use freely-accessible data sources. If you have accounts to sources behind paywalls, you can add them to the application following the instructions in the main [README](https://github.com/The-AI-Alliance/deep-research-agent-for-finance/blob/main/README.md). 
+Much of the important finance information is behind paywalls. As an open-source demo application, we can only use freely-accessible data sources. If you have accounts to sources behind paywalls, you can add them to the application following the instructions in the main [README](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/README.md). 

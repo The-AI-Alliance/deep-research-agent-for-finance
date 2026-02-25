@@ -12,8 +12,8 @@
 | `orchestrator_model_name` | gpt-oss:20b |
 | `excel_writer_model_name` | gpt-oss:20b |
 | `provider` | ollama |
-| `output_path` | /Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-finance/output/META |
-| `output_spreadsheet_path` | ('/Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-finance/output/META/financials_META.xlsx',) |
+| `output_path` | /Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-applications/output/META |
+| `output_spreadsheet_path` | ('/Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-applications/output/META/financials_META.xlsx',) |
 | `prompts_path` | finance_deep_research/prompts |
 | `financial_research_prompt_path` | finance_deep_research/prompts/financial_research_agent.md |
 | `excel_writer_agent_prompt_path` | finance_deep_research/prompts/excel_writer_agent.md |
@@ -316,7 +316,7 @@ Note that `{{foo}}` strings are part of the prompt that were replaced with appro
 
 ## 📊 Financial Research Result
 
-See also the directory `/Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-finance/output/META` for results files.
+See also the directory `/Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-applications/output/META` for results files.
 ## Reply Message #1
 
 Reply Message #1 Content:
@@ -716,7 +716,7 @@ Reply Message #2 Content:
 
 ## 📈 Excel Creation Result
 
-See also the directory `/Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-finance/output/META` for results files.
+See also the directory `/Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-applications/output/META` for results files.
 ## Reply Message #1
 
 Reply Message #1 Content:
@@ -735,7 +735,7 @@ Reply Message #1 Content:
 | annotations | None |
 | audio | None |
 | function_call | None |
-| tool_calls | [ChatCompletionMessageFunctionToolCall(id='call_0ay9xl3z', function=Function(arguments='{"filepath":"/Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-finance/output/META/financials_META.xlsx"}', name='excel_create_workbook'), type='function')] |
+| tool_calls | [ChatCompletionMessageFunctionToolCall(id='call_0ay9xl3z', function=Function(arguments='{"filepath":"/Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-applications/output/META/financials_META.xlsx"}', name='excel_create_workbook'), type='function')] |
 
 
 ## Reply Message #2
@@ -756,7 +756,7 @@ Reply Message #2 Content:
 | annotations | None |
 | audio | None |
 | function_call | None |
-| tool_calls | [ChatCompletionMessageFunctionToolCall(id='call_k6q6d6rr', function=Function(arguments='{"filepath":"/Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-finance/output/META/financials_META.xlsx","sheet_name":"Financials"}', name='excel_create_worksheet'), type='function')] |
+| tool_calls | [ChatCompletionMessageFunctionToolCall(id='call_k6q6d6rr', function=Function(arguments='{"filepath":"/Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-applications/output/META/financials_META.xlsx","sheet_name":"Financials"}', name='excel_create_worksheet'), type='function')] |
 
 
 ## Reply Message #3
@@ -777,7 +777,7 @@ Reply Message #3 Content:
 | annotations | None |
 | audio | None |
 | function_call | None |
-| tool_calls | [ChatCompletionMessageFunctionToolCall(id='call_f0hi74pf', function=Function(arguments='{"filepath":"/Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-finance/output/META/financials_META.xlsx","sheet_name":"Financials","start_cell":"A1","data":[["Account","FY N-3","FY N-2","FY N-1","FY N (Our Model)","FY N (Guidance/Consensus)"],["Revenue",null,null,null,null,null],["• Segment A (Advertising)",null,null,189458.006016,null,null],["• Segment B (Reality Labs)",null,null,null,null,null],["• Segment C (Payments \\u0026 Other)",null,null,null,null,null],["Total Revenue",null,null,189458.006016,null,null],["Cost of Revenue",null,null,null,null,null],["• Infrastructure \\u0026 Depreciation",null,null,34077.99968,null,null],["• Content/Partner Payments",null,null,null,null,null],["• Payments Processing \\u0026 Other",null,null,null,null,null],["Total Cost of Revenue",null,null,34077.99968,null,null],["Gross Profit",null,null,155381.006336,null,null],["Gross Margin",null,null,0.82013,null,null],["Operating Expenses",null,null,null,null,null],["• R\\u0026D",null,null,22602,null,null],["• Sales \\u0026 Marketing",null,null,12554,null,null],["• General \\u0026 Admin",null,null,7722,null,null],["Operating Income",null,null,112503.006336,null,null],["Operating Margin",null,null,0.40075,null,null],["Pre-Tax Income",null,null,null,null,null],["Net Income",null,null,58527.997952,null,null],["Net Margin",null,null,0.30892,null,null]]}', name='excel_write_data_to_excel'), type='function')] |
+| tool_calls | [ChatCompletionMessageFunctionToolCall(id='call_f0hi74pf', function=Function(arguments='{"filepath":"/Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-applications/output/META/financials_META.xlsx","sheet_name":"Financials","start_cell":"A1","data":[["Account","FY N-3","FY N-2","FY N-1","FY N (Our Model)","FY N (Guidance/Consensus)"],["Revenue",null,null,null,null,null],["• Segment A (Advertising)",null,null,189458.006016,null,null],["• Segment B (Reality Labs)",null,null,null,null,null],["• Segment C (Payments \\u0026 Other)",null,null,null,null,null],["Total Revenue",null,null,189458.006016,null,null],["Cost of Revenue",null,null,null,null,null],["• Infrastructure \\u0026 Depreciation",null,null,34077.99968,null,null],["• Content/Partner Payments",null,null,null,null,null],["• Payments Processing \\u0026 Other",null,null,null,null,null],["Total Cost of Revenue",null,null,34077.99968,null,null],["Gross Profit",null,null,155381.006336,null,null],["Gross Margin",null,null,0.82013,null,null],["Operating Expenses",null,null,null,null,null],["• R\\u0026D",null,null,22602,null,null],["• Sales \\u0026 Marketing",null,null,12554,null,null],["• General \\u0026 Admin",null,null,7722,null,null],["Operating Income",null,null,112503.006336,null,null],["Operating Margin",null,null,0.40075,null,null],["Pre-Tax Income",null,null,null,null,null],["Net Income",null,null,58527.997952,null,null],["Net Margin",null,null,0.30892,null,null]]}', name='excel_write_data_to_excel'), type='function')] |
 
 
 ## Reply Message #4
@@ -798,7 +798,7 @@ Reply Message #4 Content:
 | annotations | None |
 | audio | None |
 | function_call | None |
-| tool_calls | [ChatCompletionMessageFunctionToolCall(id='call_hag5sg6o', function=Function(arguments='{"sheet_name":"Financials","filepath":"/Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-finance/output/META/financials_META.xlsx","start_cell":"A1","end_cell":"J10","number_format":"#,##0","font_size":11,"bold":true,"border_style":"thin","border_color":"000000","conditional_format":{"min_value":0,"type":"color-scale"}}', name='excel_format_range'), type='function')] |
+| tool_calls | [ChatCompletionMessageFunctionToolCall(id='call_hag5sg6o', function=Function(arguments='{"sheet_name":"Financials","filepath":"/Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-applications/output/META/financials_META.xlsx","start_cell":"A1","end_cell":"J10","number_format":"#,##0","font_size":11,"bold":true,"border_style":"thin","border_color":"000000","conditional_format":{"min_value":0,"type":"color-scale"}}', name='excel_format_range'), type='function')] |
 
 
 ## Reply Message #5
@@ -819,7 +819,7 @@ Reply Message #5 Content:
 | annotations | None |
 | audio | None |
 | function_call | None |
-| tool_calls | [ChatCompletionMessageFunctionToolCall(id='call_azysgfn2', function=Function(arguments='{"alignment":null,"bg_color":"D3E5FF","bold":true,"border_color":"000000","border_style":"thin","conditional_format":null,"end_cell":"J1","filepath":"/Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-finance/output/META/financials_META.xlsx","font_color":null,"font_size":12,"italic":false,"merge_cells":false,"number_format":null,"protection":null,"sheet_name":"Financials","start_cell":"A1","underline":false,"wrap_text":false}', name='excel_format_range'), type='function')] |
+| tool_calls | [ChatCompletionMessageFunctionToolCall(id='call_azysgfn2', function=Function(arguments='{"alignment":null,"bg_color":"D3E5FF","bold":true,"border_color":"000000","border_style":"thin","conditional_format":null,"end_cell":"J1","filepath":"/Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-applications/output/META/financials_META.xlsx","font_color":null,"font_size":12,"italic":false,"merge_cells":false,"number_format":null,"protection":null,"sheet_name":"Financials","start_cell":"A1","underline":false,"wrap_text":false}', name='excel_format_range'), type='function')] |
 
 
 ## Reply Message #6
@@ -840,7 +840,7 @@ Reply Message #6 Content:
 | annotations | None |
 | audio | None |
 | function_call | None |
-| tool_calls | [ChatCompletionMessageFunctionToolCall(id='call_bo6qba0y', function=Function(arguments='{"alignment":"center","bg_color":"F5F5F5","bold":false,"border_color":"000000","border_style":"medium","conditional_format":null,"end_cell":"J10","filepath":"/Users/deanwampler/ibm/ai‑alliance/repos/agents-and-apps/deep-research-agent-for-finance/output/META/financials_META.xlsx","font_color":"111111","font_size":11,"italic":false,"merge_cells":false,"number_format":"#,##0.00","protection":null,"sheet_name":"Financials","start_cell":"A1","underline":false,"wrap_text":false}', name='excel_format_range'), type='function')] |
+| tool_calls | [ChatCompletionMessageFunctionToolCall(id='call_bo6qba0y', function=Function(arguments='{"alignment":"center","bg_color":"F5F5F5","bold":false,"border_color":"000000","border_style":"medium","conditional_format":null,"end_cell":"J10","filepath":"/Users/deanwampler/ibm/ai‑alliance/repos/agents-and-apps/deep-research-agent-for-applications/output/META/financials_META.xlsx","font_color":"111111","font_size":11,"italic":false,"merge_cells":false,"number_format":"#,##0.00","protection":null,"sheet_name":"Financials","start_cell":"A1","underline":false,"wrap_text":false}', name='excel_format_range'), type='function')] |
 
 
 ## Reply Message #7
@@ -861,13 +861,13 @@ Reply Message #7 Content:
 | annotations | None |
 | audio | None |
 | function_call | None |
-| tool_calls | [ChatCompletionMessageFunctionToolCall(id='call_nrea8b9o', function=Function(arguments='{"start_cell":"A1","end_cell":"J1","sheet_name":"Financials","filepath":"/Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-finance/output/META/financials_META.xlsx","bg_color":"D3E5FF","bold":true,"border_color":"000000","border_style":"thin","number_format":null,"font_color":"000000","font_size":12,"italic":false,"underline":false,"wrap_text":false,"merge_cells":false,"conditional_format":null}', name='excel_format_range'), type='function')] |
+| tool_calls | [ChatCompletionMessageFunctionToolCall(id='call_nrea8b9o', function=Function(arguments='{"start_cell":"A1","end_cell":"J1","sheet_name":"Financials","filepath":"/Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-applications/output/META/financials_META.xlsx","bg_color":"D3E5FF","bold":true,"border_color":"000000","border_style":"thin","number_format":null,"font_color":"000000","font_size":12,"italic":false,"underline":false,"wrap_text":false,"merge_cells":false,"conditional_format":null}', name='excel_format_range'), type='function')] |
 
 
 ## Reply Message #8
 
 Reply Message #8 Content:
-> Created ('/Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-finance/output/META/financials_META.xlsx',) with updated Financials sheet.
+> Created ('/Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-applications/output/META/financials_META.xlsx',) with updated Financials sheet.
 
 
 (end content)

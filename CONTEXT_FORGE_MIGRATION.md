@@ -1,6 +1,6 @@
 # Migration Guide: IBM Context Forge Integration
 
-This guide helps users run the Deep Research Agent for Finance installation with [**IBM Context Forge**](https://ibm.github.io/mcp-context-forge/) for external MCP service invocations, when desired. This is an optional feature.
+This guide helps users run the Deep Research Agent for Applications installation with [**IBM Context Forge**](https://ibm.github.io/mcp-context-forge/) for external MCP service invocations, when desired. This is an optional feature.
 
 ## Why IBM Context Forge?
 

@@ -23,10 +23,10 @@ To skip to the results, go to the [**📊 📈 Results**](#results_section) sect
 | Research Model | `gpt-oss:20b` |
 | Templates Dir Path | [`dra/apps/medical/templates`](file://dra/apps/medical/templates) |
 | Output Dir Path | [`../output/medical`](file://../output/medical) |
-| Research Report Path | [`/Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-finance/output/medical/medical_research_report.md`](file:///Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-finance/output/medical/medical_research_report.md) |
-| Yaml Header Template Path | [`/Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-finance/src/dra/apps/medical/templates/github_pages_header.yaml`](file:///Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-finance/src/dra/apps/medical/templates/github_pages_header.yaml) |
-| Mcp Agent Config Path | [`/Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-finance/src/dra/apps/medical/config/mcp_agent.config.ollama.debug.yaml`](file:///Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-finance/src/dra/apps/medical/config/mcp_agent.config.ollama.debug.yaml) |
-| Medical Research Prompt Path | [`/Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-finance/src/dra/apps/medical/templates/medical_research_agent.md`](file:///Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-finance/src/dra/apps/medical/templates/medical_research_agent.md) |
+| Research Report Path | [`/Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-applications/output/medical/medical_research_report.md`](file:///Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-applications/output/medical/medical_research_report.md) |
+| Yaml Header Template Path | [`/Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-applications/src/dra/apps/medical/templates/github_pages_header.yaml`](file:///Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-applications/src/dra/apps/medical/templates/github_pages_header.yaml) |
+| Mcp Agent Config Path | [`/Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-applications/src/dra/apps/medical/config/mcp_agent.config.ollama.debug.yaml`](file:///Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-applications/src/dra/apps/medical/config/mcp_agent.config.ollama.debug.yaml) |
+| Medical Research Prompt Path | [`/Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-applications/src/dra/apps/medical/templates/medical_research_agent.md`](file:///Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-applications/src/dra/apps/medical/templates/medical_research_agent.md) |
 | Verbose | True |
 | Short Run | True |
 | Observers | <dra.common.observer.Observers object at 0x10e708200> |
@@ -65,7 +65,7 @@ Information for task: medical_research
 | Name | `medical_research` |
 | Title | 📊 Medical Research Result |
 | Model Name | `gpt-oss:20b` |
-| Prompt Template Path | [`/Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-finance/src/dra/apps/medical/templates/medical_research_agent.md`](file:///Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-finance/src/dra/apps/medical/templates/medical_research_agent.md) |
+| Prompt Template Path | [`/Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-applications/src/dra/apps/medical/templates/medical_research_agent.md`](file:///Users/deanwampler/ibm/ai-alliance/repos/agents-and-apps/deep-research-agent-for-applications/src/dra/apps/medical/templates/medical_research_agent.md) |
 | Prompt Saved File | [`../output/medical/medical_research_task_prompt.txt`](file://../output/medical/medical_research_task_prompt.txt) |
 | Output Dir Path | [`../output/medical`](file://../output/medical) |
 | Status | `FINISHED_OK` |

@@ -40,13 +40,13 @@ The medical research application currently uses medical MCP servers and web sear
 
 Other applications are planned. Possibilities include legal research, general science, industrial processes, including automation, etc. 
 
-The project [`README`](https://github.com/The-AI-Alliance/deep-research-agent-for-finance){:target="repo"} provides extensive information on running the applications, configuring them, and how to create new applications.
+The project [`README`](https://github.com/The-AI-Alliance/deep-research-agent-for-applications){:target="repo"} provides extensive information on running the applications, configuring them, and how to create new applications.
 
 On our roadmap are plans to demonstrate techniques for testing AI-enabled applications, where model outputs are not _deterministic_, i.e., 100% predictable for a given set of inputs. Developers are accustomed to testing deterministic components and applications, but AI experts have the techniques developers can use to be _confident_ their AI-enabled application works as designed. See [Testing Generative AI Applications](https://the-ai-alliance.github.io/ai-application-testing/){:target="_blank"} for more on this topic.
 
 ## Try It!
 
-The project [README](https://github.com/The-AI-Alliance/deep-research-agent-for-finance){:target="repo"} describes how to install the dependencies and run the applications. Once set up, the following `make` commands provide an easy way to get help on the commands and run them.
+The project [README](https://github.com/The-AI-Alliance/deep-research-agent-for-applications){:target="repo"} describes how to install the dependencies and run the applications. Once set up, the following `make` commands provide an easy way to get help on the commands and run them.
 
 ```shell
 # For the default finance app:
