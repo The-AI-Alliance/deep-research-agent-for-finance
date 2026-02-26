@@ -5,7 +5,7 @@ site_dir        := ${docs_dir}/_site
 clean_code_dirs := logs output apps/src/output dra-core/.hypothesis
 clean_doc_dirs  := ${site_dir} ${docs_dir}/.sass-cache
 clean_dirs      := ${clean_code_dirs} ${clean_doc_dirs}
-APPS_DIR        := apps/src
+APPS_DIR        := dra-apps/src
 DRA_CORE_DIR    := dra-core
 
 ## Environment variables
@@ -229,7 +229,7 @@ install-dra-core::
 	@echo "Installing dra-core package in development mode..."
 	cd ${DRA_CORE_DIR} && uv sync
 
-test-dra-core::
+test tests test-dra-core::
 	@echo "Running dra-core tests..."
 	cd ${DRA_CORE_DIR} && uv run python -m unittest discover
 
@@ -291,8 +291,6 @@ show-output-files::
 	@echo
 	@echo "Output files in ${APPS_DIR}/${OUTPUT_DIR}:"
 	@cd "${APPS_DIR}/${OUTPUT_DIR}" && find . -type f -exec ls -lh {} \;
-
-test tests:: test-dra-core
 
 app-check:: uv-check mcp-agent-check
 

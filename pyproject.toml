@@ -1,18 +1,14 @@
 [project]
 name = "deep-research-agent"
-version = "0.4.0"
-description = "An MCP-based application for doing deep research in several domains, starting with finance research on publicly listed companies."
+version = "0.5.0"
+description = "MCP-based deep research toolkit with example applications in several domains: finance, medical, other research."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "anthropic>=0.76.0",
-    "mcp-agent>=0.1.25",
-    "ollama>=0.6.1",
-    "openai>=1.96.0",
-    "openpyxl>=3.1.5",
 ]
 
 [dependency-groups]
 dev = [
+    "dra-core @ file://${PROJECT_ROOT}/dra-core",
     "hypothesis>=6.150.2",
 ]

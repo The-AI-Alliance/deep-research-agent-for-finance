@@ -1,7 +1,7 @@
 [project]
 name = "dra-core"
-version = "0.4.0"
-description = "Core library for Deep Research Agent applications"
+version = "0.5.0"
+description = "Core library for the AI Alliance Deep Research Agent toolkit and applications"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [

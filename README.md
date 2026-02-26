@@ -4,15 +4,18 @@ A deep research agent designed to collect comprehensive information about topic 
 
 * **Finance:** Research publicly-traded companies and generate detailed investment research reports.
 * **Medicine:** Research a query on medical topics and prepare a detailed, aggregated report.
+* Others are planned...
 
 <p align="center">
 <a href="https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/LICENSE.Apache-2.0"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg"/></a>
 <a href="https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/LICENSE.CC-BY-4.00"><img src="https://img.shields.io/badge/License-CC_BY_4.0-lightgrey.svg"/></a>
 </p>
 
+Here is the finance application in action:
+
 https://github.com/user-attachments/assets/60675db5-6e0a-4a8d-9463-6a0f9d0a46d7
 
-See also the project [website](https://the-ai-alliance.github.io/deep-research-agent-for-applications/).
+See also the project [website](https://the-ai-alliance.github.io/deep-research-agent-for-applications/), although most of the useful information is here and in the application-specific READMEs (discussed below).
 
 ## About the Applications
 
@@ -29,9 +32,9 @@ This application leverages AI to perform automated financial research and analys
 - Risk and opportunity assessments
 - Investor sentiment analysis
 
-See also this app's [README](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/apps/src/dra/finance/README.md), which provides specific information about running and configuring this application.
+See the application's [README](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/apps/src/dra/finance/README.md), which provides specific information about running and configuring this application.
 
-### Medicine
+### Medical
 
 This more-recent application leverages AI to perform automated medical research and analysis. Based on the user query, it gathers data from multiple reliable sources to create structured reports with:
 
@@ -39,15 +42,15 @@ This more-recent application leverages AI to perform automated medical research 
 - References to the sources of information
 - Latest known practices, etc.
 
-See also this app's [README](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/apps/src/dra/medical/README.md), which provides specific information about running and configuring this application. For example, there is a `node` module for an MCP server that has to be installed locally on your machine; using `npx` as is done for other node services, doesn't work for this MCP server.
+See also the application's [README](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/apps/src/dra/medical/README.md), which provides specific information about running and configuring this application. For example, there is a `node` module for an MCP server that has to be installed locally on your machine; using `npx` as is done for other node-based MCP servers doesn't work for this server.
 
 ### Creating New Applications
 
-See [How to Create a New Application](#how-to-create-a-new-application) below for the steps required to create a new application. We have plans to add a Legal research application soon!
+See [How to Create a New Application](#how-to-create-a-new-application) below for the steps required to create a new application. We have plans to add a Legal research application and possibly others soon!
 
 ## Setup
 
-An account with OpenAI or Anthropic is required, or you can use a local option like Ollama. Those are the three supported model inference options, currently. See [Usage](#usage) and [Configuration](#configuration) below.
+An account with OpenAI or Anthropic is required, or you can use a local inference option like Ollama. Those are the three supported model inference options, currently. See [Usage](#usage) and [Configuration](#configuration) below.
 
 ### Prerequisites
 
@@ -55,7 +58,7 @@ An account with OpenAI or Anthropic is required, or you can use a local option l
 - [uv](https://docs.astral.sh/uv/) Python package manager, for running the application and some local MCP servers.
 - [npm/npx](https://nodejs.org/en/download) Node package manager, for running some local MCP servers.
 
-If you don't use `uv`, change the commands that use that are discussed below, in the `Makefile`, and in the `mcp-agent.config*.yaml` files.
+If you don't use `uv`, change the commands discussed below, in the other READMEs, in the `Makefile`, and in the `mcp-agent.config*.yaml` files to use your preferred alternative.
 
 ### Installation
 
@@ -78,9 +81,9 @@ uv sync
 
 Using [`make`](https://www.gnu.org/software/make/) is the easiest way to run the applications and to get built-in help. A convenient `zsh` script, `make.sh`, can be used for running either application with different arguments. Run `make.sh --help` for the details.
 
-The easiest way to run an application with default values for _most_ of the arguments is `make app-run-APP`, where `APP` is currently `finance` and `medical`. `make app-run` runs the finance application, by default. 
+The easiest way to run an application with default values for _most_ of the arguments is `make app-run-APP`, where `APP` is currently `finance` and `medical`. There is also a `make app-run`, which runs the finance application, by default. 
 
-Inside the `Makefile`, the `app-run*` targets do some setup and then run the command `cd src && uv run -m dra.apps.APP.main ...` where `...` elides a lot of arguments. 
+Inside the `Makefile`, the `app-run*` targets do some setup and then run the command `cd apps/src && uv run -m dra.apps.APP.main ...` where `...` elides a lot of arguments. 
 
 Here are the most useful `make` targets:
 
@@ -97,7 +100,7 @@ Here are the most useful `make` targets:
 > For easy demonstration purposes, the apps either have default definitions for their required flags in the `Makefile` or they will prompt you for values. This makes it easy to just try them out. However, the main MCP server used by the medical application has to be installed locally first. See the medical application's [README](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/apps/src/dra/medical/README.md) for details.
 
 > [!TIP]
-> Run the command `make -n app-run-APP` to see what command would be executed without actually running it.
+> Run the command `make -n app-run-APP` for an "`APP`" to see what command would be executed without actually running it.
 
 The minimum required arguments for the finance application are `--ticker TICKER` and `--company-name COMPANY_NAME`. Default values are defined for them in the `Makefile`. For the medical application, `--query "QUERY"`, `--terms "TERMS" (keywords), and `--report-title TITLE` are required, but the app will prompt you for their values if these arguments are not used or the values supplied are empty. (They are empty in the `Makefile`)
 
@@ -108,7 +111,7 @@ make.sh --finance --ibm
 
 make TICKER=IBM COMPANY_NAME="International Business Machines Corporation" app-run-finance
 
-cd src && uv run -m dra.apps.finance.main --ticker IBM --company-name "International Business Machines Corporation"
+cd apps/src && uv run -m dra.apps.finance.main --ticker IBM --company-name "International Business Machines Corporation"
 ```
 
 For using the medical research app to research _diabetes mellitus_:
@@ -123,14 +126,14 @@ make QUERY="What are the causes of diabetes mellitus?" \
     REPORT_TITLE="Diabetes Mellitus" app-run-medical \
     TERMS="diabetes,insulin,pancreas"
 
-cd src && uv run -m dra.apps.medical.main \
+cd apps/src && uv run -m dra.apps.medical.main \
     --query "What are the causes of diabetes mellitus?" \
     --report-title "Diabetes Mellitus" \
     --terms "diabetes,insulin,pancreas"
 ```
 
 > [!NOTE]
-> While running the finance application, you may on rare occasions see a browser window pop up asking for permission to authenticate to a financial dataset MCP server. There is no cost to do this. You can authenticate using a `gmail` email address, for example. If you decline, the application will still run, but it struggle to to gather the necessary information it needs without this resource.
+> While running the finance application, you may on rare occasions see a browser window pop up asking for permission to authenticate to a financial dataset MCP server. There is no cost to do this. You can authenticate using a `gmail` email address, for example. If you decline, the application will still run, but it may struggle to gather the necessary information it needs without this resource.
 
 ### Built-in Help
 
@@ -279,7 +282,7 @@ Here is the actual command executed by `make app-run`. (Note the use of `-n` to 
 ```shell
 $ make -n app-run-finance
 (... some setup commands elided ...)
-cd src && uv run -m dra.apps.finance.main \
+cd apps/src && uv run -m dra.apps.finance.main \
     --ticker "META" \
     --company-name "Meta Platforms, Inc." \
     --reporting-currency "USD" \

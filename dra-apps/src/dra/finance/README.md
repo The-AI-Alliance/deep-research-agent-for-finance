@@ -11,7 +11,7 @@ This README adds additional information to supplement the description provided i
 
 The easiest way to run the application with default values for all optional arguments is `make app-run-finance`. (There is a `make app-run` target, but it runs the finance application, by default.) 
 
-The `app-run-finance` target does some setup and then runs the command `cd src && uv run -m dra.apps.finance.main ...` where `...` is a lot of arguments. 
+The `app-run-finance` target does some setup and then runs the command `cd apps/src && uv run -m dra.apps.finance.main ...` where `...` is a lot of arguments. 
 
 Here are the most useful `make` targets for this application:
 
@@ -32,7 +32,7 @@ So, for example, here are the shortest `make` and CLI commands you can run to do
 ```shell
 make TICKER=IBM COMPANY_NAME="International Business Machines Corporation" app-run-finance
 
-cd src && uv run -m dra.apps.finance.main --ticker IBM --company-name "International Business Machines Corporation"
+cd apps/src && uv run -m dra.apps.finance.main --ticker IBM --company-name "International Business Machines Corporation"
 ```
 
 The application provides many optional CLI options to configure its behavior. They are discussed in the main [README](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/README.md).

@@ -1,11 +1,11 @@
 [project]
 name = "dra-apps"
-version = "0.4.0"
-description = "Deep Research Agent applications for finance and medical research"
+version = "0.5.0"
+description = "Deep Research Agent applications for research in finance, medical, and more domains to come."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "dra-core>=0.4.0",
+    "dra-core @ file://${PROJECT_ROOT}/../dra-core",
 ]
 
 [build-system]
