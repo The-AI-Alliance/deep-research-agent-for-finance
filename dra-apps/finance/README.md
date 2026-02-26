@@ -11,7 +11,7 @@ This README adds additional information to supplement the description provided i
 
 The easiest way to run the application with default values for all optional arguments is `make app-run-finance`. (There is a `make app-run` target, but it runs the finance application, by default.) 
 
-The `app-run-finance` target does some setup and then runs the command `cd apps/src && uv run -m dra.apps.finance.main ...` where `...` is a lot of arguments. 
+The `app-run-finance` target does some setup and then runs the command `cd dra-apps && uv run -m finance.main ...` where `...` is a lot of arguments. 
 
 Here are the most useful `make` targets for this application:
 
@@ -27,12 +27,14 @@ Here are the most useful `make` targets for this application:
 
 Without using make, the minimum required arguments for the finance application are `--ticker TICKER` and `--company-name COMPANY_NAME`.
 
-So, for example, here are the shortest `make` and CLI commands you can run to do research on IBM:
+So, for example, here are the shortest `make.sh`, `make`, and CLI commands you can run to do research on IBM**NOTE:** you run these commands in the repo's _root_ directory:
 
 ```shell
+make.sh --finance --ibm 
+
 make TICKER=IBM COMPANY_NAME="International Business Machines Corporation" app-run-finance
 
-cd apps/src && uv run -m dra.apps.finance.main --ticker IBM --company-name "International Business Machines Corporation"
+cd dra-apps && uv run -m finance.main --ticker IBM --company-name "International Business Machines Corporation"
 ```
 
 The application provides many optional CLI options to configure its behavior. They are discussed in the main [README](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/README.md).
@@ -41,7 +43,7 @@ See [`examples/gpt-oss_20b/META*`](https://github.com/The-AI-Alliance/deep-resea
 
 ## Notes on This Application
 
-We have discovered that the Excel spreadsheet task will not write the file if a relative output path is provided. By default, the `Makefile` uses a relative path for `OUTPUT_DIR`, which is passed to the application, but `resolve_path()` in the [`paths.py`](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/src//dra/common/utils/paths.py) utils converts paths to absolute, by default.
+We have discovered that the Excel spreadsheet task will not write the file if a relative output path is provided. By default, the `Makefile` uses a relative path for `OUTPUT_DIR`, which is passed to the application, but `resolve_path()` in the [`paths.py`](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/dra-core/src/dra/core/common/utils/paths.py) utilities is used to convert the relative paths to absolute paths, as required.
 
 ## Customizing Data Sources for Finance Deep Research
 

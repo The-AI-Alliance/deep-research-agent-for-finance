@@ -50,6 +50,8 @@ vars=()
 make_args=()
 which_app=finance
 target=
+show_footer=true
+TIME=time
 while [[ $# -gt 0 ]]
 do
 	case $1 in
@@ -73,6 +75,9 @@ do
 	--target)
 		shift
 		target=$1
+		# Only time execution and show the footer at the bottom if we are doing the default run target...
+		TIME=
+		show_footer=false 
 		;;
 	--finance)
 		which_app=finance
@@ -142,7 +147,9 @@ done
 started=$(date)
 echo $started
 
-time $NOOP make "${vars[@]}" "${make_args[@]}" $target
+$TIME $NOOP make "${vars[@]}" "${make_args[@]}" $target
+
+$show_footer || exit 0
 
 cat <<EOF
 

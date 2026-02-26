@@ -15,8 +15,9 @@ logger:
     timestamp_format: "%Y%m%d_%H%M%S"
 
 mcp:
-  # In this config file, all supported debugging flags or tools are used, 
-  # like @modelcontextprotocol/inspector. See
+  # In this config file, the debug tool @modelcontextprotocol/inspector is used
+  # to run and support debugging with the mcp-server-fetch and medical-mcp servers. 
+  # See
   #   https://modelcontextprotocol.io/docs/tools/inspector#pypi-package
   #   https://pypi.org/project/mcp-server-fetch/ (example)
   # Note that @modelcontextprotocol/inspector is actually intended for interactive use.
@@ -25,8 +26,8 @@ mcp:
       command: "npx"
       args: ["-y", "@modelcontextprotocol/inspector", "uvx", "mcp-server-fetch"]
     medical-mcp:
-      command: "node"
-      "args": ["/opt/homebrew/lib/node_modules/medical-mcp/build/index.js"]
+      command: "npx"
+      args: ["-y", "@modelcontextprotocol/inspector", "node", "/opt/homebrew/lib/node_modules/medical-mcp/build/index.js"]
     filesystem:
       command: "npx"
       args: ["-y", "@modelcontextprotocol/server-filesystem", ".."]

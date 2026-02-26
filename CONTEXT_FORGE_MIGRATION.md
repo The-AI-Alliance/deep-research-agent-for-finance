@@ -21,7 +21,7 @@ The following documentation will be handy:
 
 ### Services That Could Be Served through Context Forge
 
-Most of the services used by the applications could route through Context Forge. We will sketch an example using the medical application's `medical-mcp` MCP server. By default this server is run locally and uses STDIO to communicate with the application agent. The default invocation in the medical  `mcp_agent.config*.yaml` files is `node /path/to/node_modules/medical-mcp/build/index.js`, as discussed in [`apps/medical/README.md`](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/src/dra/apps/medical/README.md).
+Most of the services used by the applications could route through Context Forge. We will sketch an example using the medical application's `medical-mcp` MCP server. By default this server is run locally and uses STDIO to communicate with the application agent. The default invocation in the medical  `mcp_agent.config*.yaml` files is `node /path/to/node_modules/medical-mcp/build/index.js`, as discussed in [`apps/medical/README.md`](https://github.com/The-AI-Alliance/deep-research-agent-for-applications/blob/main/dra-apps/medical/README.md).
 
 Instead, we will run it on a separate server where Context Forge is running, although actually we will use the same local machine for demonstration purposes. We will then use Context Forge's `mcpgateway.translate` feature to expose this service as both a streamable HTTP and SSE (server-side events) gateway (in Context Forge terminology). This will also expose the ten tools provided by the server. Finally, we will aggregate those tools into a MCP server served by Context Forge. The details are below.
 

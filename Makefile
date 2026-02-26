@@ -2,10 +2,8 @@
 pages_url       := https://the-ai-alliance.github.io/deep-research-agent-for-applications/
 docs_dir        := docs
 site_dir        := ${docs_dir}/_site
-clean_code_dirs := logs output apps/src/output dra-core/.hypothesis
-clean_doc_dirs  := ${site_dir} ${docs_dir}/.sass-cache
-clean_dirs      := ${clean_code_dirs} ${clean_doc_dirs}
-APPS_DIR        := dra-apps/src
+
+APPS_DIR        := dra-apps
 DRA_CORE_DIR    := dra-core
 
 ## Environment variables
@@ -55,25 +53,27 @@ OUTPUT_SPREADSHEET         ?= ${TICKER}_financials.xlsx
 
 # Use a non-empty value for DEBUG to enable debug flags for MCP servers:
 DEBUG                      ?= 
+
+# Relative directory paths are relative to ${APPS_DIR}:
 ifeq (finance,${APP})
-	OUTPUT_DIR              ?= ../output/${APP}/${TICKER}
+	OUTPUT_DIR              ?= output/${APP}/${TICKER}
 	OUTPUT_REPORT           ?= ${TICKER}_report.md
 	REPORT_TITLE            ?= ${TICKER} Report
 else ifeq (medical,${APP})
-	OUTPUT_DIR              ?= ../output/${APP}
-	# Use the user-supplied title to create the report name.
+	OUTPUT_DIR              ?= output/${APP}
+	# Instead of defining a default here, use the user-supplied title
+	# to create the report name.
 	# OUTPUT_REPORT           ?= medical-report.md
 else
-	OUTPUT_DIR              ?= ../output/${APP}/${TIMESTAMP}
+	OUTPUT_DIR              ?= output/${APP}/${TIMESTAMP}
 	OUTPUT_REPORT           ?= report.md
 endif
 
-REL_APP_DIR                ?= dra/apps/${APP}
-REL_APP_PATH               ?= ${REL_APP_DIR}/main.py
-APP_MODULE                 ?= dra.apps.${APP}.main
+REL_APP_PATH               ?= ${APP}/main.py
+APP_MODULE                 ?= ${APP}.main
 RESEARCH_MODEL             ?= gpt-4o
 INFERENCE_PROVIDER         ?= openai
-TEMPLATES_DIR              ?= ${REL_APP_DIR}/templates
+TEMPLATES_DIR              ?= ${APP}/templates
 MARKDOWN_YAML_HEADER_FILE  ?= github_pages_header.yaml
 
 ifeq (,${DEBUG})
@@ -82,12 +82,16 @@ else
 	DEBUG_FILE = .debug
 endif
 ifeq (ollama,${INFERENCE_PROVIDER})
-	MCP_AGENT_CONFIG_FILE    ?= ${REL_APP_DIR}/config/mcp_agent.config.${INFERENCE_PROVIDER}${DEBUG_FILE}.yaml
+	MCP_AGENT_CONFIG_FILE    ?= ${APP}/config/mcp_agent.config.${INFERENCE_PROVIDER}${DEBUG_FILE}.yaml
 else
-	MCP_AGENT_CONFIG_FILE    ?= ${REL_APP_DIR}/config/mcp_agent.config${DEBUG_FILE}.yaml
+	MCP_AGENT_CONFIG_FILE    ?= ${APP}/config/mcp_agent.config${DEBUG_FILE}.yaml
 endif
 TEMPERATURE                ?= 0.7
 MAX_ITERATIONS             ?= 25
+
+clean_code_dirs := logs ${APPS_DIR}/output ${DRA_CORE_DIR}/.hypothesis
+clean_doc_dirs  := ${site_dir} ${docs_dir}/.sass-cache
+clean_dirs      := ${clean_code_dirs} ${clean_doc_dirs}
 
 # GitHub Pages...
 
@@ -109,7 +113,7 @@ make all                # Run the ${APP} application by building "app-run".
 make all-apps           # Run all the applications: ${APPS}.
 make all-apps-help      # Show help for all the apps: ${APPS}.
 make app-run            # Run the ${APP} application with default arguments.
-make app-run-<foo>      # Run the <foo> application with default arguments.
+make app-run-<foo>      # Run the "<foo>" application with default arguments (or prompting for values).
 make app-help           # Run the ${APP} application with --help to see the support arguments.
                         # Also prints the default invocation used by "app-run".
 make app-help-<foo>     # Show help for the <foo> application.
@@ -129,8 +133,8 @@ make setup-jekyll       # Install Jekyll. Ruby 3.X must be installed already.
 Miscellaneous make targets for help, debugging, etc.:
 
 make help               # Prints this output.
-make print-info         # Print all the current values of some make and env. variables.
-make print-app-info     # Print just the values related to the app.
+make print-info         # Print all the current default values of some make and env. variables.
+make print-info-<foo>   # Print just the values related to the app "<foo>".
 make print-make-info    # Print just the values related to make, etc.
 make print-docs-info    # Print just the values related to the GitHub Pages docs.
 make clean_code         # Deletes these directories: ${clean_code_dirs}
@@ -140,8 +144,8 @@ endef
 
 define app_help_footer
 TIPS:
-1. Use 'make print-app-info' to see some make variables you can override.
-2. Use 'make --just-print app-run' to see the arguments passed BY THIS MAKEFILE.
+1. Use 'make print-info-APP' to see some make variables you can override for APP.
+2. Use 'make --just-print app-run-APP' to see the arguments passed BY THIS MAKEFILE.
    Some argument values will be different in the Makefile than the hard-coded defaults
    in the application itself, which are shown in the help output above!!
 3. To pass additional arguments, use 'make APP_ARGS="..." app-run'. (Note the quotes.)
@@ -205,7 +209,7 @@ endef
 
 .PHONY: uv-check uv-cmd-check venv-check
 .PHONY: mcp-agent-check test tests
-.PHONY: print-info print-app-info print-make-info print-docs-info show-output-files
+.PHONY: print-info print-info-app print-make-info print-docs-info show-output-files
 .PHONY: build-dra-core install-dra-core test-dra-core
 
 all list-apps::
@@ -325,38 +329,40 @@ help::
 	@echo "Run make app-help for more help on running the app."
 	@echo
 
-print-info: print-app-info print-make-info print-docs-info
-print-app-info:
-	@echo "For settings for the non-default apps, run with make APP=app print-info:"
-	@echo "Relative paths shown are relative to ${SRC_DIR}."
+print-info: print-info-app print-make-info print-docs-info
+${APPS:%=print-info-app-%}:
+	@make APP=${@:print-info-app-%=%} print-info-app
+print-info-app:
+	@echo "Relative paths shown are relative to the directory '${APPS_DIR}'."
 	@echo
-	@echo "APP                          '${APP}'"
-	@echo "APP_MODULE                   '${APP_MODULE}'"
+	@echo "This application:"
+	@echo "  APP                          '${APP}'"
+	@echo "  APP_MODULE                   '${APP_MODULE}'"
 	@echo
 	@echo "Inference:"
-	@echo "  INFERENCE_PROVIDER         '${INFERENCE_PROVIDER}'"
-	@echo "  MCP_AGENT_CONFIG_FILE      '${MCP_AGENT_CONFIG_FILE}'"
-	@echo "  RESEARCH_MODEL             '${RESEARCH_MODEL}'"
+	@echo "  INFERENCE_PROVIDER           '${INFERENCE_PROVIDER}'"
+	@echo "  MCP_AGENT_CONFIG_FILE        '${MCP_AGENT_CONFIG_FILE}'"
+	@echo "  RESEARCH_MODEL               '${RESEARCH_MODEL}'"
 	@echo
 	@echo "Templates (for prompts, etc.):"
-	@echo "  TEMPLATES_DIR              '${TEMPLATES_DIR}'"
+	@echo "  TEMPLATES_DIR                '${TEMPLATES_DIR}'"
 	@echo
-	@echo "OUTPUT_DIR                   '${OUTPUT_DIR}'"
-	@echo "  OUTPUT_REPORT              '${OUTPUT_REPORT}' (under OUTPUT_DIR)"
+	@echo "OUTPUT_DIR                     '${OUTPUT_DIR}'"
+	@echo "  OUTPUT_REPORT                '${OUTPUT_REPORT}' (under OUTPUT_DIR; if empty, the report name will be 'calculated')"
 	@echo
 	@echo "For the Finance App:"
-	@echo "  TICKER                     '${TICKER}'"
-	@echo "  COMPANY_NAME               '${COMPANY_NAME}'"
-	@echo "  REPORTING_CURRENCY         '${REPORTING_CURRENCY}'"
-	@echo "  OUTPUT_SPREADSHEET         '${OUTPUT_SPREADSHEET}' (under OUTPUT_DIR)"
-	@echo "  EXCEL_WRITER_MODEL         '${EXCEL_WRITER_MODEL}'"
-	@echo "  FIN_RESEARCH_PROMPT_FILE   '${FIN_RESEARCH_PROMPT_FILE}'"
-	@echo "  EXCEL_WRITER_PROMPT_FILE   '${EXCEL_WRITER_PROMPT_FILE}'"
+	@echo "  TICKER                       '${TICKER}'"
+	@echo "  COMPANY_NAME                 '${COMPANY_NAME}'"
+	@echo "  REPORTING_CURRENCY           '${REPORTING_CURRENCY}'"
+	@echo "  OUTPUT_SPREADSHEET           '${OUTPUT_SPREADSHEET}' (under OUTPUT_DIR)"
+	@echo "  EXCEL_WRITER_MODEL           '${EXCEL_WRITER_MODEL}'"
+	@echo "  FIN_RESEARCH_PROMPT_FILE     '${FIN_RESEARCH_PROMPT_FILE}'"
+	@echo "  EXCEL_WRITER_PROMPT_FILE     '${EXCEL_WRITER_PROMPT_FILE}'"
 	@echo
 	@echo "For the Medical App:"
 	@echo "  MEDICAL_RESEARCH_PROMPT_FILE '${MEDICAL_RESEARCH_PROMPT_FILE}'"
 	@echo
-	@echo "APP_ARGS                     '${APP_ARGS}'"
+	@echo "APP_ARGS                       '${APP_ARGS}'"
 	@echo
 
 print-make-info:

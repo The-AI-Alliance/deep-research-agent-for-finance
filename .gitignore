@@ -295,3 +295,4 @@ logs/
 
 # Some AI development tools...
 .adaptive_workspace
+uv.lock
